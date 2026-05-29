@@ -53,7 +53,7 @@
 
         <div class="grid" style="margin-top: 12px;">
             <div class="metric"><span class="muted">Orders total</span><strong>{{ $snapshot->orders_total ?? 0 }}</strong></div>
-            <div class="metric"><span class="muted">Revenue confirmed</span><strong>{{ $snapshot->orders_revenue === null ? 'Non verificato' : $snapshot->orders_revenue }}</strong></div>
+            <div class="metric"><span class="muted">Revenue confirmed</span><strong>{{ $snapshot->orders_revenue === null ? 'N/D' : $snapshot->orders_revenue }}</strong></div>
             <div class="metric"><span class="muted">Reservations total</span><strong>{{ $snapshot->reservations_total ?? 0 }}</strong></div>
             <div class="metric"><span class="muted">Covers total</span><strong>{{ $snapshot->reservations_covers ?? 0 }}</strong></div>
         </div>
@@ -100,7 +100,7 @@
                         <td>{{ $row->http_status_code ?? '-' }}</td>
                         <td>{{ $row->response_time_ms ?? '-' }} ms</td>
                         <td>{{ $row->orders_total ?? '-' }}</td>
-                        <td>{{ $row->orders_revenue === null ? 'Non verificato' : $row->orders_revenue }} <span class="muted">{{ $row->revenue_unit }}</span></td>
+                        <td>{{ $row->orders_revenue === null ? 'N/D' : $row->orders_revenue }} <span class="muted">{{ $row->revenue_unit }}</span></td>
                         <td>{{ $row->reservations_total ?? '-' }} <span class="muted">covers {{ $row->reservations_covers ?? '-' }}</span></td>
                         <td>{{ $row->has_warnings ? 'yes' : 'no' }}</td>
                     </tr>

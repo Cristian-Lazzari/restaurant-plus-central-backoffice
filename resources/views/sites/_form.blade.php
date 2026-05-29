@@ -54,7 +54,7 @@
         const snippet = document.getElementById('report-token-snippet');
 
         function tokenSnippet(token) {
-            return 'PRIVATE_REPORT_TOKEN=' + token + "\n" + 'PRIVATE_REPORT_REVENUE_UNIT=unknown';
+            return 'PRIVATE_REPORT_TOKEN=' + token + "\n" + 'PRIVATE_REPORT_REVENUE_UNIT=euros';
         }
 
         function updateSnippet(token) {

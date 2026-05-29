@@ -61,7 +61,7 @@
                             @if(! $snapshot)
                                 -
                             @elseif($snapshot->orders_revenue === null)
-                                Non verificato
+                                N/D
                             @else
                                 {{ $snapshot->orders_revenue }}
                             @endif
