@@ -1,0 +1,36 @@
+{
+  "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2": {
+    "file": "../public/build/assets/bootstrap-icons.6c757103.woff2",
+    "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2"
+  },
+  "public/images/back.png": {
+    "file": "../public/build/assets/back.18582180.png",
+    "src": "public/images/back.png"
+  },
+  "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff": {
+    "file": "../public/build/assets/bootstrap-icons.f55513b7.woff",
+    "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff"
+  },
+  "resources/js/app.js": {
+    "file": "../public/build/assets/app.a68af303.js",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "css": [
+      "../public/build/assets/app.75a37c8c.css",
+      "../public/build/assets/app.fb1b30f9.css"
+    ],
+    "assets": [
+      "assets/bootstrap-icons.6c757103.woff2",
+      "assets/bootstrap-icons.f55513b7.woff"
+    ]
+  },
+  "resources/js/app.css": {
+    "file": "../public/build/assets/app.75a37c8c.css",
+    "src": "resources/js/app.css"
+  },
+  "resources/scss/app.scss": {
+    "file": "../public/build/assets/app.fb1b30f9.css",
+    "src": "resources/scss/app.scss",
+    "isEntry": true
+  }
+}
