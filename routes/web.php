@@ -3,6 +3,7 @@
 use App\Http\Controllers\PrivateAuthController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SiteSyncController;
+use App\Http\Controllers\SyncErrorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [PrivateAuthController::class, 'showLogin'])->name('login');
@@ -15,4 +16,5 @@ Route::middleware('backoffice.auth')->group(function () {
     Route::post('sites/{site}/toggle', [SiteController::class, 'toggle'])->name('sites.toggle');
     Route::post('sites/{site}/sync', [SiteSyncController::class, 'sync'])->name('sites.sync');
     Route::post('sync-all', [SiteSyncController::class, 'syncAll'])->name('sync.all');
+    Route::get('sync-errors', [SyncErrorController::class, 'index'])->name('sync-errors.index');
 });

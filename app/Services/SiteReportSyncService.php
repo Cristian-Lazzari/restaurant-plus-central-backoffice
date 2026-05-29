@@ -146,6 +146,14 @@ class SiteReportSyncService
             'orders_revenue' => $this->ordersRevenueForSnapshot($payload),
             'reservations_total' => $this->nullableInteger(Arr::get($payload, 'reservations.total')),
             'reservations_covers' => $this->nullableInteger(Arr::get($payload, 'reservations.total_covers')),
+            // Colonne per-periodo: presenti solo nel payload V2 (chiave "periods").
+            // nullableInteger(null) restituisce null, quindi i payload V1 restano compatibili.
+            'orders_today'              => $this->nullableInteger(Arr::get($payload, 'periods.today.orders_total')),
+            'reservations_today'        => $this->nullableInteger(Arr::get($payload, 'periods.today.reservations_total')),
+            'orders_last_7_days'        => $this->nullableInteger(Arr::get($payload, 'periods.last_7_days.orders_total')),
+            'reservations_last_7_days'  => $this->nullableInteger(Arr::get($payload, 'periods.last_7_days.reservations_total')),
+            'orders_last_30_days'       => $this->nullableInteger(Arr::get($payload, 'periods.last_30_days.orders_total')),
+            'reservations_last_30_days' => $this->nullableInteger(Arr::get($payload, 'periods.last_30_days.reservations_total')),
             'fetched_at' => now(),
         ]);
     }

@@ -25,6 +25,12 @@ class ReportSnapshot extends Model
         'orders_revenue',
         'reservations_total',
         'reservations_covers',
+        'orders_today',
+        'reservations_today',
+        'orders_last_7_days',
+        'reservations_last_7_days',
+        'orders_last_30_days',
+        'reservations_last_30_days',
         'fetched_at',
     ];
 
@@ -40,6 +46,12 @@ class ReportSnapshot extends Model
         'orders_revenue' => 'integer',
         'reservations_total' => 'integer',
         'reservations_covers' => 'integer',
+        'orders_today' => 'integer',
+        'reservations_today' => 'integer',
+        'orders_last_7_days' => 'integer',
+        'reservations_last_7_days' => 'integer',
+        'orders_last_30_days' => 'integer',
+        'reservations_last_30_days' => 'integer',
         'fetched_at' => 'datetime',
     ];
 
