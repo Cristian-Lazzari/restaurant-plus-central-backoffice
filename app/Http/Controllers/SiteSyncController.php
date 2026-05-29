@@ -18,25 +18,19 @@ class SiteSyncController extends Controller
 
     public function syncAll(Request $request, SiteReportSyncService $syncService)
     {
-        $period = $this->validatedPeriod($request);
-        $sites = Site::where('active', true)->orderBy('name')->get();
-
-        if ($sites->count() > 5) {
-            return back()->with(
-                'error',
-                'La sincronizzazione globale da interfaccia è limitata a 5 siti attivi. Usa php artisan reports:sync per sincronizzare tutti i siti.'
-            );
-        }
-
+        $sites   = Site::where('active', true)->orderBy('name')->get();
         $success = 0;
-        $failed = 0;
+        $failed  = 0;
 
         foreach ($sites as $site) {
-            $result = $syncService->sync($site, $period['from'] ?? null, $period['to'] ?? null);
+            // Passa sempre senza from/to: il payload V2 calcola i periods fissi
+            // in modo indipendente dal range — ogni sync è già completa.
+            $result = $syncService->sync($site);
             $result['ok'] ? $success++ : $failed++;
         }
 
-        $message = 'Sync completed. Success: ' . $success . '. Failed: ' . $failed . '.';
+        $total   = $sites->count();
+        $message = "Sync completata: {$total} siti. Riusciti: {$success}. Falliti: {$failed}.";
 
         return back()->with($failed > 0 ? 'error' : 'success', $message);
     }
