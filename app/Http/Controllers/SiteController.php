@@ -64,19 +64,32 @@ class SiteController extends Controller
                 $allTimeReservations += $siteRes;
                 $allTimeCovers       += $siteCov;
 
-                // Mesi attivi: da period_from a period_to, cap a 5 anni per evitare
-                // divisioni per periodi enormi causati dal from=2000-01-01 iniziale.
-                $months = 1;
+                // Mesi con attività reale forniti dal payload V2 (countActiveMonths).
+                // Se assenti (snapshot V1 o vecchio V2), usa il periodo del snapshot
+                // come fallback con cap a 5 anni per evitare distorsioni.
+                $ordersActiveMonths = isset($allTimeBlock['orders_active_months']) && $allTimeBlock['orders_active_months'] > 0
+                    ? (int) $allTimeBlock['orders_active_months']
+                    : null;
+
+                $resActiveMonths = isset($allTimeBlock['reservations_active_months']) && $allTimeBlock['reservations_active_months'] > 0
+                    ? (int) $allTimeBlock['reservations_active_months']
+                    : null;
+
+                // Fallback: mesi di calendario nel periodo snapshot (cap 5 anni)
+                $calendarMonths = 1;
                 if ($snap->period_from && $snap->period_to) {
                     $cap  = $snap->period_to->copy()->subYears(5);
-                    $from = $snap->period_from->lt($cap) ? $cap : $snap->period_from;
-                    $months = max(1, (int) ceil($from->diffInMonths($snap->period_to)));
+                    $pfr  = $snap->period_from->lt($cap) ? $cap : $snap->period_from;
+                    $calendarMonths = max(1, (int) ceil($pfr->diffInMonths($snap->period_to)));
                 }
 
-                $monthlyAvgOrders       += $months > 0 ? round($siteOrders / $months, 1) : 0;
-                $monthlyAvgRevenue      += $months > 0 ? round($siteRev    / $months, 2) : 0;
-                $monthlyAvgReservations += $months > 0 ? round($siteRes    / $months, 1) : 0;
-                $monthlyAvgCovers       += $months > 0 ? round($siteCov    / $months, 1) : 0;
+                $ordM = $ordersActiveMonths ?? $calendarMonths;
+                $resM = $resActiveMonths    ?? $calendarMonths;
+
+                $monthlyAvgOrders       += $ordM > 0 ? round($siteOrders / $ordM, 1) : 0;
+                $monthlyAvgRevenue      += $ordM > 0 ? round($siteRev    / $ordM, 2) : 0;
+                $monthlyAvgReservations += $resM > 0 ? round($siteRes    / $resM, 1) : 0;
+                $monthlyAvgCovers       += $resM > 0 ? round($siteCov    / $resM, 1) : 0;
             }
 
             $ordersTodayTotal       += (int) ($snap->orders_today             ?? 0);

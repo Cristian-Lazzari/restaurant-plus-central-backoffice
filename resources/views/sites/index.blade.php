@@ -185,17 +185,26 @@
                         $siteRes    = (int)   ($atBlock['reservations_total']  ?? 0);
                         $siteCov    = (int)   ($atBlock['reservations_covers'] ?? 0);
 
-                        // Mesi attivi (cap 5 anni)
-                        $months = 1;
+                        // Mesi con attività reale dal payload (countActiveMonths lato dashboard).
+                        // Fallback: mesi di calendario nel periodo snapshot, cap 5 anni.
+                        $ordActiveM = isset($atBlock['orders_active_months']) && $atBlock['orders_active_months'] > 0
+                            ? (int) $atBlock['orders_active_months'] : null;
+                        $resActiveM = isset($atBlock['reservations_active_months']) && $atBlock['reservations_active_months'] > 0
+                            ? (int) $atBlock['reservations_active_months'] : null;
+
+                        $calMonths = 1;
                         if ($snap && $snap->period_from && $snap->period_to) {
-                            $cap  = $snap->period_to->copy()->subYears(5);
-                            $pfr  = $snap->period_from->lt($cap) ? $cap : $snap->period_from;
-                            $months = max(1, (int) ceil($pfr->diffInMonths($snap->period_to)));
+                            $cap = $snap->period_to->copy()->subYears(5);
+                            $pfr = $snap->period_from->lt($cap) ? $cap : $snap->period_from;
+                            $calMonths = max(1, (int) ceil($pfr->diffInMonths($snap->period_to)));
                         }
-                        $avgOrd = $siteOrders > 0 ? round($siteOrders / $months) : null;
-                        $avgRev = $siteRev    > 0 ? round($siteRev    / $months, 2) : null;
-                        $avgRes = $siteRes    > 0 ? round($siteRes    / $months) : null;
-                        $avgCov = $siteCov    > 0 ? round($siteCov    / $months) : null;
+                        $ordM = $ordActiveM ?? $calMonths;
+                        $resM = $resActiveM ?? $calMonths;
+
+                        $avgOrd = $siteOrders > 0 ? round($siteOrders / $ordM) : null;
+                        $avgRev = $siteRev    > 0 ? round($siteRev    / $ordM, 2) : null;
+                        $avgRes = $siteRes    > 0 ? round($siteRes    / $resM) : null;
+                        $avgCov = $siteCov    > 0 ? round($siteCov    / $resM) : null;
                     @endphp
                     <tr>
                         {{-- Sito --}}
