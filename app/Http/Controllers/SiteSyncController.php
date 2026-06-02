@@ -23,9 +23,10 @@ class SiteSyncController extends Controller
         $failed  = 0;
 
         foreach ($sites as $site) {
-            // Passa sempre senza from/to: il payload V2 calcola i periods fissi
-            // in modo indipendente dal range — ogni sync è già completa.
-            $result = $syncService->sync($site);
+            // Carica la relazione latestSnapshot per determineSyncPeriod().
+            $site->load('latestSnapshot');
+            $period = $syncService->determineSyncPeriod($site);
+            $result = $syncService->sync($site, $period['from'], $period['to']);
             $result['ok'] ? $success++ : $failed++;
         }
 

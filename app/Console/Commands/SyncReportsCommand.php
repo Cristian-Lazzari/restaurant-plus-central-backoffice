@@ -39,23 +39,37 @@ class SyncReportsCommand extends Command
             return self::SUCCESS;
         }
 
-        $success = 0;
-        $failed  = 0;
-
-        // Nota: i blocchi "periods", "daily" e "usage" del payload V2 sono calcolati
-        // dal service dashboard in modo indipendente da from/to — ogni sync è già
-        // completa su tutti i periodi fissi. Il from/to passato qui influenza solo
-        // il blocco top-level "orders"/"reservations" (periodo di dettaglio aggiuntivo).
-        // Di default (senza --from/--to) il dashboard usa il mese corrente come periodo
-        // principale, e questo va bene perché lo storico è in periods.all_time.
+        $success         = 0;
+        $failed          = 0;
+        $explicitPeriod  = $from || $to; // true se l'utente ha passato --from/--to
 
         foreach ($sites as $site) {
-            $result = $syncService->sync($site, $from ?: null, $to ?: null);
+            if ($explicitPeriod) {
+                // Periodo manuale: usa quello passato da CLI per tutti i siti.
+                $syncFrom = $from ?: null;
+                $syncTo   = $to   ?: null;
+                $reason   = 'manual';
+            } else {
+                // Periodo automatico: determina per ogni sito individualmente.
+                $site->load('latestSnapshot');
+                $period   = $syncService->determineSyncPeriod($site);
+                $syncFrom = $period['from'];
+                $syncTo   = $period['to'];
+                $reason   = $period['reason'];
+            }
+
+            $result = $syncService->sync($site, $syncFrom, $syncTo);
 
             if ($result['ok']) {
                 $success++;
                 $apiVer = $result['snapshot']->api_version ?? '?';
-                $this->info($site->name . ': synced (api_version=' . $apiVer . ') in ' . ($result['response_time_ms'] ?? '-') . ' ms.');
+                $this->info(
+                    $site->name
+                    . ': synced (api_version=' . $apiVer
+                    . ', period=' . $syncFrom . '→' . $syncTo
+                    . ', reason=' . $reason . ')'
+                    . ' in ' . ($result['response_time_ms'] ?? '-') . ' ms.'
+                );
             } else {
                 $failed++;
                 $code   = $result['code'] ?? 'ERROR';

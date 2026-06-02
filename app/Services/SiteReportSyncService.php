@@ -204,6 +204,43 @@ class SiteReportSyncService
         ];
     }
 
+    /**
+     * Determina il periodo da richiedere per la prossima sync di un sito.
+     *
+     * - Nessun snapshot precedente  → from=2000-01-01, to=oggi  (tutta la storia)
+     * - Snapshot presente           → from=period_to+1gg, to=oggi  (incrementale)
+     * - Già aggiornato ad oggi      → from=oggi, to=oggi  (sync giornaliera)
+     *
+     * I blocchi "periods", "daily" e "usage" del payload V2 vengono sempre
+     * calcolati indipendentemente dal range passato, quindi periods.all_time
+     * contiene sempre il totale storico completo a prescindere da from/to.
+     *
+     * @return array{from: string, to: string, reason: string}
+     */
+    public function determineSyncPeriod(Site $site): array
+    {
+        $today  = \Carbon\Carbon::today()->toDateString();
+        $snap   = $site->latestSnapshot;
+
+        if (! $snap) {
+            return ['from' => '2000-01-01', 'to' => $today, 'reason' => 'initial'];
+        }
+
+        // Usa period_to se valorizzato, altrimenti la data di fetch come proxy.
+        $lastDate = $snap->period_to
+            ? $snap->period_to->toDateString()
+            : ($snap->fetched_at ? $snap->fetched_at->toDateString() : $today);
+
+        $nextFrom = \Carbon\Carbon::parse($lastDate)->addDay()->toDateString();
+
+        if ($nextFrom >= $today) {
+            // Già aggiornato: sincronizza comunque oggi per avere periods.today aggiornato.
+            return ['from' => $today, 'to' => $today, 'reason' => 'current'];
+        }
+
+        return ['from' => $nextFrom, 'to' => $today, 'reason' => 'incremental'];
+    }
+
     private function endpointFor(Site $site): string
     {
         return rtrim($site->url, '/') . '/api/private/report-summary';

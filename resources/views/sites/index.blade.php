@@ -137,11 +137,13 @@
                     <th>Pack</th>
                     <th>Ordini oggi</th>
                     <th>Ordini 7gg</th>
-                    <th>Ricavi periodo</th>
+                    <th>Ricavi storico</th>
                     <th>Prenotazioni oggi</th>
+                    <th>Prenotazioni 7gg</th>
+                    <th>Coperti (periodo)</th>
                     <th>Attività menu</th>
-                    <th>Periodo snapshot</th>
-                    <th>Ultima sync riuscita</th>
+                    <th>Periodo</th>
+                    <th>Ultima sync</th>
                     <th>Stato</th>
                     <th>Azioni</th>
                 </tr>
@@ -212,6 +214,12 @@
                         {{-- Prenotazioni oggi --}}
                         <td>{{ $snap ? ($snap->reservations_today ?? 'N/D') : '-' }}</td>
 
+                        {{-- Prenotazioni 7gg --}}
+                        <td>{{ $snap ? ($snap->reservations_last_7_days ?? 'N/D') : '-' }}</td>
+
+                        {{-- Coperti (periodo) --}}
+                        <td>{{ $snap ? ($snap->reservations_covers ?? 'N/D') : '-' }}</td>
+
                         {{-- Attivita menu --}}
                         <td>
                             @if($lastMenuActivity)
@@ -267,7 +275,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="11" class="muted" style="text-align: center; padding: 28px;">
+                        <td colspan="13" class="muted" style="text-align: center; padding: 28px;">
                             Nessun sito configurato. <a href="{{ route('sites.create') }}">Aggiungine uno</a>.
                         </td>
                     </tr>

@@ -364,53 +364,7 @@
         </div>
     @endif
 
-    {{-- Sezione 6: Storico snapshot --}}
-    <h2>Ultimi 10 snapshot</h2>
-    <div class="table-wrap" style="margin-bottom: 18px;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Recuperato il</th>
-                    <th>Periodo</th>
-                    <th>HTTP</th>
-                    <th>Tempo</th>
-                    <th>Ordini</th>
-                    <th>Ricavi</th>
-                    <th>Prenotazioni</th>
-                    <th>Coperti</th>
-                    <th>Warnings</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($site->reportSnapshots as $row)
-                    <tr>
-                        <td style="white-space: nowrap;">{{ $row->fetched_at?->format('d/m/Y H:i') }}</td>
-                        <td style="white-space: nowrap;">
-                            {{ $row->period_from?->toDateString() ?? '-' }}
-                            <span class="muted">/</span>
-                            {{ $row->period_to?->toDateString() ?? '-' }}
-                        </td>
-                        <td>{{ $row->http_status_code ?? '-' }}</td>
-                        <td>{{ $row->response_time_ms ?? '-' }} ms</td>
-                        <td>{{ $row->orders_total ?? '-' }}</td>
-                        <td>
-                            {{ $row->orders_revenue === null ? 'N/D' : number_format($row->orders_revenue) }}
-                            <span class="muted" style="font-size: 11px;">{{ $row->revenue_unit }}</span>
-                        </td>
-                        <td>{{ $row->reservations_total ?? '-' }}</td>
-                        <td>{{ $row->reservations_covers ?? '-' }}</td>
-                        <td>{{ $row->has_warnings ? 'Si' : 'No' }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="9" class="muted" style="text-align: center; padding: 24px;">Nessun snapshot.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-
-    {{-- Sezione 7: Sync manuale --}}
+    {{-- Sezione 6: Sync manuale --}}
     <h2>Sincronizzazione manuale</h2>
     <div class="panel" style="margin-bottom: 18px;">
         <form method="POST" action="{{ route('sites.sync', $site) }}">
