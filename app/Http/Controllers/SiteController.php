@@ -13,83 +13,101 @@ class SiteController extends Controller
             ->orderBy('name')
             ->get();
 
-        // Accumulate KPIs iterating the already-loaded collection — no extra queries.
-        $activeCount             = 0;
-        $ordersTotal             = 0;
-        $revenueTotal            = 0;
-        $reservationsTotal       = 0;
-        $coversTotal             = 0;
-        $sitesWithFailures       = 0;
-        $revenueUnavailable      = 0;
+        // ── KPI globali — iterazione sulla collection già caricata, zero query aggiuntive ──
+        $activeCount      = 0;
+        $sitesWithFailures = 0;
+
+        // All-time aggregati (da payload.periods.all_time, disponibili solo con V2)
+        $allTimeOrders       = 0;
+        $allTimeRevenue      = 0.0;
+        $allTimeReservations = 0;
+        $allTimeCovers       = 0;
+
+        // Medie mensili globali = somma delle medie mensili per sito
+        $monthlyAvgOrders       = 0.0;
+        $monthlyAvgRevenue      = 0.0;
+        $monthlyAvgReservations = 0.0;
+        $monthlyAvgCovers       = 0.0;
+
+        // Per il grafico e i dati "oggi / 7gg"
         $ordersTodayTotal        = 0;
         $reservationsTodayTotal  = 0;
         $ordersLast7Total        = 0;
-        $ordersLast30Total       = 0;
-
-        // Collect the snapshot dates for a period label.
-        $periodDates = [];
+        $reservationsLast7Total  = 0;
 
         foreach ($sites as $site) {
             if ($site->active) {
                 $activeCount++;
             }
-
             if ($site->consecutive_failures > 0) {
                 $sitesWithFailures++;
             }
 
             $snap = $site->latestSnapshot;
-
-            if ($snap) {
-                $ordersTotal       += (int) ($snap->orders_total ?? 0);
-                $reservationsTotal += (int) ($snap->reservations_total ?? 0);
-                $coversTotal       += (int) ($snap->reservations_covers ?? 0);
-
-                // Per-period counters — disponibili solo da snapshot V2, null altrimenti.
-                $ordersTodayTotal       += (int) ($snap->orders_today ?? 0);
-                $reservationsTodayTotal += (int) ($snap->reservations_today ?? 0);
-                $ordersLast7Total       += (int) ($snap->orders_last_7_days ?? 0);
-                $ordersLast30Total      += (int) ($snap->orders_last_30_days ?? 0);
-
-                if ($snap->revenue_unit === 'euros' && $snap->orders_revenue !== null) {
-                    $revenueTotal += (int) $snap->orders_revenue;
-                } else {
-                    $revenueUnavailable++;
-                }
-
-                if ($snap->period_from) {
-                    $periodDates[] = $snap->period_from->toDateString();
-                }
-                if ($snap->period_to) {
-                    $periodDates[] = $snap->period_to->toDateString();
-                }
+            if (! $snap) {
+                continue;
             }
-        }
 
-        // Build a human-readable period label from the range of snapshot dates.
-        $periodLabel = 'Nessun dato';
-        if (! empty($periodDates)) {
-            $min = min($periodDates);
-            $max = max($periodDates);
-            $periodLabel = $min === $max ? $min : $min . ' – ' . $max;
+            // Legge all_time dal payload V2 se disponibile
+            $allTimeBlock = is_array($snap->payload)
+                ? ($snap->payload['periods']['all_time'] ?? null)
+                : null;
+
+            if ($allTimeBlock) {
+                $siteOrders = (int)   ($allTimeBlock['orders_total']        ?? 0);
+                $siteRev    = (float) ($allTimeBlock['orders_revenue']       ?? 0);
+                $siteRes    = (int)   ($allTimeBlock['reservations_total']   ?? 0);
+                $siteCov    = (int)   ($allTimeBlock['reservations_covers']  ?? 0);
+
+                $allTimeOrders       += $siteOrders;
+                $allTimeRevenue      += $siteRev;
+                $allTimeReservations += $siteRes;
+                $allTimeCovers       += $siteCov;
+
+                // Mesi attivi: da period_from a period_to, cap a 5 anni per evitare
+                // divisioni per periodi enormi causati dal from=2000-01-01 iniziale.
+                $months = 1;
+                if ($snap->period_from && $snap->period_to) {
+                    $cap  = $snap->period_to->copy()->subYears(5);
+                    $from = $snap->period_from->lt($cap) ? $cap : $snap->period_from;
+                    $months = max(1, (int) ceil($from->diffInMonths($snap->period_to)));
+                }
+
+                $monthlyAvgOrders       += $months > 0 ? round($siteOrders / $months, 1) : 0;
+                $monthlyAvgRevenue      += $months > 0 ? round($siteRev    / $months, 2) : 0;
+                $monthlyAvgReservations += $months > 0 ? round($siteRes    / $months, 1) : 0;
+                $monthlyAvgCovers       += $months > 0 ? round($siteCov    / $months, 1) : 0;
+            }
+
+            $ordersTodayTotal       += (int) ($snap->orders_today             ?? 0);
+            $reservationsTodayTotal += (int) ($snap->reservations_today       ?? 0);
+            $ordersLast7Total       += (int) ($snap->orders_last_7_days       ?? 0);
+            $reservationsLast7Total += (int) ($snap->reservations_last_7_days ?? 0);
         }
 
         $kpis = [
-            'active_count'              => $activeCount,
-            'orders_total'              => $ordersTotal,
-            'revenue_total'             => $revenueTotal,
-            'reservations_total'        => $reservationsTotal,
-            'covers_total'              => $coversTotal,
-            'sites_with_failures'       => $sitesWithFailures,
-            'revenue_unavailable_count' => $revenueUnavailable,
-            'period_label'              => $periodLabel,
-            // Aggregati V2: nulli/zero se nessun sito ha ancora snapshot V2.
-            'orders_today'              => $ordersTodayTotal,
-            'reservations_today'        => $reservationsTodayTotal,
-            'orders_last_7'             => $ordersLast7Total,
-            'orders_last_30'            => $ordersLast30Total,
-            // Flag per mostrare/nascondere il messaggio "in attesa snapshot V2".
-            'has_today_data'            => $ordersTodayTotal > 0 || $reservationsTodayTotal > 0,
+            'active_count'        => $activeCount,
+            'sites_with_failures' => $sitesWithFailures,
+            // All-time
+            'orders_all_time'       => $allTimeOrders,
+            'revenue_all_time'      => $allTimeRevenue,
+            'reservations_all_time' => $allTimeReservations,
+            'covers_all_time'       => $allTimeCovers,
+            // Medie mensili (somma delle medie per sito)
+            'orders_monthly_avg'       => round($monthlyAvgOrders),
+            'revenue_monthly_avg'      => round($monthlyAvgRevenue, 2),
+            'reservations_monthly_avg' => round($monthlyAvgReservations),
+            'covers_monthly_avg'       => round($monthlyAvgCovers),
+            // Oggi / 7gg per grafico
+            'orders_today'          => $ordersTodayTotal,
+            'reservations_today'    => $reservationsTodayTotal,
+            'orders_last_7'         => $ordersLast7Total,
+            'reservations_last_7'   => $reservationsLast7Total,
+            // Flag: nessun dato ancora (snapshot V2 non ancora arrivato)
+            'has_v2_data' => $allTimeOrders > 0 || $allTimeReservations > 0,
+            // Flag servizi non utilizzati (globalmente)
+            'uses_orders'        => $allTimeOrders > 0,
+            'uses_reservations'  => $allTimeReservations > 0,
         ];
 
         // ── Inactivity detection ──────────────────────────────────────────────
