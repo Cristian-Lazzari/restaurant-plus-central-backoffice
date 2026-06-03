@@ -5,16 +5,28 @@ namespace App\Http\Controllers;
 use App\Models\Site;
 use App\Services\SiteMonthlyMetricsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SiteController extends Controller
 {
     public function index(SiteMonthlyMetricsService $monthlyMetrics)
     {
         $sites = Site::with(['latestSnapshot', 'latestError'])
+            ->orderByRaw('sort_order is null')
+            ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
         $siteMetrics = [];
+        $lastGlobalSyncAt = $sites->reduce(function ($latest, Site $site) {
+            if (! $site->last_success_at) {
+                return $latest;
+            }
+
+            return $latest === null || $site->last_success_at->gt($latest)
+                ? $site->last_success_at
+                : $latest;
+        });
 
         // ── KPI globali — iterazione sulla collection già caricata, zero query aggiuntive ──
         $activeCount = 0;
@@ -177,7 +189,7 @@ class SiteController extends Controller
         usort($inactiveSites, fn ($a, $b) => ($reasonOrder[$a['reason']] ?? 9) <=> ($reasonOrder[$b['reason']] ?? 9));
         $inactiveSites = array_slice($inactiveSites, 0, 5);
 
-        return view('sites.index', compact('sites', 'kpis', 'inactiveSites', 'siteMetrics'));
+        return view('sites.index', compact('sites', 'kpis', 'inactiveSites', 'siteMetrics', 'lastGlobalSyncAt'));
     }
 
     public function create()
@@ -199,13 +211,14 @@ class SiteController extends Controller
         $data['url'] = rtrim($data['url'], '/');
         $data['active'] = $request->boolean('active');
         $data['retention_days'] = $data['retention_days'] ?? 90;
+        $data['sort_order'] = ((int) (Site::max('sort_order') ?? Site::count())) + 1;
 
         Site::create($data);
 
         return redirect()->route('dashboard')->with('success', 'Site created.');
     }
 
-    public function show(Site $site)
+    public function show(Site $site, SiteMonthlyMetricsService $monthlyMetrics)
     {
         $site->load([
             'latestSnapshot',
@@ -213,7 +226,14 @@ class SiteController extends Controller
             'syncErrors' => fn ($query) => $query->latest('occurred_at')->limit(10),
         ]);
 
-        return view('sites.show', compact('site'));
+        $businessMetrics = $monthlyMetrics->forSnapshot($site->latestSnapshot);
+        $usesOrders = (int) ($businessMetrics['orders_total'] ?? 0) > 0
+            || (int) ($site->latestSnapshot?->orders_total ?? 0) > 0;
+        $usesReservations = (int) ($businessMetrics['reservations_total'] ?? 0) > 0
+            || (int) ($site->latestSnapshot?->reservations_total ?? 0) > 0;
+        $monthlyTrend = $monthlyMetrics->monthlyTrendForSnapshot($site->latestSnapshot);
+
+        return view('sites.show', compact('site', 'businessMetrics', 'usesOrders', 'usesReservations', 'monthlyTrend'));
     }
 
     public function edit(Site $site)
@@ -252,6 +272,22 @@ class SiteController extends Controller
         $site->update(['active' => ! $site->active]);
 
         return back()->with('success', $site->active ? 'Site activated.' : 'Site deactivated.');
+    }
+
+    public function reorder(Request $request)
+    {
+        $data = $request->validate([
+            'site_ids' => ['required', 'array', 'min:1'],
+            'site_ids.*' => ['required', 'integer', 'distinct', 'exists:sites,id'],
+        ]);
+
+        DB::transaction(function () use ($data): void {
+            foreach (array_values($data['site_ids']) as $index => $siteId) {
+                Site::whereKey($siteId)->update(['sort_order' => $index + 1]);
+            }
+        });
+
+        return redirect()->route('dashboard')->with('success', 'Ordine siti aggiornato.');
     }
 
     private function validationMessages(): array

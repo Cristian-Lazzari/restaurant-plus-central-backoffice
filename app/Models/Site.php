@@ -13,6 +13,7 @@ class Site extends Model
 
     protected $fillable = [
         'name',
+        'sort_order',
         'url',
         'token',
         'active',
@@ -31,6 +32,7 @@ class Site extends Model
 
     protected $casts = [
         'token' => 'encrypted',
+        'sort_order' => 'integer',
         'active' => 'boolean',
         'pack' => 'integer',
         'consecutive_failures' => 'integer',

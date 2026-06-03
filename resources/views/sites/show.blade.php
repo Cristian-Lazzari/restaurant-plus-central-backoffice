@@ -5,6 +5,45 @@
         $snapshot = $site->latestSnapshot;
         $payload  = $snapshot?->payload ?? [];
         $warnings = $snapshot?->data_warnings ?? [];
+        $monthlyRows = $monthlyTrend['rows'] ?? [];
+        $hasMonthlyTrend = count($monthlyRows) > 0;
+        $hasBusiness = $usesOrders || $usesReservations;
+        $formatPercent = function (?float $percent): string {
+            if ($percent === null) {
+                return '-';
+            }
+
+            $decimals = abs($percent - round($percent)) < 0.05 ? 0 : 1;
+
+            return ($percent > 0 ? '+' : '') . number_format($percent, $decimals, ',', '.') . '%';
+        };
+        $deltaBadge = function (array $change) use ($formatPercent): array {
+            $state = $change['state'] ?? 'none';
+            $percent = $change['percent'] ?? null;
+
+            return match ($state) {
+                'up' => [
+                    'label' => $formatPercent($percent),
+                    'style' => 'color:#027a48;background:#ecfdf3;border-color:#abefc6;',
+                ],
+                'down' => [
+                    'label' => $formatPercent($percent),
+                    'style' => 'color:#b42318;background:#fef3f2;border-color:#fecdca;',
+                ],
+                'flat' => [
+                    'label' => '0%',
+                    'style' => 'color:#475467;background:#f2f4f7;border-color:#d9dee7;',
+                ],
+                'new' => [
+                    'label' => 'Nuovo',
+                    'style' => 'color:#155eef;background:#eef4ff;border-color:#b2ccff;',
+                ],
+                default => [
+                    'label' => 'Primo mese',
+                    'style' => 'color:#667085;background:#f8fafc;border-color:#d9dee7;',
+                ],
+            };
+        };
     @endphp
 
     {{-- Page header --}}
@@ -35,18 +74,21 @@
     <h2 style="margin-top: 0;">Dati business</h2>
 
     @if($snapshot)
-        @if($hasPeriods)
+        @if(! $hasBusiness)
+            <div class="panel muted" style="font-size: 13px; margin-bottom: 12px; padding: 16px;">
+                Nessun ordine o prenotazione registrati per questo sito.
+            </div>
+        @elseif($hasPeriods)
             {{-- V2: selettore periodo dinamico --}}
             <div class="panel" style="margin-bottom: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 8px;">
                     <label for="periodSelect" style="margin: 0; font-weight: 600; white-space: nowrap;">Periodo:</label>
                     <select id="periodSelect" class="btn" style="cursor: pointer; padding: 6px 10px;">
-                        <option value="today">Oggi</option>
-                        <option value="last_7_days">Ultimi 7 giorni</option>
-                        <option value="last_30_days">Ultimi 30 giorni</option>
                         <option value="current_month" selected>Mese corrente</option>
                         <option value="current_year">Anno corrente</option>
                         <option value="all_time">Storico</option>
+                        <option value="today">Oggi</option>
+                        <option value="last_7_days">Ultimi 7 giorni</option>
                     </select>
                 </div>
                 <div class="muted" style="font-size: 13px;">
@@ -55,55 +97,63 @@
             </div>
 
             <div class="grid" style="margin-bottom: 12px;">
-                <div class="metric">
-                    <span class="muted">Ordini</span>
-                    <strong id="periodOrders">-</strong>
-                </div>
-                <div class="metric">
-                    <span class="muted">Ricavi</span>
-                    <strong id="periodRevenue">-</strong>
-                    @if($revUnit !== 'euros')
-                        <div class="muted" style="font-size: 11px; margin-top: 2px;">revenue_unit = {{ $revUnit }}</div>
-                    @endif
-                </div>
-                <div class="metric">
-                    <span class="muted">Media ordine</span>
-                    <strong id="periodAverage">-</strong>
-                </div>
-                <div class="metric">
-                    <span class="muted">Prenotazioni</span>
-                    <strong id="periodReservations">-</strong>
-                </div>
-                <div class="metric">
-                    <span class="muted">Coperti</span>
-                    <strong id="periodCovers">-</strong>
-                </div>
+                @if($usesOrders)
+                    <div class="metric">
+                        <span class="muted">Ordini</span>
+                        <strong id="periodOrders">-</strong>
+                    </div>
+                    <div class="metric">
+                        <span class="muted">Ricavi</span>
+                        <strong id="periodRevenue">-</strong>
+                        @if($revUnit !== 'euros')
+                            <div class="muted" style="font-size: 11px; margin-top: 2px;">revenue_unit = {{ $revUnit }}</div>
+                        @endif
+                    </div>
+                    <div class="metric">
+                        <span class="muted">Media ordine</span>
+                        <strong id="periodAverage">-</strong>
+                    </div>
+                @endif
+                @if($usesReservations)
+                    <div class="metric">
+                        <span class="muted">Prenotazioni</span>
+                        <strong id="periodReservations">-</strong>
+                    </div>
+                    <div class="metric">
+                        <span class="muted">Coperti</span>
+                        <strong id="periodCovers">-</strong>
+                    </div>
+                @endif
             </div>
         @else
             {{-- V1: valori statici dall'ultimo snapshot --}}
             <div class="grid" style="margin-bottom: 12px;">
-                <div class="metric">
-                    <span class="muted">Ordini</span>
-                    <strong>{{ number_format($snapshot->orders_total ?? 0) }}</strong>
-                </div>
-                <div class="metric">
-                    <span class="muted">Ricavi</span>
-                    @if($revUnit !== 'euros' || $snapshot->orders_revenue === null)
-                        <strong>N/D</strong>
-                        <div class="muted" style="font-size: 12px;">revenue_unit = {{ $revUnit }}</div>
-                    @else
-                        <strong>€ {{ number_format($snapshot->orders_revenue, 2) }}</strong>
-                        <div class="muted" style="font-size: 12px;">revenue_unit = euros</div>
-                    @endif
-                </div>
-                <div class="metric">
-                    <span class="muted">Prenotazioni</span>
-                    <strong>{{ number_format($snapshot->reservations_total ?? 0) }}</strong>
-                </div>
-                <div class="metric">
-                    <span class="muted">Coperti</span>
-                    <strong>{{ number_format($snapshot->reservations_covers ?? 0) }}</strong>
-                </div>
+                @if($usesOrders)
+                    <div class="metric">
+                        <span class="muted">Ordini</span>
+                        <strong>{{ number_format($snapshot->orders_total ?? 0) }}</strong>
+                    </div>
+                    <div class="metric">
+                        <span class="muted">Ricavi</span>
+                        @if($revUnit !== 'euros' || $snapshot->orders_revenue === null)
+                            <strong>N/D</strong>
+                            <div class="muted" style="font-size: 12px;">revenue_unit = {{ $revUnit }}</div>
+                        @else
+                            <strong>€ {{ number_format($snapshot->orders_revenue, 2) }}</strong>
+                            <div class="muted" style="font-size: 12px;">revenue_unit = euros</div>
+                        @endif
+                    </div>
+                @endif
+                @if($usesReservations)
+                    <div class="metric">
+                        <span class="muted">Prenotazioni</span>
+                        <strong>{{ number_format($snapshot->reservations_total ?? 0) }}</strong>
+                    </div>
+                    <div class="metric">
+                        <span class="muted">Coperti</span>
+                        <strong>{{ number_format($snapshot->reservations_covers ?? 0) }}</strong>
+                    </div>
+                @endif
             </div>
             <div class="panel muted" style="font-size: 13px; margin-bottom: 12px; padding: 8px 12px;">
                 Filtro periodo disponibile dopo snapshot api_version=2.
@@ -262,67 +312,94 @@
         </div>
     @endif
 
-    {{-- Sezione 4: Grafici andamento ultimi 30 giorni (solo payload V2) --}}
-    @php
-        $daily        = is_array($payload['daily'] ?? null) ? $payload['daily'] : [];
-        $hasChartData = count($daily) > 0;
-    @endphp
-    <h2>Andamento ultimi 30 giorni</h2>
-    @if($hasChartData)
+    {{-- Sezione 4: Andamento mensile --}}
+    <h2>Andamento mensile</h2>
+    @if($hasBusiness && $hasMonthlyTrend)
         <div class="panel" style="margin-bottom: 12px;">
-            <div class="muted" style="font-size: 12px; margin-bottom: 10px;">Ordini per giorno</div>
-            <canvas id="chartOrders" style="max-height: 200px;"></canvas>
+            <canvas id="chartMonthly" style="max-height: 280px;"></canvas>
         </div>
-        <div class="panel" style="margin-bottom: 12px;">
-            <div class="muted" style="font-size: 12px; margin-bottom: 10px;">Ricavi per giorno (€)</div>
-            <canvas id="chartRevenue" style="max-height: 200px;"></canvas>
-        </div>
-        <div class="panel" style="margin-bottom: 18px;">
-            <div class="muted" style="font-size: 12px; margin-bottom: 10px;">Prenotazioni e coperti per giorno</div>
-            <canvas id="chartReservations" style="max-height: 200px;"></canvas>
-        </div>
-    @else
-        <div class="panel muted" style="margin-bottom: 18px; font-size: 13px;">
-            Grafici disponibili dopo uno snapshot api_version=2 con dati giornalieri.
-        </div>
-    @endif
 
-    {{-- Sezione 4b: Daily raw (collassabile, solo payload V2) --}}
-    <details style="margin-bottom: 18px;">
-        <summary style="cursor: pointer; font-size: 16px; font-weight: 700; padding: 10px 0; user-select: none; list-style: none;">
-            &#9654; Andamento giornaliero (ultimi 30 giorni)
-        </summary>
-        @if(! empty($payload['daily']))
-            <div class="table-wrap" style="margin-top: 10px;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Data</th>
-                            <th>Ordini</th>
-                            <th>Ricavi</th>
-                            <th>Prenotazioni</th>
-                            <th>Coperti</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach(array_reverse($payload['daily']) as $day)
-                            <tr>
-                                <td>{{ \Carbon\Carbon::parse($day['date'])->format('d/m/Y') }}</td>
-                                <td>{{ $day['orders'] ?? 0 }}</td>
-                                <td>{{ !empty($day['revenue']) ? '€ ' . number_format($day['revenue'], 2) : '-' }}</td>
-                                <td>{{ $day['reservations'] ?? 0 }}</td>
-                                <td>{{ $day['covers'] ?? 0 }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @else
-            <div class="muted" style="margin-top: 10px; font-size: 13px; padding: 10px 0;">
-                Dati giornalieri disponibili dopo aggiornamento dashboard a api_version=2.
+        @if(($monthlyTrend['source'] ?? null) === 'daily')
+            <div class="panel muted" style="font-size: 12px; margin-bottom: 12px; padding: 8px 12px;">
+                Vista mensile costruita dai dati disponibili nel payload corrente.
             </div>
         @endif
-    </details>
+
+        <div class="table-wrap" style="margin-bottom: 18px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Mese</th>
+                        @if($usesOrders)
+                            <th>Ordini</th>
+                            <th>Δ ordini</th>
+                            <th>Ricavi</th>
+                            <th>Δ ricavi</th>
+                        @endif
+                        @if($usesReservations)
+                            <th>Prenotazioni</th>
+                            <th>Δ prenotazioni</th>
+                            <th>Coperti</th>
+                            <th>Δ coperti</th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(array_reverse($monthlyRows) as $row)
+                        <tr>
+                            <td>
+                                <strong>{{ ucfirst($row['label']) }}</strong>
+                            </td>
+                            @if($usesOrders)
+                                @php
+                                    $ordersBadge = $deltaBadge($row['changes']['orders'] ?? []);
+                                    $revenueBadge = $deltaBadge($row['changes']['revenue'] ?? []);
+                                @endphp
+                                <td>{{ number_format($row['orders'] ?? 0) }}</td>
+                                <td>
+                                    <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $ordersBadge['style'] }}">
+                                        {{ $ordersBadge['label'] }}
+                                    </span>
+                                </td>
+                                <td>{{ $row['revenue'] !== null ? '€ ' . number_format($row['revenue'], 2) : '-' }}</td>
+                                <td>
+                                    @if($row['revenue'] !== null)
+                                        <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $revenueBadge['style'] }}">
+                                            {{ $revenueBadge['label'] }}
+                                        </span>
+                                    @else
+                                        <span class="muted">-</span>
+                                    @endif
+                                </td>
+                            @endif
+                            @if($usesReservations)
+                                @php
+                                    $reservationsBadge = $deltaBadge($row['changes']['reservations'] ?? []);
+                                    $coversBadge = $deltaBadge($row['changes']['covers'] ?? []);
+                                @endphp
+                                <td>{{ number_format($row['reservations'] ?? 0) }}</td>
+                                <td>
+                                    <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $reservationsBadge['style'] }}">
+                                        {{ $reservationsBadge['label'] }}
+                                    </span>
+                                </td>
+                                <td>{{ number_format($row['covers'] ?? 0) }}</td>
+                                <td>
+                                    <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $coversBadge['style'] }}">
+                                        {{ $coversBadge['label'] }}
+                                    </span>
+                                </td>
+                            @endif
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @elseif($hasBusiness)
+        <div class="panel muted" style="margin-bottom: 18px; font-size: 13px;">
+            Dati mensili disponibili dopo uno snapshot con andamento mensile.
+        </div>
+    @endif
 
     {{-- Sezione 5: Info sito --}}
     <h2>Info sito</h2>
@@ -454,7 +531,7 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-@if($hasPeriods)
+@if($hasPeriods && $hasBusiness)
 <script>
 (function () {
     const periods    = @json($payload['periods']);
@@ -467,6 +544,10 @@
     const elAverage  = document.getElementById('periodAverage');
     const elRes      = document.getElementById('periodReservations');
     const elCovers   = document.getElementById('periodCovers');
+
+    if (!select || !elFrom || !elTo) {
+        return;
+    }
 
     function fmtN(n) {
         if (n === null || n === undefined) return 'N/D';
@@ -482,11 +563,11 @@
         if (!p) return;
         elFrom.textContent         = p.from  || '-';
         elTo.textContent           = p.to    || '-';
-        elOrders.textContent       = fmtN(p.orders_total);
-        elRevenue.textContent      = fmtEur(p.orders_revenue);
-        elAverage.textContent      = fmtEur(p.orders_average);
-        elRes.textContent          = fmtN(p.reservations_total);
-        elCovers.textContent       = fmtN(p.reservations_covers);
+        if (elOrders) elOrders.textContent   = fmtN(p.orders_total);
+        if (elRevenue) elRevenue.textContent = fmtEur(p.orders_revenue);
+        if (elAverage) elAverage.textContent = fmtEur(p.orders_average);
+        if (elRes) elRes.textContent         = fmtN(p.reservations_total);
+        if (elCovers) elCovers.textContent   = fmtN(p.reservations_covers);
     }
 
     select.addEventListener('change', function () { update(this.value); });
@@ -495,67 +576,76 @@
 </script>
 @endif
 
-@if($hasChartData)
+@if($hasBusiness && $hasMonthlyTrend)
 <script>
 (function () {
-    const daily  = @json($daily);
-    const labels = daily.map(d => d.date);
-    const def    = { tension: 0.35, pointRadius: 2, pointHoverRadius: 5, fill: true };
+    const rows = @json($monthlyRows);
+    const labels = rows.map(row => row.label.charAt(0).toUpperCase() + row.label.slice(1));
+    const datasets = [];
 
-    new Chart(document.getElementById('chartOrders'), {
+    @if($usesOrders)
+        datasets.push({
+            type: 'bar',
+            label: 'Ordini',
+            data: rows.map(row => row.orders ?? 0),
+            backgroundColor: 'rgba(21,94,239,0.72)',
+            yAxisID: 'count',
+        });
+        datasets.push({
+            type: 'line',
+            label: 'Ricavi (€)',
+            data: rows.map(row => row.revenue ?? 0),
+            borderColor: '#039855',
+            backgroundColor: 'rgba(3,152,85,0.12)',
+            tension: 0.35,
+            pointRadius: 3,
+            yAxisID: 'money',
+        });
+    @endif
+
+    @if($usesReservations)
+        datasets.push({
+            type: 'bar',
+            label: 'Prenotazioni',
+            data: rows.map(row => row.reservations ?? 0),
+            backgroundColor: 'rgba(122,90,248,0.68)',
+            yAxisID: 'count',
+        });
+        datasets.push({
+            type: 'line',
+            label: 'Coperti',
+            data: rows.map(row => row.covers ?? 0),
+            borderColor: '#f04438',
+            backgroundColor: 'rgba(240,68,56,0.1)',
+            tension: 0.35,
+            pointRadius: 3,
+            yAxisID: 'count',
+        });
+    @endif
+
+    new Chart(document.getElementById('chartMonthly'), {
         type: 'line',
         data: {
             labels,
-            datasets: [{
-                ...def,
-                label: 'Ordini',
-                data: daily.map(d => d.orders ?? 0),
-                borderColor: '#155eef',
-                backgroundColor: 'rgba(21,94,239,0.08)',
-            }]
+            datasets
         },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
-    });
-
-    new Chart(document.getElementById('chartRevenue'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [{
-                ...def,
-                label: 'Ricavi (€)',
-                data: daily.map(d => d.revenue ?? 0),
-                borderColor: '#039855',
-                backgroundColor: 'rgba(3,152,85,0.08)',
-            }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-    });
-
-    new Chart(document.getElementById('chartReservations'), {
-        type: 'line',
-        data: {
-            labels,
-            datasets: [
-                {
-                    ...def,
-                    fill: false,
-                    label: 'Prenotazioni',
-                    data: daily.map(d => d.reservations ?? 0),
-                    borderColor: '#7a5af8',
-                    backgroundColor: 'rgba(122,90,248,0.08)',
+        options: {
+            responsive: true,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { position: 'top' } },
+            scales: {
+                count: { beginAtZero: true, ticks: { precision: 0 }, position: 'left' },
+                money: {
+                    beginAtZero: true,
+                    position: 'right',
+                    display: @json($usesOrders),
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        callback: value => '€ ' + new Intl.NumberFormat('it-IT').format(value),
+                    },
                 },
-                {
-                    ...def,
-                    fill: false,
-                    label: 'Coperti',
-                    data: daily.map(d => d.covers ?? 0),
-                    borderColor: '#f04438',
-                    backgroundColor: 'rgba(240,68,56,0.08)',
-                }
-            ]
-        },
-        options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+            },
+        }
     });
 })();
 </script>

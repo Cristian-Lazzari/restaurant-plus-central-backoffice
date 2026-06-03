@@ -12,6 +12,7 @@ Route::post('/logout', [PrivateAuthController::class, 'logout'])->name('logout')
 
 Route::middleware('backoffice.auth')->group(function () {
     Route::get('/', [SiteController::class, 'index'])->name('dashboard');
+    Route::post('sites/reorder', [SiteController::class, 'reorder'])->name('sites.reorder');
     Route::resource('sites', SiteController::class)->except(['index', 'destroy']);
     Route::post('sites/{site}/toggle', [SiteController::class, 'toggle'])->name('sites.toggle');
     Route::post('sites/{site}/sync', [SiteSyncController::class, 'sync'])->name('sites.sync');

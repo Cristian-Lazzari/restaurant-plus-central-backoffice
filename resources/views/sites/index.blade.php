@@ -167,22 +167,34 @@
     @endif
 
     {{-- Section D: Tabella siti --}}
-    <h2>Siti</h2>
+    <div class="actions" style="justify-content: space-between; margin-top: 28px; margin-bottom: 12px;">
+        <h2 style="margin: 0;">Siti</h2>
+        @if($sites->count() > 1)
+            <form id="siteOrderForm" method="POST" action="{{ route('sites.reorder') }}">
+                @csrf
+                <button id="saveSiteOrder" class="btn" type="submit" disabled>Salva ordine</button>
+            </form>
+        @endif
+    </div>
+    <div class="panel muted" style="font-size: 13px; margin-bottom: 12px; padding: 10px 14px;">
+        Ultimo sync registrato:
+        <strong style="color: var(--ink);">{{ $lastGlobalSyncAt ? $lastGlobalSyncAt->format('d/m/Y H:i') : 'Mai' }}</strong>
+    </div>
     <div class="table-wrap" style="margin-bottom: 16px;">
         <table>
             <thead>
                 <tr>
+                    <th style="width: 88px;">Ordine</th>
                     <th>Sito</th>
                     <th>Ordini<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
                     <th>Ricavi<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
                     <th>Prenotazioni<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
                     <th>Coperti<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
-                    <th>Ultima sync</th>
                     <th>Stato</th>
                     <th>Azioni</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="sitesTableBody">
                 @forelse($sites as $site)
                     @php
                         $snap = $site->latestSnapshot;
@@ -209,7 +221,15 @@
                         $avgRes = $metric['reservations_monthly_avg'] ?? null;
                         $avgCov = $metric['covers_monthly_avg'] ?? null;
                     @endphp
-                    <tr>
+                    <tr data-site-row data-site-id="{{ $site->id }}" draggable="{{ $sites->count() > 1 ? 'true' : 'false' }}">
+                        {{-- Ordine --}}
+                        <td>
+                            <div class="actions" style="gap: 4px; flex-wrap: nowrap;">
+                                <button class="btn site-order-btn" type="button" data-move="up" title="Sposta su" aria-label="Sposta {{ $site->name }} su" style="padding: 5px 8px;" @disabled($sites->count() <= 1)>↑</button>
+                                <button class="btn site-order-btn" type="button" data-move="down" title="Sposta giu" aria-label="Sposta {{ $site->name }} giu" style="padding: 5px 8px;" @disabled($sites->count() <= 1)>↓</button>
+                            </div>
+                        </td>
+
                         {{-- Sito --}}
                         <td>
                             <a href="{{ route('sites.show', $site) }}"><strong>{{ $site->name }}</strong></a>
@@ -282,15 +302,6 @@
                             @endif
                         </td>
 
-                        {{-- Ultima sync --}}
-                        <td>
-                            @if($site->last_success_at)
-                                {{ $site->last_success_at->format('d/m/Y H:i') }}
-                            @else
-                                <span class="muted">Mai</span>
-                            @endif
-                        </td>
-
                         {{-- Stato --}}
                         <td>
                             <span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;color:{{ $sc }};background:{{ $sb }};">
@@ -328,6 +339,111 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@if($sites->count() > 1)
+<script>
+(function () {
+    const tbody = document.getElementById('sitesTableBody');
+    const form = document.getElementById('siteOrderForm');
+    const saveButton = document.getElementById('saveSiteOrder');
+    let draggedRow = null;
+
+    if (!tbody || !form || !saveButton) {
+        return;
+    }
+
+    function rows() {
+        return Array.from(tbody.querySelectorAll('tr[data-site-id]'));
+    }
+
+    function updateHiddenInputs() {
+        form.querySelectorAll('input[name="site_ids[]"]').forEach(input => input.remove());
+        rows().forEach(row => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'site_ids[]';
+            input.value = row.dataset.siteId;
+            form.appendChild(input);
+        });
+    }
+
+    function updateButtonStates() {
+        const allRows = rows();
+        allRows.forEach((row, index) => {
+            const up = row.querySelector('[data-move="up"]');
+            const down = row.querySelector('[data-move="down"]');
+            if (up) up.disabled = index === 0;
+            if (down) down.disabled = index === allRows.length - 1;
+        });
+    }
+
+    function markChanged() {
+        updateHiddenInputs();
+        updateButtonStates();
+        saveButton.disabled = false;
+    }
+
+    tbody.addEventListener('click', function (event) {
+        const button = event.target.closest('[data-move]');
+        if (!button) {
+            return;
+        }
+
+        const row = button.closest('tr[data-site-id]');
+        if (!row) {
+            return;
+        }
+
+        if (button.dataset.move === 'up' && row.previousElementSibling) {
+            tbody.insertBefore(row, row.previousElementSibling);
+            markChanged();
+        }
+
+        if (button.dataset.move === 'down' && row.nextElementSibling) {
+            tbody.insertBefore(row.nextElementSibling, row);
+            markChanged();
+        }
+    });
+
+    tbody.addEventListener('dragstart', function (event) {
+        draggedRow = event.target.closest('tr[data-site-id]');
+        if (!draggedRow) {
+            return;
+        }
+
+        draggedRow.style.opacity = '0.55';
+        event.dataTransfer.effectAllowed = 'move';
+    });
+
+    tbody.addEventListener('dragend', function () {
+        if (draggedRow) {
+            draggedRow.style.opacity = '';
+        }
+        draggedRow = null;
+    });
+
+    tbody.addEventListener('dragover', function (event) {
+        if (!draggedRow) {
+            return;
+        }
+
+        event.preventDefault();
+        const target = event.target.closest('tr[data-site-id]');
+        if (!target || target === draggedRow) {
+            return;
+        }
+
+        const box = target.getBoundingClientRect();
+        const after = event.clientY > box.top + box.height / 2;
+        tbody.insertBefore(draggedRow, after ? target.nextElementSibling : target);
+        markChanged();
+    });
+
+    form.addEventListener('submit', updateHiddenInputs);
+    updateHiddenInputs();
+    updateButtonStates();
+})();
+</script>
+@endif
 @if($chartSites->isNotEmpty() && $hasBarData)
 <script>
 (function () {
