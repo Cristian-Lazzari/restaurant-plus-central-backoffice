@@ -29,7 +29,12 @@
                 </div>
                 <div class="metric">
                     <span class="muted">Media mensile ordini</span>
-                    <strong>{{ number_format($kpis['orders_monthly_avg']) }}</strong>
+                    @if($kpis['orders_monthly_avg'] !== null)
+                        <strong>{{ number_format($kpis['orders_monthly_avg']) }}</strong>
+                    @else
+                        <strong class="muted" style="font-size:14px;">—</strong>
+                        <div class="muted" style="font-size:11px;margin-top:2px;">Sync per aggiornare</div>
+                    @endif
                 </div>
                 <div class="metric">
                     <span class="muted">Ricavi totali</span>
@@ -37,7 +42,12 @@
                 </div>
                 <div class="metric">
                     <span class="muted">Media mensile ricavi</span>
-                    <strong>€ {{ number_format($kpis['revenue_monthly_avg'], 2) }}</strong>
+                    @if($kpis['revenue_monthly_avg'] !== null)
+                        <strong>€ {{ number_format($kpis['revenue_monthly_avg'], 2) }}</strong>
+                    @else
+                        <strong class="muted" style="font-size:14px;">—</strong>
+                        <div class="muted" style="font-size:11px;margin-top:2px;">Sync per aggiornare</div>
+                    @endif
                 </div>
             </div>
         @else
@@ -55,7 +65,12 @@
                 </div>
                 <div class="metric">
                     <span class="muted">Media mensile prenotazioni</span>
-                    <strong>{{ number_format($kpis['reservations_monthly_avg']) }}</strong>
+                    @if($kpis['reservations_monthly_avg'] !== null)
+                        <strong>{{ number_format($kpis['reservations_monthly_avg']) }}</strong>
+                    @else
+                        <strong class="muted" style="font-size:14px;">—</strong>
+                        <div class="muted" style="font-size:11px;margin-top:2px;">Sync per aggiornare</div>
+                    @endif
                 </div>
                 <div class="metric">
                     <span class="muted">Coperti totali</span>
@@ -63,7 +78,12 @@
                 </div>
                 <div class="metric">
                     <span class="muted">Media mensile coperti</span>
-                    <strong>{{ number_format($kpis['covers_monthly_avg']) }}</strong>
+                    @if($kpis['covers_monthly_avg'] !== null)
+                        <strong>{{ number_format($kpis['covers_monthly_avg']) }}</strong>
+                    @else
+                        <strong class="muted" style="font-size:14px;">—</strong>
+                        <div class="muted" style="font-size:11px;margin-top:2px;">Sync per aggiornare</div>
+                    @endif
                 </div>
             </div>
         @else
@@ -178,33 +198,16 @@
                             $sc = '#027a48'; $sb = '#ecfdf3'; $st = 'OK';
                         }
 
-                        // All-time per-sito dal payload
-                        $atBlock = is_array($snap?->payload) ? ($snap->payload['periods']['all_time'] ?? null) : null;
-                        $siteOrders = (int)   ($atBlock['orders_total']       ?? 0);
-                        $siteRev    = (float) ($atBlock['orders_revenue']      ?? 0);
-                        $siteRes    = (int)   ($atBlock['reservations_total']  ?? 0);
-                        $siteCov    = (int)   ($atBlock['reservations_covers'] ?? 0);
-
-                        // Mesi con attività reale dal payload (countActiveMonths lato dashboard).
-                        // Fallback: mesi di calendario nel periodo snapshot, cap 5 anni.
-                        $ordActiveM = isset($atBlock['orders_active_months']) && $atBlock['orders_active_months'] > 0
-                            ? (int) $atBlock['orders_active_months'] : null;
-                        $resActiveM = isset($atBlock['reservations_active_months']) && $atBlock['reservations_active_months'] > 0
-                            ? (int) $atBlock['reservations_active_months'] : null;
-
-                        $calMonths = 1;
-                        if ($snap && $snap->period_from && $snap->period_to) {
-                            $cap = $snap->period_to->copy()->subYears(5);
-                            $pfr = $snap->period_from->lt($cap) ? $cap : $snap->period_from;
-                            $calMonths = max(1, (int) ceil($pfr->diffInMonths($snap->period_to)));
-                        }
-                        $ordM = $ordActiveM ?? $calMonths;
-                        $resM = $resActiveM ?? $calMonths;
-
-                        $avgOrd = $siteOrders > 0 ? round($siteOrders / $ordM) : null;
-                        $avgRev = $siteRev    > 0 ? round($siteRev    / $ordM, 2) : null;
-                        $avgRes = $siteRes    > 0 ? round($siteRes    / $resM) : null;
-                        $avgCov = $siteCov    > 0 ? round($siteCov    / $resM) : null;
+                        $metric = $siteMetrics[$site->id] ?? [];
+                        $hasAllTime = (bool) ($metric['has_all_time'] ?? false);
+                        $siteOrders = (int) ($metric['orders_total'] ?? 0);
+                        $siteRev = $metric['orders_revenue'] ?? null;
+                        $siteRes = (int) ($metric['reservations_total'] ?? 0);
+                        $siteCov = (int) ($metric['reservations_covers'] ?? 0);
+                        $avgOrd = $metric['orders_monthly_avg'] ?? null;
+                        $avgRev = $metric['revenue_monthly_avg'] ?? null;
+                        $avgRes = $metric['reservations_monthly_avg'] ?? null;
+                        $avgCov = $metric['covers_monthly_avg'] ?? null;
                     @endphp
                     <tr>
                         {{-- Sito --}}
@@ -219,8 +222,12 @@
                         <td>
                             @if($siteOrders > 0)
                                 <strong>{{ number_format($siteOrders) }}</strong>
-                                <div class="muted" style="font-size:12px;">~{{ number_format($avgOrd) }}/mese</div>
-                            @elseif($atBlock)
+                                @if($avgOrd !== null)
+                                    <div class="muted" style="font-size:12px;">~{{ number_format($avgOrd) }}/mese</div>
+                                @else
+                                    <div class="muted" style="font-size:11px;">Sync per aggiornare media</div>
+                                @endif
+                            @elseif($hasAllTime)
                                 <span class="muted" style="font-size:12px;">Non usa ordini</span>
                             @else
                                 <span class="muted">-</span>
@@ -229,10 +236,14 @@
 
                         {{-- Ricavi --}}
                         <td>
-                            @if($siteRev > 0)
+                            @if($siteRev !== null && $siteRev > 0)
                                 <strong>€ {{ number_format($siteRev, 2) }}</strong>
-                                <div class="muted" style="font-size:12px;">€ {{ number_format($avgRev, 2) }}/mese</div>
-                            @elseif($atBlock)
+                                @if($avgRev !== null)
+                                    <div class="muted" style="font-size:12px;">€ {{ number_format($avgRev, 2) }}/mese</div>
+                                @else
+                                    <div class="muted" style="font-size:11px;">Sync per aggiornare media</div>
+                                @endif
+                            @elseif($hasAllTime)
                                 <span class="muted" style="font-size:12px;">—</span>
                             @else
                                 <span class="muted">-</span>
@@ -243,8 +254,12 @@
                         <td>
                             @if($siteRes > 0)
                                 <strong>{{ number_format($siteRes) }}</strong>
-                                <div class="muted" style="font-size:12px;">~{{ number_format($avgRes) }}/mese</div>
-                            @elseif($atBlock)
+                                @if($avgRes !== null)
+                                    <div class="muted" style="font-size:12px;">~{{ number_format($avgRes) }}/mese</div>
+                                @else
+                                    <div class="muted" style="font-size:11px;">Sync per aggiornare media</div>
+                                @endif
+                            @elseif($hasAllTime)
                                 <span class="muted" style="font-size:12px;">Non usa prenotazioni</span>
                             @else
                                 <span class="muted">-</span>
@@ -255,8 +270,12 @@
                         <td>
                             @if($siteCov > 0)
                                 <strong>{{ number_format($siteCov) }}</strong>
-                                <div class="muted" style="font-size:12px;">~{{ number_format($avgCov) }}/mese</div>
-                            @elseif($atBlock)
+                                @if($avgCov !== null)
+                                    <div class="muted" style="font-size:12px;">~{{ number_format($avgCov) }}/mese</div>
+                                @else
+                                    <div class="muted" style="font-size:11px;">Sync per aggiornare media</div>
+                                @endif
+                            @elseif($hasAllTime)
                                 <span class="muted" style="font-size:12px;">—</span>
                             @else
                                 <span class="muted">-</span>

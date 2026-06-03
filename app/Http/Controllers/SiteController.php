@@ -3,37 +3,40 @@
 namespace App\Http\Controllers;
 
 use App\Models\Site;
+use App\Services\SiteMonthlyMetricsService;
 use Illuminate\Http\Request;
 
 class SiteController extends Controller
 {
-    public function index()
+    public function index(SiteMonthlyMetricsService $monthlyMetrics)
     {
         $sites = Site::with(['latestSnapshot', 'latestError'])
             ->orderBy('name')
             ->get();
 
+        $siteMetrics = [];
+
         // ── KPI globali — iterazione sulla collection già caricata, zero query aggiuntive ──
-        $activeCount      = 0;
+        $activeCount = 0;
         $sitesWithFailures = 0;
 
         // All-time aggregati (da payload.periods.all_time, disponibili solo con V2)
-        $allTimeOrders       = 0;
-        $allTimeRevenue      = 0.0;
+        $allTimeOrders = 0;
+        $allTimeRevenue = 0.0;
         $allTimeReservations = 0;
-        $allTimeCovers       = 0;
+        $allTimeCovers = 0;
 
         // Medie mensili globali = somma delle medie mensili per sito
-        $monthlyAvgOrders       = 0.0;
-        $monthlyAvgRevenue      = 0.0;
+        $monthlyAvgOrders = 0.0;
+        $monthlyAvgRevenue = 0.0;
         $monthlyAvgReservations = 0.0;
-        $monthlyAvgCovers       = 0.0;
+        $monthlyAvgCovers = 0.0;
 
         // Per il grafico e i dati "oggi / 7gg"
-        $ordersTodayTotal        = 0;
-        $reservationsTodayTotal  = 0;
-        $ordersLast7Total        = 0;
-        $reservationsLast7Total  = 0;
+        $ordersTodayTotal = 0;
+        $reservationsTodayTotal = 0;
+        $ordersLast7Total = 0;
+        $reservationsLast7Total = 0;
 
         foreach ($sites as $site) {
             if ($site->active) {
@@ -44,83 +47,63 @@ class SiteController extends Controller
             }
 
             $snap = $site->latestSnapshot;
+            $metrics = $monthlyMetrics->forSnapshot($snap);
+            $siteMetrics[$site->id] = $metrics;
+
             if (! $snap) {
                 continue;
             }
 
-            // Legge all_time dal payload V2 se disponibile
-            $allTimeBlock = is_array($snap->payload)
-                ? ($snap->payload['periods']['all_time'] ?? null)
-                : null;
+            if ($metrics['has_all_time']) {
+                $allTimeOrders += $metrics['orders_total'];
+                $allTimeRevenue += $metrics['orders_revenue'] ?? 0.0;
+                $allTimeReservations += $metrics['reservations_total'];
+                $allTimeCovers += $metrics['reservations_covers'];
 
-            if ($allTimeBlock) {
-                $siteOrders = (int)   ($allTimeBlock['orders_total']        ?? 0);
-                $siteRev    = (float) ($allTimeBlock['orders_revenue']       ?? 0);
-                $siteRes    = (int)   ($allTimeBlock['reservations_total']   ?? 0);
-                $siteCov    = (int)   ($allTimeBlock['reservations_covers']  ?? 0);
-
-                $allTimeOrders       += $siteOrders;
-                $allTimeRevenue      += $siteRev;
-                $allTimeReservations += $siteRes;
-                $allTimeCovers       += $siteCov;
-
-                // Mesi con attività reale forniti dal payload V2 (countActiveMonths).
-                // Se assenti (snapshot V1 o vecchio V2), usa il periodo del snapshot
-                // come fallback con cap a 5 anni per evitare distorsioni.
-                $ordersActiveMonths = isset($allTimeBlock['orders_active_months']) && $allTimeBlock['orders_active_months'] > 0
-                    ? (int) $allTimeBlock['orders_active_months']
-                    : null;
-
-                $resActiveMonths = isset($allTimeBlock['reservations_active_months']) && $allTimeBlock['reservations_active_months'] > 0
-                    ? (int) $allTimeBlock['reservations_active_months']
-                    : null;
-
-                // Fallback: mesi di calendario nel periodo snapshot (cap 5 anni)
-                $calendarMonths = 1;
-                if ($snap->period_from && $snap->period_to) {
-                    $cap  = $snap->period_to->copy()->subYears(5);
-                    $pfr  = $snap->period_from->lt($cap) ? $cap : $snap->period_from;
-                    $calendarMonths = max(1, (int) ceil($pfr->diffInMonths($snap->period_to)));
+                if ($metrics['orders_monthly_avg'] !== null) {
+                    $monthlyAvgOrders += $metrics['orders_monthly_avg'];
                 }
-
-                $ordM = $ordersActiveMonths ?? $calendarMonths;
-                $resM = $resActiveMonths    ?? $calendarMonths;
-
-                $monthlyAvgOrders       += $ordM > 0 ? round($siteOrders / $ordM, 1) : 0;
-                $monthlyAvgRevenue      += $ordM > 0 ? round($siteRev    / $ordM, 2) : 0;
-                $monthlyAvgReservations += $resM > 0 ? round($siteRes    / $resM, 1) : 0;
-                $monthlyAvgCovers       += $resM > 0 ? round($siteCov    / $resM, 1) : 0;
+                if ($metrics['revenue_monthly_avg'] !== null) {
+                    $monthlyAvgRevenue += $metrics['revenue_monthly_avg'];
+                }
+                if ($metrics['reservations_monthly_avg'] !== null) {
+                    $monthlyAvgReservations += $metrics['reservations_monthly_avg'];
+                }
+                if ($metrics['covers_monthly_avg'] !== null) {
+                    $monthlyAvgCovers += $metrics['covers_monthly_avg'];
+                }
             }
 
-            $ordersTodayTotal       += (int) ($snap->orders_today             ?? 0);
-            $reservationsTodayTotal += (int) ($snap->reservations_today       ?? 0);
-            $ordersLast7Total       += (int) ($snap->orders_last_7_days       ?? 0);
+            $ordersTodayTotal += (int) ($snap->orders_today ?? 0);
+            $reservationsTodayTotal += (int) ($snap->reservations_today ?? 0);
+            $ordersLast7Total += (int) ($snap->orders_last_7_days ?? 0);
             $reservationsLast7Total += (int) ($snap->reservations_last_7_days ?? 0);
         }
 
         $kpis = [
-            'active_count'        => $activeCount,
+            'active_count' => $activeCount,
             'sites_with_failures' => $sitesWithFailures,
             // All-time
-            'orders_all_time'       => $allTimeOrders,
-            'revenue_all_time'      => $allTimeRevenue,
+            'orders_all_time' => $allTimeOrders,
+            'revenue_all_time' => $allTimeRevenue,
             'reservations_all_time' => $allTimeReservations,
-            'covers_all_time'       => $allTimeCovers,
+            'covers_all_time' => $allTimeCovers,
             // Medie mensili (somma delle medie per sito)
-            'orders_monthly_avg'       => round($monthlyAvgOrders),
-            'revenue_monthly_avg'      => round($monthlyAvgRevenue, 2),
-            'reservations_monthly_avg' => round($monthlyAvgReservations),
-            'covers_monthly_avg'       => round($monthlyAvgCovers),
+            // null = active_months non ancora nel payload → serve nuova sync
+            'orders_monthly_avg' => $monthlyAvgOrders > 0 ? round($monthlyAvgOrders) : null,
+            'revenue_monthly_avg' => $monthlyAvgRevenue > 0 ? round($monthlyAvgRevenue, 2) : null,
+            'reservations_monthly_avg' => $monthlyAvgReservations > 0 ? round($monthlyAvgReservations) : null,
+            'covers_monthly_avg' => $monthlyAvgCovers > 0 ? round($monthlyAvgCovers) : null,
             // Oggi / 7gg per grafico
-            'orders_today'          => $ordersTodayTotal,
-            'reservations_today'    => $reservationsTodayTotal,
-            'orders_last_7'         => $ordersLast7Total,
-            'reservations_last_7'   => $reservationsLast7Total,
+            'orders_today' => $ordersTodayTotal,
+            'reservations_today' => $reservationsTodayTotal,
+            'orders_last_7' => $ordersLast7Total,
+            'reservations_last_7' => $reservationsLast7Total,
             // Flag: nessun dato ancora (snapshot V2 non ancora arrivato)
             'has_v2_data' => $allTimeOrders > 0 || $allTimeReservations > 0,
             // Flag servizi non utilizzati (globalmente)
-            'uses_orders'        => $allTimeOrders > 0,
-            'uses_reservations'  => $allTimeReservations > 0,
+            'uses_orders' => $allTimeOrders > 0,
+            'uses_reservations' => $allTimeReservations > 0,
         ];
 
         // ── Inactivity detection ──────────────────────────────────────────────
@@ -134,10 +117,11 @@ class SiteController extends Controller
             // No snapshot at all.
             if (! $snap) {
                 $inactiveSites[] = [
-                    'site'          => $site,
-                    'reason'        => 'no_snapshot',
+                    'site' => $site,
+                    'reason' => 'no_snapshot',
                     'last_activity' => null,
                 ];
+
                 continue;
             }
 
@@ -147,27 +131,29 @@ class SiteController extends Controller
             if ($usageMenu === null) {
                 if (($snap->api_version ?? '1') !== '2') {
                     $inactiveSites[] = [
-                        'site'          => $site,
-                        'reason'        => 'no_v2',
+                        'site' => $site,
+                        'reason' => 'no_v2',
                         'last_activity' => null,
                     ];
                 }
+
                 continue;
             }
 
             // Find most recent menu date.
             $rawDates = array_filter([
-                $usageMenu['last_product_updated_at']    ?? null,
-                $usageMenu['last_category_updated_at']   ?? null,
+                $usageMenu['last_product_updated_at'] ?? null,
+                $usageMenu['last_category_updated_at'] ?? null,
                 $usageMenu['last_ingredient_updated_at'] ?? null,
             ]);
 
             if (empty($rawDates)) {
                 $inactiveSites[] = [
-                    'site'          => $site,
-                    'reason'        => 'no_menu_activity',
+                    'site' => $site,
+                    'reason' => 'no_menu_activity',
                     'last_activity' => null,
                 ];
+
                 continue;
             }
 
@@ -176,8 +162,8 @@ class SiteController extends Controller
             try {
                 if (\Carbon\Carbon::parse($lastActivityRaw)->lt($thirtyDaysAgo)) {
                     $inactiveSites[] = [
-                        'site'          => $site,
-                        'reason'        => 'stale_menu',
+                        'site' => $site,
+                        'reason' => 'stale_menu',
                         'last_activity' => $lastActivityRaw,
                     ];
                 }
@@ -188,15 +174,15 @@ class SiteController extends Controller
 
         // Sort: no_snapshot first, then no_v2, then no_menu_activity, then stale.
         $reasonOrder = ['no_snapshot' => 0, 'no_v2' => 1, 'no_menu_activity' => 2, 'stale_menu' => 3];
-        usort($inactiveSites, fn($a, $b) => ($reasonOrder[$a['reason']] ?? 9) <=> ($reasonOrder[$b['reason']] ?? 9));
+        usort($inactiveSites, fn ($a, $b) => ($reasonOrder[$a['reason']] ?? 9) <=> ($reasonOrder[$b['reason']] ?? 9));
         $inactiveSites = array_slice($inactiveSites, 0, 5);
 
-        return view('sites.index', compact('sites', 'kpis', 'inactiveSites'));
+        return view('sites.index', compact('sites', 'kpis', 'inactiveSites', 'siteMetrics'));
     }
 
     public function create()
     {
-        return view('sites.create', ['site' => new Site()]);
+        return view('sites.create', ['site' => new Site]);
     }
 
     public function store(Request $request)
