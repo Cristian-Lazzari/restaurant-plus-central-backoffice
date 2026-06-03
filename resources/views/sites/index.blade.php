@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+    @php
+        $canReorderSites = $canReorderSites ?? false;
+    @endphp
 
     {{-- Page header --}}
     <div class="actions" style="justify-content: space-between; margin-bottom: 24px;">
@@ -169,7 +172,7 @@
     {{-- Section D: Tabella siti --}}
     <div class="actions" style="justify-content: space-between; margin-top: 28px; margin-bottom: 12px;">
         <h2 style="margin: 0;">Siti</h2>
-        @if($sites->count() > 1)
+        @if($canReorderSites && $sites->count() > 1)
             <form id="siteOrderForm" method="POST" action="{{ route('sites.reorder') }}">
                 @csrf
                 <button id="saveSiteOrder" class="btn" type="submit" disabled>Salva ordine</button>
@@ -184,7 +187,9 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 88px;">Ordine</th>
+                    @if($canReorderSites)
+                        <th style="width: 88px;">Ordine</th>
+                    @endif
                     <th>Sito</th>
                     <th>Ordini<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
                     <th>Ricavi<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
@@ -221,14 +226,16 @@
                         $avgRes = $metric['reservations_monthly_avg'] ?? null;
                         $avgCov = $metric['covers_monthly_avg'] ?? null;
                     @endphp
-                    <tr data-site-row data-site-id="{{ $site->id }}" draggable="{{ $sites->count() > 1 ? 'true' : 'false' }}">
+                    <tr data-site-row data-site-id="{{ $site->id }}" draggable="{{ $canReorderSites && $sites->count() > 1 ? 'true' : 'false' }}">
                         {{-- Ordine --}}
-                        <td>
-                            <div class="actions" style="gap: 4px; flex-wrap: nowrap;">
-                                <button class="btn site-order-btn" type="button" data-move="up" title="Sposta su" aria-label="Sposta {{ $site->name }} su" style="padding: 5px 8px;" @disabled($sites->count() <= 1)>↑</button>
-                                <button class="btn site-order-btn" type="button" data-move="down" title="Sposta giu" aria-label="Sposta {{ $site->name }} giu" style="padding: 5px 8px;" @disabled($sites->count() <= 1)>↓</button>
-                            </div>
-                        </td>
+                        @if($canReorderSites)
+                            <td>
+                                <div class="actions" style="gap: 4px; flex-wrap: nowrap;">
+                                    <button class="btn site-order-btn" type="button" data-move="up" title="Sposta su" aria-label="Sposta {{ $site->name }} su" style="padding: 5px 8px;" @disabled($sites->count() <= 1)>↑</button>
+                                    <button class="btn site-order-btn" type="button" data-move="down" title="Sposta giu" aria-label="Sposta {{ $site->name }} giu" style="padding: 5px 8px;" @disabled($sites->count() <= 1)>↓</button>
+                                </div>
+                            </td>
+                        @endif
 
                         {{-- Sito --}}
                         <td>
@@ -339,7 +346,7 @@
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-@if($sites->count() > 1)
+@if($canReorderSites && $sites->count() > 1)
 <script>
 (function () {
     const tbody = document.getElementById('sitesTableBody');

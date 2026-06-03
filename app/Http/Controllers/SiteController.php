@@ -6,14 +6,23 @@ use App\Models\Site;
 use App\Services\SiteMonthlyMetricsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SiteController extends Controller
 {
     public function index(SiteMonthlyMetricsService $monthlyMetrics)
     {
-        $sites = Site::with(['latestSnapshot', 'latestError'])
-            ->orderByRaw('sort_order is null')
-            ->orderBy('sort_order')
+        $canReorderSites = Schema::hasColumn('sites', 'sort_order');
+
+        $sitesQuery = Site::with(['latestSnapshot', 'latestError']);
+
+        if ($canReorderSites) {
+            $sitesQuery
+                ->orderByRaw('sort_order is null')
+                ->orderBy('sort_order');
+        }
+
+        $sites = $sitesQuery
             ->orderBy('name')
             ->get();
 
@@ -189,7 +198,7 @@ class SiteController extends Controller
         usort($inactiveSites, fn ($a, $b) => ($reasonOrder[$a['reason']] ?? 9) <=> ($reasonOrder[$b['reason']] ?? 9));
         $inactiveSites = array_slice($inactiveSites, 0, 5);
 
-        return view('sites.index', compact('sites', 'kpis', 'inactiveSites', 'siteMetrics', 'lastGlobalSyncAt'));
+        return view('sites.index', compact('sites', 'kpis', 'inactiveSites', 'siteMetrics', 'lastGlobalSyncAt', 'canReorderSites'));
     }
 
     public function create()
@@ -211,7 +220,9 @@ class SiteController extends Controller
         $data['url'] = rtrim($data['url'], '/');
         $data['active'] = $request->boolean('active');
         $data['retention_days'] = $data['retention_days'] ?? 90;
-        $data['sort_order'] = ((int) (Site::max('sort_order') ?? Site::count())) + 1;
+        if (Schema::hasColumn('sites', 'sort_order')) {
+            $data['sort_order'] = ((int) (Site::max('sort_order') ?? Site::count())) + 1;
+        }
 
         Site::create($data);
 
@@ -276,6 +287,12 @@ class SiteController extends Controller
 
     public function reorder(Request $request)
     {
+        if (! Schema::hasColumn('sites', 'sort_order')) {
+            return redirect()
+                ->route('dashboard')
+                ->with('error', 'Esegui le migration per abilitare il riordino siti.');
+        }
+
         $data = $request->validate([
             'site_ids' => ['required', 'array', 'min:1'],
             'site_ids.*' => ['required', 'integer', 'distinct', 'exists:sites,id'],
