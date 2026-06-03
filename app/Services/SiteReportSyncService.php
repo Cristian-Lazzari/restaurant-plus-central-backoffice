@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ReportSnapshot;
 use App\Models\Site;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -36,13 +37,26 @@ class SiteReportSyncService
         }
 
         try {
+            $token = $site->token;
+
             $response = Http::timeout(15)
                 ->acceptJson()
-                ->withToken($site->token)
+                ->withToken($token)
                 ->get($endpoint, array_filter([
                     'from' => $from,
                     'to' => $to,
                 ], fn ($value) => $value !== null && $value !== ''));
+        } catch (DecryptException $e) {
+            $responseTimeMs = $this->responseTimeMs($startedAt);
+
+            return $this->fail($site, 'TOKEN_DECRYPT_FAILED', 'Saved site token cannot be decrypted. Check that APP_KEY did not change.', [
+                'endpoint' => $endpoint,
+                'from' => $from,
+                'to' => $to,
+                'response_time_ms' => $responseTimeMs,
+                'exception' => class_basename($e),
+                'exception_message' => $this->excerpt($e->getMessage()),
+            ], $responseTimeMs);
         } catch (ConnectionException $e) {
             $responseTimeMs = $this->responseTimeMs($startedAt);
 
@@ -95,20 +109,32 @@ class SiteReportSyncService
             ], $responseTimeMs, $httpStatusCode);
         }
 
-        $snapshot = $this->storeSnapshot($site, $payload, $httpStatusCode, $responseTimeMs);
-        $pack = Arr::get($payload, 'instance.pack');
+        try {
+            $snapshot = $this->storeSnapshot($site, $payload, $httpStatusCode, $responseTimeMs);
+            $pack = Arr::get($payload, 'instance.pack');
 
-        $siteUpdates = [
-            'last_sync_at' => now(),
-            'last_success_at' => now(),
-            'consecutive_failures' => 0,
-        ];
+            $siteUpdates = [
+                'last_sync_at' => now(),
+                'last_success_at' => now(),
+                'consecutive_failures' => 0,
+            ];
 
-        if ($pack !== null && $pack !== '' && is_numeric($pack)) {
-            $siteUpdates['pack'] = (int) $pack;
+            if ($pack !== null && $pack !== '' && is_numeric($pack)) {
+                $siteUpdates['pack'] = (int) $pack;
+            }
+
+            $site->forceFill($siteUpdates)->save();
+        } catch (Throwable $e) {
+            return $this->fail($site, 'SNAPSHOT_STORE_FAILED', 'Report response was received but could not be saved.', [
+                'endpoint' => $endpoint,
+                'from' => $from,
+                'to' => $to,
+                'status' => $httpStatusCode,
+                'response_time_ms' => $responseTimeMs,
+                'exception' => class_basename($e),
+                'exception_message' => $this->excerpt($e->getMessage()),
+            ], $responseTimeMs, $httpStatusCode);
         }
-
-        $site->forceFill($siteUpdates)->save();
 
         $this->logInfo('sync succeeded', [
             'site_id' => $site->id,

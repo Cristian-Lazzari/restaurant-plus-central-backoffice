@@ -21,17 +21,31 @@ class SiteSyncController extends Controller
         $sites   = Site::where('active', true)->orderBy('name')->get();
         $success = 0;
         $failed  = 0;
+        $failureSummaries = [];
 
         foreach ($sites as $site) {
             // Carica la relazione latestSnapshot per determineSyncPeriod().
             $site->load('latestSnapshot');
             $period = $syncService->determineSyncPeriod($site);
             $result = $syncService->sync($site, $period['from'], $period['to']);
-            $result['ok'] ? $success++ : $failed++;
+
+            if ($result['ok']) {
+                $success++;
+            } else {
+                $failed++;
+
+                if (count($failureSummaries) < 5) {
+                    $failureSummaries[] = $site->name . ': ' . $this->failureLabel($result);
+                }
+            }
         }
 
         $total   = $sites->count();
         $message = "Sync completata: {$total} siti. Riusciti: {$success}. Falliti: {$failed}.";
+
+        if ($failed > 0 && count($failureSummaries) > 0) {
+            $message .= ' Prime cause: ' . implode(' | ', $failureSummaries);
+        }
 
         return back()->with($failed > 0 ? 'error' : 'success', $message);
     }
@@ -42,5 +56,18 @@ class SiteSyncController extends Controller
             'from' => ['nullable', 'date_format:Y-m-d'],
             'to' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:from'],
         ]);
+    }
+
+    private function failureLabel(array $result): string
+    {
+        $parts = array_filter([
+            $result['code'] ?? null,
+            isset($result['http_status_code']) && $result['http_status_code'] !== null
+                ? 'HTTP ' . $result['http_status_code']
+                : null,
+            $result['message'] ?? null,
+        ]);
+
+        return implode(' - ', $parts);
     }
 }
