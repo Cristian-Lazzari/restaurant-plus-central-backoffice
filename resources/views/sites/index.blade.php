@@ -3,6 +3,12 @@
 @section('content')
     @php
         $canReorderSites = $canReorderSites ?? false;
+        $savingsBenchmark = $savingsBenchmark ?? [
+            'order_commission_percent' => 20,
+            'reservation_cover_fee' => 4,
+        ];
+        $benchmarkOrderPercent = number_format($savingsBenchmark['order_commission_percent'], 0, ',', '.');
+        $benchmarkCoverFee = number_format($savingsBenchmark['reservation_cover_fee'], 0, ',', '.');
     @endphp
 
     {{-- Page header --}}
@@ -92,6 +98,30 @@
         @else
             <div class="panel muted" style="margin-bottom: 20px; font-size: 13px; padding: 12px 16px;">
                 Nessun ristorante sta utilizzando il servizio prenotazioni.
+            </div>
+        @endif
+
+        @if(($kpis['uses_orders'] || $kpis['uses_reservations']) && ($kpis['estimated_total_savings'] ?? 0) > 0)
+            <div class="grid" style="margin-bottom: 8px;">
+                <div class="metric" style="border-color: #fedf89; background: #fffbeb;">
+                    <span class="muted">Risparmio stimato Future Plus</span>
+                    <strong>€ {{ number_format($kpis['estimated_total_savings'], 2) }}</strong>
+                </div>
+                @if($kpis['uses_orders'])
+                    <div class="metric">
+                        <span class="muted">Commissioni ordini evitate</span>
+                        <strong>€ {{ number_format($kpis['estimated_order_savings'] ?? 0, 2) }}</strong>
+                    </div>
+                @endif
+                @if($kpis['uses_reservations'])
+                    <div class="metric">
+                        <span class="muted">Commissioni prenotazioni evitate</span>
+                        <strong>€ {{ number_format($kpis['estimated_reservation_savings'] ?? 0, 2) }}</strong>
+                    </div>
+                @endif
+            </div>
+            <div class="muted" style="font-size: 12px; margin-bottom: 20px;">
+                Benchmark: Just Eat/Deliveroo/Glovo {{ $benchmarkOrderPercent }}%, TheFork € {{ $benchmarkCoverFee }}/coperto.
             </div>
         @endif
     @endif
@@ -195,6 +225,7 @@
                     <th>Ricavi<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
                     <th>Prenotazioni<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
                     <th>Coperti<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
+                    <th>Risparmio<br><span style="font-weight:400;font-size:11px;">stima</span></th>
                     <th>Stato</th>
                     <th>Azioni</th>
                 </tr>
@@ -225,6 +256,9 @@
                         $avgRev = $metric['revenue_monthly_avg'] ?? null;
                         $avgRes = $metric['reservations_monthly_avg'] ?? null;
                         $avgCov = $metric['covers_monthly_avg'] ?? null;
+                        $siteOrderSavings = $metric['estimated_order_savings'] ?? 0.0;
+                        $siteReservationSavings = $metric['estimated_reservation_savings'] ?? 0.0;
+                        $siteSavings = $metric['estimated_total_savings'] ?? 0.0;
                     @endphp
                     <tr data-site-row data-site-id="{{ $site->id }}" draggable="{{ $canReorderSites && $sites->count() > 1 ? 'true' : 'false' }}">
                         {{-- Ordine --}}
@@ -309,6 +343,25 @@
                             @endif
                         </td>
 
+                        {{-- Risparmio stimato --}}
+                        <td>
+                            @if($siteSavings > 0)
+                                <strong>€ {{ number_format($siteSavings, 2) }}</strong>
+                                <div class="muted" style="font-size:11px;">
+                                    @if($siteOrderSavings > 0)
+                                        ordini € {{ number_format($siteOrderSavings, 2) }}
+                                    @endif
+                                    @if($siteReservationSavings > 0)
+                                        {{ $siteOrderSavings > 0 ? ' / ' : '' }}pren. € {{ number_format($siteReservationSavings, 2) }}
+                                    @endif
+                                </div>
+                            @elseif($hasAllTime)
+                                <span class="muted" style="font-size:12px;">—</span>
+                            @else
+                                <span class="muted">-</span>
+                            @endif
+                        </td>
+
                         {{-- Stato --}}
                         <td>
                             <span style="display:inline-block;padding:3px 8px;border-radius:999px;font-size:12px;font-weight:600;color:{{ $sc }};background:{{ $sb }};">
@@ -329,7 +382,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="8" class="muted" style="text-align:center;padding:28px;">
+                        <td colspan="{{ $canReorderSites ? 9 : 8 }}" class="muted" style="text-align:center;padding:28px;">
                             Nessun sito configurato. <a href="{{ route('sites.create') }}">Aggiungine uno</a>.
                         </td>
                     </tr>

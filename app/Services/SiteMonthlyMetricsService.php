@@ -8,6 +8,10 @@ use Illuminate\Support\Arr;
 
 class SiteMonthlyMetricsService
 {
+    public const ORDER_MARKETPLACE_COMMISSION_RATE = 0.20;
+
+    public const RESERVATION_MARKETPLACE_COVER_FEE = 4.0;
+
     /**
      * @return array{
      *     has_all_time: bool,
@@ -20,7 +24,10 @@ class SiteMonthlyMetricsService
      *     orders_monthly_avg: float|null,
      *     revenue_monthly_avg: float|null,
      *     reservations_monthly_avg: float|null,
-     *     covers_monthly_avg: float|null
+     *     covers_monthly_avg: float|null,
+     *     estimated_order_savings: float,
+     *     estimated_reservation_savings: float,
+     *     estimated_total_savings: float
      * }
      */
     public function forSnapshot(?ReportSnapshot $snapshot): array
@@ -39,6 +46,7 @@ class SiteMonthlyMetricsService
 
         $ordersActiveMonths = $this->positiveInteger(Arr::get($allTime, 'orders_active_months'));
         $reservationsActiveMonths = $this->positiveInteger(Arr::get($allTime, 'reservations_active_months'));
+        $savings = $this->estimatedSavings($ordersRevenue, $reservationsCovers);
 
         return [
             'has_all_time' => true,
@@ -54,6 +62,26 @@ class SiteMonthlyMetricsService
                 : null,
             'reservations_monthly_avg' => $this->average($reservationsTotal, $reservationsActiveMonths, 0),
             'covers_monthly_avg' => $this->average($reservationsCovers, $reservationsActiveMonths, 0),
+            'estimated_order_savings' => $savings['order_savings'],
+            'estimated_reservation_savings' => $savings['reservation_savings'],
+            'estimated_total_savings' => $savings['total_savings'],
+        ];
+    }
+
+    /**
+     * @return array{order_savings: float, reservation_savings: float, total_savings: float}
+     */
+    public function estimatedSavings(?float $ordersRevenue, int $reservationCovers): array
+    {
+        $orderSavings = $ordersRevenue !== null
+            ? round(max(0.0, $ordersRevenue) * self::ORDER_MARKETPLACE_COMMISSION_RATE, 2)
+            : 0.0;
+        $reservationSavings = round(max(0, $reservationCovers) * self::RESERVATION_MARKETPLACE_COVER_FEE, 2);
+
+        return [
+            'order_savings' => $orderSavings,
+            'reservation_savings' => $reservationSavings,
+            'total_savings' => round($orderSavings + $reservationSavings, 2),
         ];
     }
 
@@ -67,6 +95,9 @@ class SiteMonthlyMetricsService
      *         revenue: float|null,
      *         reservations: int,
      *         covers: int,
+     *         order_savings: float,
+     *         reservation_savings: float,
+     *         savings: float,
      *         changes: array<string, array{state: string, percent: float|null}>
      *     }>
      * }
@@ -104,6 +135,9 @@ class SiteMonthlyMetricsService
      *         revenue: float|null,
      *         reservations: int,
      *         covers: int,
+     *         order_savings: float,
+     *         reservation_savings: float,
+     *         savings: float,
      *         changes: array<string, array{state: string, percent: float|null}>
      *     }>
      * }
@@ -162,6 +196,9 @@ class SiteMonthlyMetricsService
             'revenue_monthly_avg' => null,
             'reservations_monthly_avg' => null,
             'covers_monthly_avg' => null,
+            'estimated_order_savings' => 0.0,
+            'estimated_reservation_savings' => 0.0,
+            'estimated_total_savings' => 0.0,
         ];
     }
 
@@ -189,7 +226,7 @@ class SiteMonthlyMetricsService
             $row['reservations'] = (int) ($snapshot->reservations_total ?? $this->integerValue(Arr::get($payload, 'reservations.total')));
             $row['covers'] = (int) ($snapshot->reservations_covers ?? $this->integerValue(Arr::get($payload, 'reservations.total_covers')));
 
-            return [$month => $row];
+            return [$month => $this->withSavings($row)];
         }
 
         return $this->monthlyRowsFromDaily($payload);
@@ -250,7 +287,7 @@ class SiteMonthlyMetricsService
             $this->mergeMonthlyRow($rows, $row);
         }
 
-        return $rows;
+        return $this->withSavingsForRows($rows);
     }
 
     /**
@@ -280,11 +317,11 @@ class SiteMonthlyMetricsService
             $this->mergeMonthlyRow($rows, $row);
         }
 
-        return $rows;
+        return $this->withSavingsForRows($rows);
     }
 
     /**
-     * @return array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int}
+     * @return array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int, order_savings: float, reservation_savings: float, savings: float}
      */
     private function baseMonthlyRow(string $month): array
     {
@@ -295,6 +332,9 @@ class SiteMonthlyMetricsService
             'revenue' => null,
             'reservations' => 0,
             'covers' => 0,
+            'order_savings' => 0.0,
+            'reservation_savings' => 0.0,
+            'savings' => 0.0,
         ];
     }
 
@@ -319,6 +359,34 @@ class SiteMonthlyMetricsService
         if ($row['revenue'] !== null) {
             $rows[$month]['revenue'] = ($rows[$month]['revenue'] ?? 0) + $row['revenue'];
         }
+    }
+
+    /**
+     * @param array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int} $row
+     * @return array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int, order_savings: float, reservation_savings: float, savings: float}
+     */
+    private function withSavings(array $row): array
+    {
+        $savings = $this->estimatedSavings($row['revenue'], (int) $row['covers']);
+
+        $row['order_savings'] = $savings['order_savings'];
+        $row['reservation_savings'] = $savings['reservation_savings'];
+        $row['savings'] = $savings['total_savings'];
+
+        return $row;
+    }
+
+    /**
+     * @param array<string, array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int}> $rows
+     * @return array<string, array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int, order_savings: float, reservation_savings: float, savings: float}>
+     */
+    private function withSavingsForRows(array $rows): array
+    {
+        foreach ($rows as $month => $row) {
+            $rows[$month] = $this->withSavings($row);
+        }
+
+        return $rows;
     }
 
     /**
@@ -366,6 +434,9 @@ class SiteMonthlyMetricsService
      *     revenue: float|null,
      *     reservations: int,
      *     covers: int,
+     *     order_savings: float,
+     *     reservation_savings: float,
+     *     savings: float,
      *     changes: array<string, array{state: string, percent: float|null}>
      * }>
      */
@@ -379,6 +450,7 @@ class SiteMonthlyMetricsService
                 'revenue' => $this->changeDescriptor($row['revenue'], $previous['revenue'] ?? null),
                 'reservations' => $this->changeDescriptor($row['reservations'], $previous['reservations'] ?? null),
                 'covers' => $this->changeDescriptor($row['covers'], $previous['covers'] ?? null),
+                'savings' => $this->changeDescriptor($row['savings'], $previous['savings'] ?? null),
             ];
 
             $previous = $row;

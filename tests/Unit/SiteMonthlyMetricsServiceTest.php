@@ -27,6 +27,9 @@ class SiteMonthlyMetricsServiceTest extends TestCase
         $this->assertSame(300.0, $metrics['revenue_monthly_avg']);
         $this->assertSame(7.0, $metrics['reservations_monthly_avg']);
         $this->assertSame(21.0, $metrics['covers_monthly_avg']);
+        $this->assertSame(180.0, $metrics['estimated_order_savings']);
+        $this->assertSame(168.0, $metrics['estimated_reservation_savings']);
+        $this->assertSame(348.0, $metrics['estimated_total_savings']);
     }
 
     public function test_it_does_not_fall_back_to_calendar_months_when_active_months_are_missing(): void
@@ -49,6 +52,7 @@ class SiteMonthlyMetricsServiceTest extends TestCase
         $this->assertNull($metrics['revenue_monthly_avg']);
         $this->assertNull($metrics['reservations_monthly_avg']);
         $this->assertNull($metrics['covers_monthly_avg']);
+        $this->assertSame(348.0, $metrics['estimated_total_savings']);
     }
 
     public function test_it_keeps_zero_revenue_average_when_active_months_are_known(): void
@@ -65,6 +69,7 @@ class SiteMonthlyMetricsServiceTest extends TestCase
 
         $this->assertSame(2.0, $metrics['orders_monthly_avg']);
         $this->assertSame(0.0, $metrics['revenue_monthly_avg']);
+        $this->assertSame(0.0, $metrics['estimated_total_savings']);
     }
 
     public function test_it_builds_monthly_trend_from_monthly_payload(): void
@@ -96,6 +101,10 @@ class SiteMonthlyMetricsServiceTest extends TestCase
         $this->assertSame(-20.0, $trend['rows'][1]['changes']['revenue']['percent']);
         $this->assertSame('down', $trend['rows'][1]['changes']['revenue']['state']);
         $this->assertSame(-20.0, $trend['rows'][1]['changes']['reservations']['percent']);
+        $this->assertSame(100.0, $trend['rows'][0]['savings']);
+        $this->assertSame(104.0, $trend['rows'][1]['savings']);
+        $this->assertSame(4.0, $trend['rows'][1]['changes']['savings']['percent']);
+        $this->assertSame('up', $trend['rows'][1]['changes']['savings']['state']);
     }
 
     public function test_it_falls_back_to_daily_payload_grouped_by_month(): void
@@ -112,6 +121,7 @@ class SiteMonthlyMetricsServiceTest extends TestCase
         $this->assertCount(2, $trend['rows']);
         $this->assertSame(5, $trend['rows'][0]['orders']);
         $this->assertSame(100.0, $trend['rows'][0]['revenue']);
+        $this->assertSame(68.0, $trend['rows'][0]['savings']);
         $this->assertSame(10, $trend['rows'][1]['orders']);
         $this->assertSame(100.0, $trend['rows'][1]['changes']['orders']['percent']);
     }
@@ -163,8 +173,12 @@ class SiteMonthlyMetricsServiceTest extends TestCase
         $this->assertCount(3, $trend['rows']);
         $this->assertSame('2026-04', $trend['rows'][0]['month']);
         $this->assertSame('2026-06', $trend['rows'][2]['month']);
+        $this->assertSame(80.0, $trend['rows'][0]['savings']);
+        $this->assertSame(108.0, $trend['rows'][1]['savings']);
+        $this->assertSame(54.0, $trend['rows'][2]['savings']);
         $this->assertSame(50.0, $trend['rows'][1]['changes']['orders']['percent']);
         $this->assertSame(-50.0, $trend['rows'][2]['changes']['orders']['percent']);
+        $this->assertSame(-50.0, $trend['rows'][2]['changes']['savings']['percent']);
     }
 
     private function service(): SiteMonthlyMetricsService

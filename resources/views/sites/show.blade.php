@@ -8,6 +8,14 @@
         $monthlyRows = $monthlyTrend['rows'] ?? [];
         $hasMonthlyTrend = count($monthlyRows) > 0;
         $hasBusiness = $usesOrders || $usesReservations;
+        $savingsBenchmark = $savingsBenchmark ?? [
+            'order_commission_rate' => 0.20,
+            'order_commission_percent' => 20,
+            'reservation_cover_fee' => 4,
+        ];
+        $benchmarkOrderRate = $savingsBenchmark['order_commission_rate'] ?? (($savingsBenchmark['order_commission_percent'] ?? 20) / 100);
+        $benchmarkOrderPercent = number_format($savingsBenchmark['order_commission_percent'] ?? ($benchmarkOrderRate * 100), 0, ',', '.');
+        $benchmarkCoverFee = number_format($savingsBenchmark['reservation_cover_fee'] ?? 4, 0, ',', '.');
         $formatPercent = function (?float $percent): string {
             if ($percent === null) {
                 return '-';
@@ -124,6 +132,10 @@
                         <strong id="periodCovers">-</strong>
                     </div>
                 @endif
+                <div class="metric" style="border-color: #fedf89; background: #fffbeb;">
+                    <span class="muted">Risparmio stimato</span>
+                    <strong id="periodSavings">-</strong>
+                </div>
             </div>
         @else
             {{-- V1: valori statici dall'ultimo snapshot --}}
@@ -154,9 +166,25 @@
                         <strong>{{ number_format($snapshot->reservations_covers ?? 0) }}</strong>
                     </div>
                 @endif
+                @if(($businessMetrics['estimated_total_savings'] ?? 0) > 0)
+                    <div class="metric" style="border-color: #fedf89; background: #fffbeb;">
+                        <span class="muted">Risparmio stimato</span>
+                        <strong>€ {{ number_format($businessMetrics['estimated_total_savings'], 2) }}</strong>
+                        <div class="muted" style="font-size: 11px; margin-top: 2px;">
+                            ordini € {{ number_format($businessMetrics['estimated_order_savings'] ?? 0, 2) }}
+                            / pren. € {{ number_format($businessMetrics['estimated_reservation_savings'] ?? 0, 2) }}
+                        </div>
+                    </div>
+                @endif
             </div>
             <div class="panel muted" style="font-size: 13px; margin-bottom: 12px; padding: 8px 12px;">
                 Filtro periodo disponibile dopo snapshot api_version=2.
+            </div>
+        @endif
+
+        @if($hasBusiness)
+            <div class="panel muted" style="font-size: 12px; margin-bottom: 12px; padding: 8px 12px;">
+                Benchmark risparmio: Just Eat/Deliveroo/Glovo {{ $benchmarkOrderPercent }}%, TheFork € {{ $benchmarkCoverFee }}/coperto.
             </div>
         @endif
 
@@ -342,6 +370,8 @@
                             <th>Coperti</th>
                             <th>Δ coperti</th>
                         @endif
+                        <th>Risparmio stimato</th>
+                        <th>Δ risparmio</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -390,6 +420,15 @@
                                     </span>
                                 </td>
                             @endif
+                            @php
+                                $savingsBadge = $deltaBadge($row['changes']['savings'] ?? []);
+                            @endphp
+                            <td>€ {{ number_format($row['savings'] ?? 0, 2) }}</td>
+                            <td>
+                                <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $savingsBadge['style'] }}">
+                                    {{ $savingsBadge['label'] }}
+                                </span>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -536,6 +575,10 @@
 (function () {
     const periods    = @json($payload['periods']);
     const revUnit    = @json($revUnit);
+    const usesOrders = @json($usesOrders);
+    const usesReservations = @json($usesReservations);
+    const orderCommissionRate = @json($benchmarkOrderRate);
+    const reservationCoverFee = @json($savingsBenchmark['reservation_cover_fee'] ?? 4);
     const select     = document.getElementById('periodSelect');
     const elFrom     = document.getElementById('periodFrom');
     const elTo       = document.getElementById('periodTo');
@@ -544,6 +587,7 @@
     const elAverage  = document.getElementById('periodAverage');
     const elRes      = document.getElementById('periodReservations');
     const elCovers   = document.getElementById('periodCovers');
+    const elSavings  = document.getElementById('periodSavings');
 
     if (!select || !elFrom || !elTo) {
         return;
@@ -553,9 +597,35 @@
         if (n === null || n === undefined) return 'N/D';
         return new Intl.NumberFormat('it-IT').format(n);
     }
+    function fmtMoney(n) {
+        if (n === null || n === undefined) return 'N/D';
+        return '€ ' + new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+    }
     function fmtEur(n) {
         if (n === null || n === undefined || revUnit !== 'euros') return 'N/D';
-        return '€ ' + new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+        return fmtMoney(n);
+    }
+    function numeric(value) {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    }
+    function estimatedSavings(p) {
+        let total = 0;
+        let known = false;
+        const revenue = numeric(p.orders_revenue);
+        const covers = numeric(p.reservations_covers);
+
+        if (usesOrders && revUnit === 'euros' && revenue !== null) {
+            total += revenue * orderCommissionRate;
+            known = true;
+        }
+
+        if (usesReservations && covers !== null) {
+            total += covers * reservationCoverFee;
+            known = true;
+        }
+
+        return known ? total : null;
     }
 
     function update(key) {
@@ -568,6 +638,7 @@
         if (elAverage) elAverage.textContent = fmtEur(p.orders_average);
         if (elRes) elRes.textContent         = fmtN(p.reservations_total);
         if (elCovers) elCovers.textContent   = fmtN(p.reservations_covers);
+        if (elSavings) elSavings.textContent = fmtMoney(estimatedSavings(p));
     }
 
     select.addEventListener('change', function () { update(this.value); });
@@ -623,6 +694,17 @@
         });
     @endif
 
+    datasets.push({
+        type: 'line',
+        label: 'Risparmio stimato (€)',
+        data: rows.map(row => row.savings ?? 0),
+        borderColor: '#dc6803',
+        backgroundColor: 'rgba(220,104,3,0.12)',
+        tension: 0.35,
+        pointRadius: 3,
+        yAxisID: 'money',
+    });
+
     new Chart(document.getElementById('chartMonthly'), {
         type: 'line',
         data: {
@@ -638,7 +720,7 @@
                 money: {
                     beginAtZero: true,
                     position: 'right',
-                    display: @json($usesOrders),
+                    display: @json($hasBusiness),
                     grid: { drawOnChartArea: false },
                     ticks: {
                         callback: value => '€ ' + new Intl.NumberFormat('it-IT').format(value),

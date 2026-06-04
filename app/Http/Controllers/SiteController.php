@@ -46,6 +46,8 @@ class SiteController extends Controller
         $allTimeRevenue = 0.0;
         $allTimeReservations = 0;
         $allTimeCovers = 0;
+        $estimatedOrderSavings = 0.0;
+        $estimatedReservationSavings = 0.0;
 
         // Medie mensili globali = somma delle medie mensili per sito
         $monthlyAvgOrders = 0.0;
@@ -80,6 +82,8 @@ class SiteController extends Controller
                 $allTimeRevenue += $metrics['orders_revenue'] ?? 0.0;
                 $allTimeReservations += $metrics['reservations_total'];
                 $allTimeCovers += $metrics['reservations_covers'];
+                $estimatedOrderSavings += $metrics['estimated_order_savings'] ?? 0.0;
+                $estimatedReservationSavings += $metrics['estimated_reservation_savings'] ?? 0.0;
 
                 if ($metrics['orders_monthly_avg'] !== null) {
                     $monthlyAvgOrders += $metrics['orders_monthly_avg'];
@@ -109,6 +113,9 @@ class SiteController extends Controller
             'revenue_all_time' => $allTimeRevenue,
             'reservations_all_time' => $allTimeReservations,
             'covers_all_time' => $allTimeCovers,
+            'estimated_order_savings' => round($estimatedOrderSavings, 2),
+            'estimated_reservation_savings' => round($estimatedReservationSavings, 2),
+            'estimated_total_savings' => round($estimatedOrderSavings + $estimatedReservationSavings, 2),
             // Medie mensili (somma delle medie per sito)
             // null = active_months non ancora nel payload → serve nuova sync
             'orders_monthly_avg' => $monthlyAvgOrders > 0 ? round($monthlyAvgOrders) : null,
@@ -198,7 +205,9 @@ class SiteController extends Controller
         usort($inactiveSites, fn ($a, $b) => ($reasonOrder[$a['reason']] ?? 9) <=> ($reasonOrder[$b['reason']] ?? 9));
         $inactiveSites = array_slice($inactiveSites, 0, 5);
 
-        return view('sites.index', compact('sites', 'kpis', 'inactiveSites', 'siteMetrics', 'lastGlobalSyncAt', 'canReorderSites'));
+        $savingsBenchmark = $this->savingsBenchmark();
+
+        return view('sites.index', compact('sites', 'kpis', 'inactiveSites', 'siteMetrics', 'lastGlobalSyncAt', 'canReorderSites', 'savingsBenchmark'));
     }
 
     public function create()
@@ -243,8 +252,9 @@ class SiteController extends Controller
         $usesReservations = (int) ($businessMetrics['reservations_total'] ?? 0) > 0
             || (int) ($site->latestSnapshot?->reservations_total ?? 0) > 0;
         $monthlyTrend = $monthlyMetrics->monthlyTrendForSnapshots($site->reportSnapshots, $site->latestSnapshot);
+        $savingsBenchmark = $this->savingsBenchmark();
 
-        return view('sites.show', compact('site', 'businessMetrics', 'usesOrders', 'usesReservations', 'monthlyTrend'));
+        return view('sites.show', compact('site', 'businessMetrics', 'usesOrders', 'usesReservations', 'monthlyTrend', 'savingsBenchmark'));
     }
 
     public function edit(Site $site)
@@ -311,6 +321,15 @@ class SiteController extends Controller
     {
         return [
             'url.starts_with' => 'The dashboard URL must start with https://.',
+        ];
+    }
+
+    private function savingsBenchmark(): array
+    {
+        return [
+            'order_commission_rate' => SiteMonthlyMetricsService::ORDER_MARKETPLACE_COMMISSION_RATE,
+            'order_commission_percent' => SiteMonthlyMetricsService::ORDER_MARKETPLACE_COMMISSION_RATE * 100,
+            'reservation_cover_fee' => SiteMonthlyMetricsService::RESERVATION_MARKETPLACE_COVER_FEE,
         ];
     }
 }
