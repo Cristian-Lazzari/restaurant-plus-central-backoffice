@@ -72,6 +72,26 @@ class SiteMonthlyMetricsServiceTest extends TestCase
         $this->assertSame(0.0, $metrics['estimated_total_savings']);
     }
 
+    public function test_it_uses_custom_savings_benchmark(): void
+    {
+        $metrics = $this->service()
+            ->useSavingsBenchmark(0.10, 2.5)
+            ->forSnapshot($this->snapshot([
+                'periods' => [
+                    'all_time' => [
+                        'orders_total' => 20,
+                        'orders_revenue' => 1000,
+                        'reservations_total' => 4,
+                        'reservations_covers' => 10,
+                    ],
+                ],
+            ]));
+
+        $this->assertSame(100.0, $metrics['estimated_order_savings']);
+        $this->assertSame(25.0, $metrics['estimated_reservation_savings']);
+        $this->assertSame(125.0, $metrics['estimated_total_savings']);
+    }
+
     public function test_it_builds_monthly_trend_from_monthly_payload(): void
     {
         $trend = $this->service()->monthlyTrendForSnapshot($this->snapshot([

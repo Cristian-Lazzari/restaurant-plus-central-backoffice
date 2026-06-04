@@ -12,6 +12,18 @@ class SiteMonthlyMetricsService
 
     public const RESERVATION_MARKETPLACE_COVER_FEE = 4.0;
 
+    private float $orderMarketplaceCommissionRate = self::ORDER_MARKETPLACE_COMMISSION_RATE;
+
+    private float $reservationMarketplaceCoverFee = self::RESERVATION_MARKETPLACE_COVER_FEE;
+
+    public function useSavingsBenchmark(float $orderMarketplaceCommissionRate, float $reservationMarketplaceCoverFee): self
+    {
+        $this->orderMarketplaceCommissionRate = max(0.0, $orderMarketplaceCommissionRate);
+        $this->reservationMarketplaceCoverFee = max(0.0, $reservationMarketplaceCoverFee);
+
+        return $this;
+    }
+
     /**
      * @return array{
      *     has_all_time: bool,
@@ -74,9 +86,9 @@ class SiteMonthlyMetricsService
     public function estimatedSavings(?float $ordersRevenue, int $reservationCovers): array
     {
         $orderSavings = $ordersRevenue !== null
-            ? round(max(0.0, $ordersRevenue) * self::ORDER_MARKETPLACE_COMMISSION_RATE, 2)
+            ? round(max(0.0, $ordersRevenue) * $this->orderMarketplaceCommissionRate, 2)
             : 0.0;
-        $reservationSavings = round(max(0, $reservationCovers) * self::RESERVATION_MARKETPLACE_COVER_FEE, 2);
+        $reservationSavings = round(max(0, $reservationCovers) * $this->reservationMarketplaceCoverFee, 2);
 
         return [
             'order_savings' => $orderSavings,

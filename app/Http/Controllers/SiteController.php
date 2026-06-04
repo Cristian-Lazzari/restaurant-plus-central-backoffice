@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Site;
+use App\Services\BackofficeSettingsService;
 use App\Services\SiteMonthlyMetricsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,8 +11,14 @@ use Illuminate\Support\Facades\Schema;
 
 class SiteController extends Controller
 {
-    public function index(SiteMonthlyMetricsService $monthlyMetrics)
+    public function index(SiteMonthlyMetricsService $monthlyMetrics, BackofficeSettingsService $settings)
     {
+        $savingsBenchmark = $settings->savingsBenchmark();
+        $monthlyMetrics->useSavingsBenchmark(
+            $savingsBenchmark['order_commission_rate'],
+            $savingsBenchmark['reservation_cover_fee']
+        );
+
         $canReorderSites = Schema::hasColumn('sites', 'sort_order');
 
         $sitesQuery = Site::with(['latestSnapshot', 'latestError']);
@@ -205,8 +212,6 @@ class SiteController extends Controller
         usort($inactiveSites, fn ($a, $b) => ($reasonOrder[$a['reason']] ?? 9) <=> ($reasonOrder[$b['reason']] ?? 9));
         $inactiveSites = array_slice($inactiveSites, 0, 5);
 
-        $savingsBenchmark = $this->savingsBenchmark();
-
         return view('sites.index', compact('sites', 'kpis', 'inactiveSites', 'siteMetrics', 'lastGlobalSyncAt', 'canReorderSites', 'savingsBenchmark'));
     }
 
@@ -238,8 +243,14 @@ class SiteController extends Controller
         return redirect()->route('dashboard')->with('success', 'Site created.');
     }
 
-    public function show(Site $site, SiteMonthlyMetricsService $monthlyMetrics)
+    public function show(Site $site, SiteMonthlyMetricsService $monthlyMetrics, BackofficeSettingsService $settings)
     {
+        $savingsBenchmark = $settings->savingsBenchmark();
+        $monthlyMetrics->useSavingsBenchmark(
+            $savingsBenchmark['order_commission_rate'],
+            $savingsBenchmark['reservation_cover_fee']
+        );
+
         $site->load([
             'latestSnapshot',
             'reportSnapshots' => fn ($query) => $query->orderBy('period_from')->orderBy('fetched_at'),
@@ -252,7 +263,6 @@ class SiteController extends Controller
         $usesReservations = (int) ($businessMetrics['reservations_total'] ?? 0) > 0
             || (int) ($site->latestSnapshot?->reservations_total ?? 0) > 0;
         $monthlyTrend = $monthlyMetrics->monthlyTrendForSnapshots($site->reportSnapshots, $site->latestSnapshot);
-        $savingsBenchmark = $this->savingsBenchmark();
 
         return view('sites.show', compact('site', 'businessMetrics', 'usesOrders', 'usesReservations', 'monthlyTrend', 'savingsBenchmark'));
     }
@@ -324,12 +334,4 @@ class SiteController extends Controller
         ];
     }
 
-    private function savingsBenchmark(): array
-    {
-        return [
-            'order_commission_rate' => SiteMonthlyMetricsService::ORDER_MARKETPLACE_COMMISSION_RATE,
-            'order_commission_percent' => SiteMonthlyMetricsService::ORDER_MARKETPLACE_COMMISSION_RATE * 100,
-            'reservation_cover_fee' => SiteMonthlyMetricsService::RESERVATION_MARKETPLACE_COVER_FEE,
-        ];
-    }
 }

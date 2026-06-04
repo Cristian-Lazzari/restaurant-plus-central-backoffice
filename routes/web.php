@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\PrivateAuthController;
+use App\Http\Controllers\BackofficeSettingsController;
 use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SiteSyncController;
 use App\Http\Controllers\SyncErrorController;
@@ -12,6 +13,8 @@ Route::post('/logout', [PrivateAuthController::class, 'logout'])->name('logout')
 
 Route::middleware('backoffice.auth')->group(function () {
     Route::get('/', [SiteController::class, 'index'])->name('dashboard');
+    Route::get('settings', [BackofficeSettingsController::class, 'edit'])->name('backoffice-settings.edit');
+    Route::post('settings', [BackofficeSettingsController::class, 'update'])->name('backoffice-settings.update');
     Route::post('sites/reorder', [SiteController::class, 'reorder'])->name('sites.reorder');
     Route::resource('sites', SiteController::class)->except(['index', 'destroy']);
     Route::post('sites/{site}/toggle', [SiteController::class, 'toggle'])->name('sites.toggle');

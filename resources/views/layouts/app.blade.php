@@ -23,7 +23,7 @@
         th { color: #344054; background: #fbfcfe; font-weight: 700; }
         tr:last-child td { border-bottom: 0; }
         label { display: block; font-weight: 700; margin: 0 0 6px; }
-        input[type="text"], input[type="url"], input[type="password"], input[type="date"], textarea {
+        input[type="text"], input[type="url"], input[type="password"], input[type="date"], input[type="number"], textarea {
             width: 100%; border: 1px solid var(--border); border-radius: 6px; padding: 10px 11px; font: inherit; background: #fff;
         }
         .field { margin-bottom: 14px; }
@@ -47,7 +47,13 @@
 <body>
     <header>
         <nav>
-            <a class="brand" href="{{ route('dashboard') }}">{{ config('app.name') }}</a>
+            <div class="actions">
+                <a class="brand" href="{{ route('dashboard') }}">{{ config('app.name') }}</a>
+                @if(session('backoffice_authenticated'))
+                    <a class="btn" href="{{ route('dashboard') }}">Dashboard</a>
+                    <a class="btn" href="{{ route('backoffice-settings.edit') }}">Impostazioni</a>
+                @endif
+            </div>
             @if(session('backoffice_authenticated'))
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

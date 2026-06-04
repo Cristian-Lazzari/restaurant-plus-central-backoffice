@@ -7,8 +7,13 @@
             'order_commission_percent' => 20,
             'reservation_cover_fee' => 4,
         ];
-        $benchmarkOrderPercent = number_format($savingsBenchmark['order_commission_percent'], 0, ',', '.');
-        $benchmarkCoverFee = number_format($savingsBenchmark['reservation_cover_fee'], 0, ',', '.');
+        $formatBenchmarkNumber = function (float $value): string {
+            $decimals = abs($value - round($value)) < 0.005 ? 0 : 2;
+
+            return number_format($value, $decimals, ',', '.');
+        };
+        $benchmarkOrderPercent = $formatBenchmarkNumber((float) $savingsBenchmark['order_commission_percent']);
+        $benchmarkCoverFee = $formatBenchmarkNumber((float) $savingsBenchmark['reservation_cover_fee']);
     @endphp
 
     {{-- Page header --}}
