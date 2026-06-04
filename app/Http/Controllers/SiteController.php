@@ -233,7 +233,7 @@ class SiteController extends Controller
     {
         $site->load([
             'latestSnapshot',
-            'reportSnapshots' => fn ($query) => $query->latest('fetched_at')->limit(10),
+            'reportSnapshots' => fn ($query) => $query->orderBy('period_from')->orderBy('fetched_at'),
             'syncErrors' => fn ($query) => $query->latest('occurred_at')->limit(10),
         ]);
 
@@ -242,7 +242,7 @@ class SiteController extends Controller
             || (int) ($site->latestSnapshot?->orders_total ?? 0) > 0;
         $usesReservations = (int) ($businessMetrics['reservations_total'] ?? 0) > 0
             || (int) ($site->latestSnapshot?->reservations_total ?? 0) > 0;
-        $monthlyTrend = $monthlyMetrics->monthlyTrendForSnapshot($site->latestSnapshot);
+        $monthlyTrend = $monthlyMetrics->monthlyTrendForSnapshots($site->reportSnapshots, $site->latestSnapshot);
 
         return view('sites.show', compact('site', 'businessMetrics', 'usesOrders', 'usesReservations', 'monthlyTrend'));
     }

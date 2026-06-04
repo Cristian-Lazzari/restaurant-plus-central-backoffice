@@ -130,6 +130,43 @@ class SiteMonthlyMetricsServiceTest extends TestCase
         $this->assertSame(100.0, $trend['rows'][1]['changes']['reservations']['percent']);
     }
 
+    public function test_it_builds_monthly_trend_from_single_month_snapshots(): void
+    {
+        $trend = $this->service()->monthlyTrendForSnapshots([
+            $this->snapshotFromAttributes([
+                'period_from' => '2026-04-01',
+                'period_to' => '2026-04-30',
+                'orders_total' => 8,
+                'orders_revenue' => 160,
+                'reservations_total' => 4,
+                'reservations_covers' => 12,
+            ]),
+            $this->snapshotFromAttributes([
+                'period_from' => '2026-05-01',
+                'period_to' => '2026-05-31',
+                'orders_total' => 12,
+                'orders_revenue' => 180,
+                'reservations_total' => 6,
+                'reservations_covers' => 18,
+            ]),
+            $this->snapshotFromAttributes([
+                'period_from' => '2026-06-01',
+                'period_to' => '2026-06-30',
+                'orders_total' => 6,
+                'orders_revenue' => 90,
+                'reservations_total' => 3,
+                'reservations_covers' => 9,
+            ]),
+        ]);
+
+        $this->assertSame('snapshots', $trend['source']);
+        $this->assertCount(3, $trend['rows']);
+        $this->assertSame('2026-04', $trend['rows'][0]['month']);
+        $this->assertSame('2026-06', $trend['rows'][2]['month']);
+        $this->assertSame(50.0, $trend['rows'][1]['changes']['orders']['percent']);
+        $this->assertSame(-50.0, $trend['rows'][2]['changes']['orders']['percent']);
+    }
+
     private function service(): SiteMonthlyMetricsService
     {
         return new SiteMonthlyMetricsService;
@@ -138,5 +175,13 @@ class SiteMonthlyMetricsServiceTest extends TestCase
     private function snapshot(array $payload): ReportSnapshot
     {
         return new ReportSnapshot(['payload' => $payload]);
+    }
+
+    private function snapshotFromAttributes(array $attributes): ReportSnapshot
+    {
+        $snapshot = new ReportSnapshot;
+        $snapshot->setRawAttributes($attributes, true);
+
+        return $snapshot;
     }
 }

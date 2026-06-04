@@ -94,6 +94,58 @@ class SiteMonthlyMetricsService
     }
 
     /**
+     * @param iterable<ReportSnapshot> $snapshots
+     * @return array{
+     *     source: string|null,
+     *     rows: list<array{
+     *         month: string,
+     *         label: string,
+     *         orders: int,
+     *         revenue: float|null,
+     *         reservations: int,
+     *         covers: int,
+     *         changes: array<string, array{state: string, percent: float|null}>
+     *     }>
+     * }
+     */
+    public function monthlyTrendForSnapshots(iterable $snapshots, ?ReportSnapshot $fallbackSnapshot = null): array
+    {
+        $rows = [];
+        $source = null;
+
+        foreach ($snapshots as $snapshot) {
+            if (! $snapshot instanceof ReportSnapshot) {
+                continue;
+            }
+
+            $snapshotRows = $this->monthlyRowsForSnapshot($snapshot);
+
+            if (count($snapshotRows) === 0) {
+                continue;
+            }
+
+            foreach ($snapshotRows as $row) {
+                $this->replaceMonthlyRow($rows, $row);
+            }
+
+            $source = 'snapshots';
+        }
+
+        if (count($rows) === 0 && $fallbackSnapshot) {
+            return $this->monthlyTrendForSnapshot($fallbackSnapshot);
+        }
+
+        $rows = array_values(array_filter($rows, fn (array $row): bool => $this->rowHasActivity($row)));
+
+        usort($rows, fn (array $a, array $b): int => $a['month'] <=> $b['month']);
+
+        return [
+            'source' => $source,
+            'rows' => $this->attachMonthlyChanges($rows),
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function emptyMetrics(bool $hasAllTime): array
@@ -111,6 +163,36 @@ class SiteMonthlyMetricsService
             'reservations_monthly_avg' => null,
             'covers_monthly_avg' => null,
         ];
+    }
+
+    /**
+     * @return array<string, array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int}>
+     */
+    private function monthlyRowsForSnapshot(ReportSnapshot $snapshot): array
+    {
+        $payload = is_array($snapshot->payload) ? $snapshot->payload : [];
+
+        $rows = $this->monthlyRowsFromPayload($payload);
+
+        if (count($rows) > 0) {
+            return $rows;
+        }
+
+        $month = $this->singleMonthForSnapshot($snapshot);
+
+        if ($month !== null) {
+            $row = $this->baseMonthlyRow($month);
+            $row['orders'] = (int) ($snapshot->orders_total ?? $this->integerValue(Arr::get($payload, 'orders.total')));
+            $row['revenue'] = $snapshot->orders_revenue !== null
+                ? (float) $snapshot->orders_revenue
+                : $this->nullableFloat(Arr::get($payload, 'orders.revenue_confirmed') ?? Arr::get($payload, 'orders.revenue'));
+            $row['reservations'] = (int) ($snapshot->reservations_total ?? $this->integerValue(Arr::get($payload, 'reservations.total')));
+            $row['covers'] = (int) ($snapshot->reservations_covers ?? $this->integerValue(Arr::get($payload, 'reservations.total_covers')));
+
+            return [$month => $row];
+        }
+
+        return $this->monthlyRowsFromDaily($payload);
     }
 
     /**
@@ -237,6 +319,34 @@ class SiteMonthlyMetricsService
         if ($row['revenue'] !== null) {
             $rows[$month]['revenue'] = ($rows[$month]['revenue'] ?? 0) + $row['revenue'];
         }
+    }
+
+    /**
+     * @param array<string, array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int}> $rows
+     * @param array{month: string, label: string, orders: int, revenue: float|null, reservations: int, covers: int} $row
+     */
+    private function replaceMonthlyRow(array &$rows, array $row): void
+    {
+        $rows[$row['month']] = $row;
+    }
+
+    private function singleMonthForSnapshot(ReportSnapshot $snapshot): ?string
+    {
+        $rawFrom = $snapshot->getRawOriginal('period_from');
+        $rawTo = $snapshot->getRawOriginal('period_to');
+
+        if (! $rawFrom || ! $rawTo) {
+            return null;
+        }
+
+        $from = CarbonImmutable::parse($rawFrom);
+        $to = CarbonImmutable::parse($rawTo);
+
+        if ($from->format('Y-m') !== $to->format('Y-m')) {
+            return null;
+        }
+
+        return $from->format('Y-m');
     }
 
     private function rowHasActivity(array $row): bool
