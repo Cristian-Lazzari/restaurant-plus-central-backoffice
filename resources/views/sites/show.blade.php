@@ -376,7 +376,6 @@
                             <th>Δ coperti</th>
                         @endif
                         <th>Risparmio stimato</th>
-                        <th>Δ risparmio</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -425,15 +424,7 @@
                                     </span>
                                 </td>
                             @endif
-                            @php
-                                $savingsBadge = $deltaBadge($row['changes']['savings'] ?? []);
-                            @endphp
                             <td>€ {{ number_format($row['savings'] ?? 0, 2) }}</td>
-                            <td>
-                                <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $savingsBadge['style'] }}">
-                                    {{ $savingsBadge['label'] }}
-                                </span>
-                            </td>
                         </tr>
                     @endforeach
                 </tbody>
