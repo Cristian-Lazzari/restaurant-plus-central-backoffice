@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\Site;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 
 class SetSiteReportTokenCommand extends Command
 {
@@ -31,11 +33,25 @@ class SetSiteReportTokenCommand extends Command
             return self::FAILURE;
         }
 
+        DB::table('sites')
+            ->where('id', $site->id)
+            ->update([
+                'token' => Crypt::encryptString($token),
+                'consecutive_failures' => 0,
+                'last_error_at' => null,
+                'updated_at' => now(),
+            ]);
+
         $site->forceFill([
-            'token' => $token,
             'consecutive_failures' => 0,
             'last_error_at' => null,
-        ])->save();
+        ])->syncOriginal();
+
+        if (Site::find($site->id)?->token !== $token) {
+            $this->error('Token salvato ma la verifica di lettura non coincide.');
+
+            return self::FAILURE;
+        }
 
         $this->info('Token aggiornato per: ' . $site->name);
 
