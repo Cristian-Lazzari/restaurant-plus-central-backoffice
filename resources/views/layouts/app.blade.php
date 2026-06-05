@@ -603,6 +603,7 @@
                 padding: 5px 4px 8px;
                 display: flex;
                 flex-direction: column;
+                align-items: flex-start;
                 gap: 3px;
                 font-size: 13px;
                 min-width: 0;
