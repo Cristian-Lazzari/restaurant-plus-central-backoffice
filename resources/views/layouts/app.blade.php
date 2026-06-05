@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name') }}</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon.png') }}">
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -688,13 +688,25 @@
     </style>
 </head>
 <body>
+@php
+    $logoHorizSrc = file_exists(public_path('images/logo-futureplus.png'))
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('images/logo-futureplus.png')))
+        : null;
+    $faviconSrc = file_exists(public_path('images/favicon.png'))
+        ? 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('images/favicon.png')))
+        : null;
+@endphp
 <div class="app">
 
     {{-- ─── Sidebar ─── --}}
     <aside class="sidebar" id="sidebar" role="navigation" aria-label="{{ __('Navigazione principale') }}">
 
         <a class="sidebar-brand" href="{{ route('dashboard') }}">
-            <img src="{{ asset('images/logo-futureplus.png') }}" alt="Future Plus">
+            @if($logoHorizSrc)
+                <img src="{{ $logoHorizSrc }}" alt="Future Plus">
+            @else
+                <span style="color:#fff;font-weight:700;font-size:15px;letter-spacing:.5px;">FUTURE+</span>
+            @endif
         </a>
 
         @if(session('backoffice_authenticated'))
@@ -757,7 +769,11 @@
         {{-- ─── Topbar (mobile only) ─── --}}
         <div class="topbar" role="banner">
             <a class="topbar-brand" href="{{ route('dashboard') }}">
-                <img src="{{ asset('images/logo-futureplus.png') }}" alt="Future Plus" style="height:24px;width:auto;display:block;object-fit:contain;">
+                @if($logoHorizSrc)
+                    <img src="{{ $logoHorizSrc }}" alt="Future Plus" style="height:24px;width:auto;display:block;object-fit:contain;">
+                @else
+                    <span style="color:#fff;font-weight:700;font-size:14px;">FUTURE+</span>
+                @endif
             </a>
             <button class="hamburger" id="menuToggle" aria-label="{{ __('Apri menu') }}" aria-expanded="false" aria-controls="sidebar">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

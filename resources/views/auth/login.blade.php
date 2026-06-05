@@ -58,7 +58,16 @@
     <div class="login-wrap">
         <div class="login-box">
             <div class="login-logo-area">
-                <img src="{{ asset('images/logo-futureplus.png') }}" alt="Future Plus">
+                @php
+                    $lsrc = file_exists(public_path('images/logo-futureplus.png'))
+                        ? 'data:image/png;base64,'.base64_encode(file_get_contents(public_path('images/logo-futureplus.png')))
+                        : null;
+                @endphp
+                @if($lsrc)
+                    <img src="{{ $lsrc }}" alt="Future Plus">
+                @else
+                    <span style="color:#fff;font-weight:800;font-size:22px;letter-spacing:.5px;">FUTURE+</span>
+                @endif
                 <div class="login-subtitle">{{ __('Accesso backoffice privato') }}</div>
             </div>
             <div class="login-card">
