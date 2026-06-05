@@ -208,10 +208,14 @@
     <div class="actions" style="justify-content: space-between; margin-top: 28px; margin-bottom: 12px;">
         <h2 style="margin: 0;">Siti</h2>
         @if($canReorderSites && $sites->count() > 1)
-            <form id="siteOrderForm" method="POST" action="{{ route('sites.reorder') }}">
-                @csrf
-                <button id="saveSiteOrder" class="btn" type="submit" disabled>Salva ordine</button>
-            </form>
+            <div class="actions">
+                <button id="editSiteOrder" class="btn" type="button">Modifica ordine</button>
+                <form id="siteOrderForm" method="POST" action="{{ route('sites.reorder') }}" style="display: none;">
+                    @csrf
+                    <button id="saveSiteOrder" class="btn primary" type="submit" disabled>Salva ordine</button>
+                </form>
+                <button id="cancelSiteOrder" class="btn" type="button" style="display: none;">Annulla</button>
+            </div>
         @endif
     </div>
     <div class="panel muted" style="font-size: 13px; margin-bottom: 12px; padding: 10px 14px;">
@@ -223,7 +227,7 @@
             <thead>
                 <tr>
                     @if($canReorderSites)
-                        <th style="width: 88px;">Ordine</th>
+                        <th data-order-cell style="width: 88px; display: none;">Ordine</th>
                     @endif
                     <th>Sito</th>
                     <th>Ordini<br><span style="font-weight:400;font-size:11px;">totale / media mese</span></th>
@@ -265,10 +269,10 @@
                         $siteReservationSavings = $metric['estimated_reservation_savings'] ?? 0.0;
                         $siteSavings = $metric['estimated_total_savings'] ?? 0.0;
                     @endphp
-                    <tr data-site-row data-site-id="{{ $site->id }}" draggable="{{ $canReorderSites && $sites->count() > 1 ? 'true' : 'false' }}">
+                    <tr data-site-row data-site-id="{{ $site->id }}" draggable="false">
                         {{-- Ordine --}}
                         @if($canReorderSites)
-                            <td>
+                            <td data-order-cell style="display: none;">
                                 <div class="actions" style="gap: 4px; flex-wrap: nowrap;">
                                     <button class="btn site-order-btn" type="button" data-move="up" title="Sposta su" aria-label="Sposta {{ $site->name }} su" style="padding: 5px 8px;" @disabled($sites->count() <= 1)>↑</button>
                                     <button class="btn site-order-btn" type="button" data-move="down" title="Sposta giu" aria-label="Sposta {{ $site->name }} giu" style="padding: 5px 8px;" @disabled($sites->count() <= 1)>↓</button>
@@ -409,15 +413,50 @@
 (function () {
     const tbody = document.getElementById('sitesTableBody');
     const form = document.getElementById('siteOrderForm');
+    const editButton = document.getElementById('editSiteOrder');
     const saveButton = document.getElementById('saveSiteOrder');
+    const cancelButton = document.getElementById('cancelSiteOrder');
     let draggedRow = null;
+    let editingOrder = false;
 
-    if (!tbody || !form || !saveButton) {
+    if (!tbody || !form || !editButton || !saveButton || !cancelButton) {
         return;
     }
 
     function rows() {
         return Array.from(tbody.querySelectorAll('tr[data-site-id]'));
+    }
+
+    const initialOrder = rows().map(row => row.dataset.siteId);
+
+    function orderCells() {
+        return Array.from(document.querySelectorAll('[data-order-cell]'));
+    }
+
+    function setOrderMode(enabled) {
+        editingOrder = enabled;
+        orderCells().forEach(cell => {
+            cell.style.display = enabled ? '' : 'none';
+        });
+        rows().forEach(row => {
+            row.draggable = enabled;
+        });
+        editButton.style.display = enabled ? 'none' : '';
+        form.style.display = enabled ? '' : 'none';
+        cancelButton.style.display = enabled ? '' : 'none';
+        saveButton.disabled = true;
+        updateHiddenInputs();
+        updateButtonStates();
+    }
+
+    function restoreInitialOrder() {
+        const rowsById = new Map(rows().map(row => [row.dataset.siteId, row]));
+        initialOrder.forEach(siteId => {
+            const row = rowsById.get(siteId);
+            if (row) {
+                tbody.appendChild(row);
+            }
+        });
     }
 
     function updateHiddenInputs() {
@@ -442,12 +481,29 @@
     }
 
     function markChanged() {
+        if (!editingOrder) {
+            return;
+        }
+
         updateHiddenInputs();
         updateButtonStates();
         saveButton.disabled = false;
     }
 
+    editButton.addEventListener('click', function () {
+        setOrderMode(true);
+    });
+
+    cancelButton.addEventListener('click', function () {
+        restoreInitialOrder();
+        setOrderMode(false);
+    });
+
     tbody.addEventListener('click', function (event) {
+        if (!editingOrder) {
+            return;
+        }
+
         const button = event.target.closest('[data-move]');
         if (!button) {
             return;
@@ -470,6 +526,12 @@
     });
 
     tbody.addEventListener('dragstart', function (event) {
+        if (!editingOrder) {
+            event.preventDefault();
+
+            return;
+        }
+
         draggedRow = event.target.closest('tr[data-site-id]');
         if (!draggedRow) {
             return;
@@ -487,6 +549,10 @@
     });
 
     tbody.addEventListener('dragover', function (event) {
+        if (!editingOrder) {
+            return;
+        }
+
         if (!draggedRow) {
             return;
         }
@@ -504,8 +570,7 @@
     });
 
     form.addEventListener('submit', updateHiddenInputs);
-    updateHiddenInputs();
-    updateButtonStates();
+    setOrderMode(false);
 })();
 </script>
 @endif
