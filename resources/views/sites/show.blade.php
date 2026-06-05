@@ -59,151 +59,176 @@
         };
     @endphp
 
-    {{-- Page header --}}
-    <div class="actions" style="justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
-        <div>
-            <div style="margin-bottom: 6px;">
-                <a href="{{ route('dashboard') }}" class="muted" style="font-size: 13px;">&larr; Dashboard</a>
+    <style>
+        .collapsible { border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--surface); margin-bottom: 16px; box-shadow: var(--shadow-sm); }
+        .collapsible summary { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; font-weight: 700; font-size: 14px; list-style: none; user-select: none; }
+        .collapsible summary::-webkit-details-marker { display: none; }
+        .collapsible summary svg { transition: transform 0.2s; flex-shrink: 0; }
+        details[open] .collapsible summary svg { transform: rotate(90deg); }
+        .collapsible-body { padding: 0 16px 16px; border-top: 1px solid var(--border-soft); }
+        .period-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--surface); margin-bottom: 12px; box-shadow: var(--shadow-sm); }
+        .delta-badge { display: inline-block; padding: 2px 8px; border: 1px solid; border-radius: 999px; font-size: 11px; font-weight: 600; }
+        .show-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .show-metric { border: 1px solid var(--border-soft); border-radius: var(--radius); padding: 14px 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
+        .show-metric span { display: block; color: var(--muted); font-size: 12px; }
+        .show-metric strong { display: block; font-size: 20px; line-height: 1.2; margin-top: 4px; font-weight: 760; }
+    </style>
+
+    {{-- Section: Breadcrumb + Page header --}}
+    <div class="page-header">
+        <nav class="breadcrumb" aria-label="{{ __('Breadcrumb') }}">
+            <a href="{{ route('dashboard') }}">{{ __('Dashboard') }}</a>
+            <span class="breadcrumb-sep" aria-hidden="true">›</span>
+            <span>{{ $site->name }}</span>
+        </nav>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+            <div>
+                <h1 class="page-title">{{ $site->name }}</h1>
+                <div class="page-subtitle">
+                    <a href="{{ $site->url }}" target="_blank" rel="noopener noreferrer" style="color: var(--muted);">{{ $site->url }}</a>
+                </div>
             </div>
-            <h1 style="margin-bottom: 4px;">{{ $site->name }}</h1>
-            <div class="muted">
-                <a href="{{ $site->url }}" target="_blank" rel="noopener noreferrer" style="color: var(--muted);">{{ $site->url }}</a>
+            <div class="actions">
+                <a class="btn" href="{{ route('sites.edit', $site) }}">{{ __('Modifica') }}</a>
+                <form method="POST" action="{{ route('sites.toggle', $site) }}">
+                    @csrf
+                    <button class="btn {{ $site->active ? 'btn-danger' : 'btn-primary' }}" type="submit">
+                        {{ $site->active ? __('Disattiva') : __('Attiva') }}
+                    </button>
+                </form>
             </div>
-        </div>
-        <div class="actions">
-            <a class="btn" href="{{ route('sites.edit', $site) }}">Modifica</a>
-            <form method="POST" action="{{ route('sites.toggle', $site) }}">
-                @csrf
-                <button class="btn" type="submit">{{ $site->active ? 'Disattiva' : 'Attiva' }}</button>
-            </form>
         </div>
     </div>
 
-    {{-- Sezione 1+2: Dati business con filtro periodo --}}
+    {{-- Section: Dati business --}}
     @php
         $hasPeriods = is_array($payload['periods'] ?? null) && ! empty($payload['periods']);
         $revUnit    = $snapshot?->revenue_unit ?? 'unknown';
     @endphp
-    <h2 style="margin-top: 0;">Dati business</h2>
+
+    <div class="section-header" style="margin-bottom: 12px;">
+        <h2 class="section-title">{{ __('Dati business') }}</h2>
+    </div>
 
     @if($snapshot)
         @if(! $hasBusiness)
-            <div class="panel muted" style="font-size: 13px; margin-bottom: 12px; padding: 16px;">
-                Nessun ordine o prenotazione registrati per questo sito.
+            <div class="panel text-muted mb-4" style="font-size: 13px;">
+                {{ __('Nessun ordine o prenotazione registrati per questo sito.') }}
             </div>
         @elseif($hasPeriods)
             {{-- V2: selettore periodo dinamico --}}
-            <div class="panel" style="margin-bottom: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <div class="period-selector">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <label for="periodSelect" style="margin: 0; font-weight: 600; white-space: nowrap;">Periodo:</label>
-                    <select id="periodSelect" class="btn" style="cursor: pointer; padding: 6px 10px;">
-                        <option value="current_month" selected>Mese corrente</option>
-                        <option value="current_year">Anno corrente</option>
-                        <option value="all_time">Storico</option>
-                        <option value="today">Oggi</option>
-                        <option value="last_7_days">Ultimi 7 giorni</option>
+                    <label for="periodSelect" style="margin: 0; font-weight: 600; white-space: nowrap;">{{ __('Periodo:') }}</label>
+                    <select id="periodSelect" style="width:auto; border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 10px; font:inherit; font-size:13px; background:#fff; cursor:pointer;">
+                        <option value="current_month" selected>{{ __('Mese corrente') }}</option>
+                        <option value="current_year">{{ __('Anno corrente') }}</option>
+                        <option value="all_time">{{ __('Storico') }}</option>
+                        <option value="today">{{ __('Oggi') }}</option>
+                        <option value="last_7_days">{{ __('Ultimi 7 giorni') }}</option>
                     </select>
                 </div>
-                <div class="muted" style="font-size: 13px;">
-                    Da: <strong id="periodFrom">-</strong> &ndash; a: <strong id="periodTo">-</strong>
+                <div class="text-muted text-sm">
+                    {{ __('Da:') }} <strong id="periodFrom">-</strong> &ndash; {{ __('a:') }} <strong id="periodTo">-</strong>
                 </div>
             </div>
 
-            <div class="grid" style="margin-bottom: 12px;">
+            <div class="show-metric-grid mb-4">
                 @if($usesOrders)
-                    <div class="metric">
-                        <span class="muted">Ordini</span>
+                    <div class="show-metric">
+                        <span>{{ __('Ordini') }}</span>
                         <strong id="periodOrders">-</strong>
                     </div>
-                    <div class="metric">
-                        <span class="muted">Ricavi</span>
+                    <div class="show-metric">
+                        <span>{{ __('Ricavi') }}</span>
                         <strong id="periodRevenue">-</strong>
                         @if($revUnit !== 'euros')
-                            <div class="muted" style="font-size: 11px; margin-top: 2px;">revenue_unit = {{ $revUnit }}</div>
+                            <div class="text-muted text-sm" style="margin-top: 2px;">revenue_unit = {{ $revUnit }}</div>
                         @endif
                     </div>
-                    <div class="metric">
-                        <span class="muted">Media ordine</span>
+                    <div class="show-metric">
+                        <span>{{ __('Media ordine') }}</span>
                         <strong id="periodAverage">-</strong>
                     </div>
                 @endif
                 @if($usesReservations)
-                    <div class="metric">
-                        <span class="muted">Prenotazioni</span>
+                    <div class="show-metric">
+                        <span>{{ __('Prenotazioni') }}</span>
                         <strong id="periodReservations">-</strong>
                     </div>
-                    <div class="metric">
-                        <span class="muted">Coperti</span>
+                    <div class="show-metric">
+                        <span>{{ __('Coperti') }}</span>
                         <strong id="periodCovers">-</strong>
                     </div>
                 @endif
-                <div class="metric" style="border-color: #fedf89; background: #fffbeb;">
-                    <span class="muted">Risparmio stimato</span>
+                <div class="show-metric" style="border-color: #fedf89; background: #fffbeb;">
+                    <span>{{ __('Risparmio stimato') }}</span>
                     <strong id="periodSavings">-</strong>
                 </div>
             </div>
         @else
             {{-- V1: valori statici dall'ultimo snapshot --}}
-            <div class="grid" style="margin-bottom: 12px;">
+            <div class="show-metric-grid mb-4">
                 @if($usesOrders)
-                    <div class="metric">
-                        <span class="muted">Ordini</span>
+                    <div class="show-metric">
+                        <span>{{ __('Ordini') }}</span>
                         <strong>{{ number_format($snapshot->orders_total ?? 0) }}</strong>
                     </div>
-                    <div class="metric">
-                        <span class="muted">Ricavi</span>
+                    <div class="show-metric">
+                        <span>{{ __('Ricavi') }}</span>
                         @if($revUnit !== 'euros' || $snapshot->orders_revenue === null)
                             <strong>N/D</strong>
-                            <div class="muted" style="font-size: 12px;">revenue_unit = {{ $revUnit }}</div>
+                            <div class="text-muted text-sm">revenue_unit = {{ $revUnit }}</div>
                         @else
                             <strong>€ {{ number_format($snapshot->orders_revenue, 2) }}</strong>
-                            <div class="muted" style="font-size: 12px;">revenue_unit = euros</div>
+                            <div class="text-muted text-sm">revenue_unit = euros</div>
                         @endif
                     </div>
                 @endif
                 @if($usesReservations)
-                    <div class="metric">
-                        <span class="muted">Prenotazioni</span>
+                    <div class="show-metric">
+                        <span>{{ __('Prenotazioni') }}</span>
                         <strong>{{ number_format($snapshot->reservations_total ?? 0) }}</strong>
                     </div>
-                    <div class="metric">
-                        <span class="muted">Coperti</span>
+                    <div class="show-metric">
+                        <span>{{ __('Coperti') }}</span>
                         <strong>{{ number_format($snapshot->reservations_covers ?? 0) }}</strong>
                     </div>
                 @endif
                 @if(($businessMetrics['estimated_total_savings'] ?? 0) > 0)
-                    <div class="metric" style="border-color: #fedf89; background: #fffbeb;">
-                        <span class="muted">Risparmio stimato</span>
+                    <div class="show-metric" style="border-color: #fedf89; background: #fffbeb;">
+                        <span>{{ __('Risparmio stimato') }}</span>
                         <strong>€ {{ number_format($businessMetrics['estimated_total_savings'], 2) }}</strong>
-                        <div class="muted" style="font-size: 11px; margin-top: 2px;">
-                            ordini € {{ number_format($businessMetrics['estimated_order_savings'] ?? 0, 2) }}
-                            / pren. € {{ number_format($businessMetrics['estimated_reservation_savings'] ?? 0, 2) }}
+                        <div class="text-muted text-sm" style="margin-top: 2px;">
+                            {{ __('ordini') }} € {{ number_format($businessMetrics['estimated_order_savings'] ?? 0, 2) }}
+                            / {{ __('pren.') }} € {{ number_format($businessMetrics['estimated_reservation_savings'] ?? 0, 2) }}
                         </div>
                     </div>
                 @endif
             </div>
-            <div class="panel muted" style="font-size: 13px; margin-bottom: 12px; padding: 8px 12px;">
-                Filtro periodo disponibile dopo snapshot api_version=2.
+            <div class="panel text-muted mb-3" style="font-size: 13px;">
+                {{ __('Filtro periodo disponibile dopo snapshot api_version=2.') }}
             </div>
         @endif
 
         @if($hasBusiness)
-            <div class="panel muted" style="font-size: 12px; margin-bottom: 12px; padding: 8px 12px;">
-                Benchmark risparmio: Just Eat/Deliveroo/Glovo {{ $benchmarkOrderPercent }}%, TheFork € {{ $benchmarkCoverFee }}/coperto.
+            <div class="panel text-muted mb-3" style="font-size: 12px;">
+                {{ __('Benchmark risparmio: Just Eat/Deliveroo/Glovo') }} {{ $benchmarkOrderPercent }}%, TheFork € {{ $benchmarkCoverFee }}/{{ __('coperto') }}.
             </div>
         @endif
 
-        <div class="panel muted" style="font-size: 13px; margin-bottom: 18px; padding: 10px 14px;">
-            Snapshot: periodo
+        <div class="panel text-muted mb-5" style="font-size: 13px;">
+            {{ __('Snapshot: periodo') }}
             <strong>{{ $snapshot->period_from?->toDateString() ?? '-' }}</strong>
             &ndash;
             <strong>{{ $snapshot->period_to?->toDateString() ?? '-' }}</strong>,
-            recuperato il {{ $snapshot->fetched_at?->format('d/m/Y H:i') ?? '-' }}
+            {{ __('recuperato il') }} {{ $snapshot->fetched_at?->format('d/m/Y H:i') ?? '-' }}
         </div>
 
         @if(is_array($warnings) && count($warnings) > 0)
-            <div class="panel" style="border-color: #fedf89; background: #fffaeb; margin-bottom: 18px;">
-                <strong style="color: #93370d;">Attenzione: data warnings presenti</strong>
+            <div class="panel mb-5" style="border-color: var(--amber-border); background: var(--amber-soft);">
+                <strong style="color: #93370d;">{{ __('Attenzione: data warnings presenti') }}</strong>
                 <ul style="margin: 8px 0 0; padding-left: 18px; color: #93370d;">
                     @foreach($warnings as $warning)
                         <li>{{ $warning }}</li>
@@ -212,15 +237,14 @@
             </div>
         @endif
     @else
-        <div class="panel muted" style="text-align: center; padding: 28px; margin-bottom: 18px;">
-            Nessun snapshot ancora. Esegui una sync per raccogliere i dati.
+        <div class="panel text-muted mb-5" style="text-align: center; padding: 28px;">
+            {{ __('Nessun snapshot ancora. Esegui una sync per raccogliere i dati.') }}
         </div>
     @endif
 
-    {{-- Sezione 3: Attivita gestionale (solo payload V2) --}}
+    {{-- Section: Attivita gestionale (payload V2) --}}
     @php
-        // Calcola stato inattività menu per il badge.
-        $menuActivityBadge = 'grey'; // default: dato non disponibile
+        $menuActivityBadge = 'grey';
         $menuActivityLabel = 'Dato non disponibile';
 
         if (isset($payload['usage']['menu'])) {
@@ -256,269 +280,280 @@
             default  => 'background: #f2f4f7; border-color: #d9dee7; color: #667085;',
         };
     @endphp
-    <h2>
-        Attivita gestionale
-        <span style="display: inline-block; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid; margin-left: 8px; vertical-align: middle; {{ $badgeStyle }}">
-            {{ $menuActivityLabel }}
-        </span>
-    </h2>
+
+    <div class="section-header" style="margin-bottom: 12px; margin-top: 8px;">
+        <h2 class="section-title">
+            {{ __('Attivita gestionale') }}
+            <span style="display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid; margin-left: 8px; vertical-align: middle; {{ $badgeStyle }}">
+                {{ $menuActivityLabel }}
+            </span>
+        </h2>
+    </div>
+
     @if(isset($payload['usage']))
         @php
             $usageMenu    = $payload['usage']['menu']    ?? [];
             $usageContent = $payload['usage']['content'] ?? [];
             $usageAdmin   = $payload['usage']['admin']   ?? [];
         @endphp
-        <div class="grid" style="margin-bottom: 12px;">
-            <div class="metric">
-                <span class="muted">Prodotti</span>
+        <div class="show-metric-grid mb-3">
+            <div class="show-metric">
+                <span>{{ __('Prodotti') }}</span>
                 <strong>{{ $usageMenu['products_count'] ?? '-' }}</strong>
             </div>
-            <div class="metric">
-                <span class="muted">Categorie</span>
+            <div class="show-metric">
+                <span>{{ __('Categorie') }}</span>
                 <strong>{{ $usageMenu['categories_count'] ?? '-' }}</strong>
             </div>
-            <div class="metric">
-                <span class="muted">Ingredienti</span>
+            <div class="show-metric">
+                <span>{{ __('Ingredienti') }}</span>
                 <strong>{{ $usageMenu['ingredients_count'] ?? '-' }}</strong>
             </div>
-            <div class="metric">
-                <span class="muted">Post totali</span>
+            <div class="show-metric">
+                <span>{{ __('Post totali') }}</span>
                 <strong>{{ $usageContent['posts_count'] ?? '-' }}</strong>
             </div>
-            <div class="metric">
-                <span class="muted">Post attivi</span>
+            <div class="show-metric">
+                <span>{{ __('Post attivi') }}</span>
                 <strong>{{ $usageContent['posts_active'] ?? '-' }}</strong>
             </div>
-            <div class="metric">
-                <span class="muted">Promo attive</span>
+            <div class="show-metric">
+                <span>{{ __('Promo attive') }}</span>
                 <strong>{{ $usageContent['posts_promo'] ?? '-' }}</strong>
             </div>
         </div>
 
-        <div class="table-wrap" style="margin-bottom: 18px;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Elemento</th>
-                        <th>Ultimo aggiornamento</th>
-                        <th>Aggiornati 7gg</th>
-                        <th>Aggiornati 30gg</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Prodotti</td>
-                        <td class="muted">{{ !empty($usageMenu['last_product_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_product_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ $usageMenu['products_updated_last_7_days'] ?? '-' }}</td>
-                        <td>{{ $usageMenu['products_updated_last_30_days'] ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Categorie</td>
-                        <td class="muted">{{ !empty($usageMenu['last_category_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_category_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ $usageMenu['categories_updated_last_7_days'] ?? '-' }}</td>
-                        <td>{{ $usageMenu['categories_updated_last_30_days'] ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Ingredienti</td>
-                        <td class="muted">{{ !empty($usageMenu['last_ingredient_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_ingredient_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ $usageMenu['ingredients_updated_last_7_days'] ?? '-' }}</td>
-                        <td>{{ $usageMenu['ingredients_updated_last_30_days'] ?? '-' }}</td>
-                    </tr>
-                    <tr>
-                        <td>Post</td>
-                        <td class="muted">{{ !empty($usageContent['last_post_updated_at']) ? \Carbon\Carbon::parse($usageContent['last_post_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
-                        <td>{{ $usageContent['posts_updated_last_7_days'] ?? '-' }}</td>
-                        <td>{{ $usageContent['posts_updated_last_30_days'] ?? '-' }}</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="card-table mb-5">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{{ __('Elemento') }}</th>
+                            <th>{{ __('Ultimo aggiornamento') }}</th>
+                            <th>{{ __('Aggiornati 7gg') }}</th>
+                            <th>{{ __('Aggiornati 30gg') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="{{ __('Elemento') }}">{{ __('Prodotti') }}</td>
+                            <td data-label="{{ __('Ultimo aggiornamento') }}" class="text-muted">{{ !empty($usageMenu['last_product_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_product_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
+                            <td data-label="{{ __('Aggiornati 7gg') }}">{{ $usageMenu['products_updated_last_7_days'] ?? '-' }}</td>
+                            <td data-label="{{ __('Aggiornati 30gg') }}">{{ $usageMenu['products_updated_last_30_days'] ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td data-label="{{ __('Elemento') }}">{{ __('Categorie') }}</td>
+                            <td data-label="{{ __('Ultimo aggiornamento') }}" class="text-muted">{{ !empty($usageMenu['last_category_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_category_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
+                            <td data-label="{{ __('Aggiornati 7gg') }}">{{ $usageMenu['categories_updated_last_7_days'] ?? '-' }}</td>
+                            <td data-label="{{ __('Aggiornati 30gg') }}">{{ $usageMenu['categories_updated_last_30_days'] ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td data-label="{{ __('Elemento') }}">{{ __('Ingredienti') }}</td>
+                            <td data-label="{{ __('Ultimo aggiornamento') }}" class="text-muted">{{ !empty($usageMenu['last_ingredient_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_ingredient_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
+                            <td data-label="{{ __('Aggiornati 7gg') }}">{{ $usageMenu['ingredients_updated_last_7_days'] ?? '-' }}</td>
+                            <td data-label="{{ __('Aggiornati 30gg') }}">{{ $usageMenu['ingredients_updated_last_30_days'] ?? '-' }}</td>
+                        </tr>
+                        <tr>
+                            <td data-label="{{ __('Elemento') }}">{{ __('Post') }}</td>
+                            <td data-label="{{ __('Ultimo aggiornamento') }}" class="text-muted">{{ !empty($usageContent['last_post_updated_at']) ? \Carbon\Carbon::parse($usageContent['last_post_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
+                            <td data-label="{{ __('Aggiornati 7gg') }}">{{ $usageContent['posts_updated_last_7_days'] ?? '-' }}</td>
+                            <td data-label="{{ __('Aggiornati 30gg') }}">{{ $usageContent['posts_updated_last_30_days'] ?? '-' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         @if(! empty($usageAdmin['last_admin_login_at']))
-            <div class="panel muted" style="font-size: 13px; margin-bottom: 18px;">
-                Ultimo accesso admin: <strong>{{ \Carbon\Carbon::parse($usageAdmin['last_admin_login_at'])->format('d/m/Y H:i') }}</strong>
+            <div class="panel text-muted mb-5" style="font-size: 13px;">
+                {{ __('Ultimo accesso admin:') }} <strong>{{ \Carbon\Carbon::parse($usageAdmin['last_admin_login_at'])->format('d/m/Y H:i') }}</strong>
             </div>
         @endif
     @else
-        <div class="panel muted" style="margin-bottom: 18px; font-size: 13px;">
-            Dati usage disponibili dopo aggiornamento dashboard a api_version=2.
+        <div class="panel text-muted mb-5" style="font-size: 13px;">
+            {{ __('Dati usage disponibili dopo aggiornamento dashboard a api_version=2.') }}
         </div>
     @endif
 
-    {{-- Sezione 4: Andamento mensile --}}
-    <h2>Andamento mensile</h2>
+    {{-- Section: Andamento mensile --}}
+    <div class="section-header" style="margin-bottom: 12px;">
+        <h2 class="section-title">{{ __('Andamento mensile') }}</h2>
+    </div>
+
     @if($hasBusiness && $hasMonthlyTrend)
-        <div class="panel" style="margin-bottom: 12px;">
+        <div class="panel mb-3" style="padding: 16px;">
             <canvas id="chartMonthly" style="max-height: 280px;"></canvas>
         </div>
 
         @if(($monthlyTrend['source'] ?? null) === 'daily')
-            <div class="panel muted" style="font-size: 12px; margin-bottom: 12px; padding: 8px 12px;">
-                Vista mensile costruita dai dati disponibili nel payload corrente.
+            <div class="panel text-muted mb-3" style="font-size: 12px;">
+                {{ __('Vista mensile costruita dai dati disponibili nel payload corrente.') }}
             </div>
         @endif
 
-        <div class="table-wrap" style="margin-bottom: 18px;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Mese</th>
-                        @if($usesOrders)
-                            <th>Ordini</th>
-                            <th>Δ ordini</th>
-                            <th>Ricavi</th>
-                            <th>Δ ricavi</th>
-                        @endif
-                        @if($usesReservations)
-                            <th>Prenotazioni</th>
-                            <th>Δ prenotazioni</th>
-                            <th>Coperti</th>
-                            <th>Δ coperti</th>
-                        @endif
-                        <th>Risparmio stimato</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach(array_reverse($monthlyRows) as $row)
+        <div class="card-table mb-5">
+            <div class="table-wrap">
+                <table>
+                    <thead>
                         <tr>
-                            <td>
-                                <strong>{{ ucfirst($row['label']) }}</strong>
-                            </td>
+                            <th>{{ __('Mese') }}</th>
                             @if($usesOrders)
-                                @php
-                                    $ordersBadge = $deltaBadge($row['changes']['orders'] ?? []);
-                                    $revenueBadge = $deltaBadge($row['changes']['revenue'] ?? []);
-                                @endphp
-                                <td>{{ number_format($row['orders'] ?? 0) }}</td>
-                                <td>
-                                    <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $ordersBadge['style'] }}">
-                                        {{ $ordersBadge['label'] }}
-                                    </span>
-                                </td>
-                                <td>{{ $row['revenue'] !== null ? '€ ' . number_format($row['revenue'], 2) : '-' }}</td>
-                                <td>
-                                    @if($row['revenue'] !== null)
-                                        <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $revenueBadge['style'] }}">
-                                            {{ $revenueBadge['label'] }}
-                                        </span>
-                                    @else
-                                        <span class="muted">-</span>
-                                    @endif
-                                </td>
+                                <th>{{ __('Ordini') }}</th>
+                                <th>&Delta; {{ __('ordini') }}</th>
+                                <th>{{ __('Ricavi') }}</th>
+                                <th>&Delta; {{ __('ricavi') }}</th>
                             @endif
                             @if($usesReservations)
-                                @php
-                                    $reservationsBadge = $deltaBadge($row['changes']['reservations'] ?? []);
-                                    $coversBadge = $deltaBadge($row['changes']['covers'] ?? []);
-                                @endphp
-                                <td>{{ number_format($row['reservations'] ?? 0) }}</td>
-                                <td>
-                                    <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $reservationsBadge['style'] }}">
-                                        {{ $reservationsBadge['label'] }}
-                                    </span>
-                                </td>
-                                <td>{{ number_format($row['covers'] ?? 0) }}</td>
-                                <td>
-                                    <span style="display:inline-block;padding:3px 8px;border:1px solid;border-radius:999px;font-size:12px;font-weight:600;{{ $coversBadge['style'] }}">
-                                        {{ $coversBadge['label'] }}
-                                    </span>
-                                </td>
+                                <th>{{ __('Prenotazioni') }}</th>
+                                <th>&Delta; {{ __('prenotazioni') }}</th>
+                                <th>{{ __('Coperti') }}</th>
+                                <th>&Delta; {{ __('coperti') }}</th>
                             @endif
-                            <td>€ {{ number_format($row['savings'] ?? 0, 2) }}</td>
+                            <th>{{ __('Risparmio stimato') }}</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach(array_reverse($monthlyRows) as $row)
+                            <tr>
+                                <td data-label="{{ __('Mese') }}">
+                                    <strong>{{ ucfirst($row['label']) }}</strong>
+                                </td>
+                                @if($usesOrders)
+                                    @php
+                                        $ordersBadge = $deltaBadge($row['changes']['orders'] ?? []);
+                                        $revenueBadge = $deltaBadge($row['changes']['revenue'] ?? []);
+                                    @endphp
+                                    <td data-label="{{ __('Ordini') }}">{{ number_format($row['orders'] ?? 0) }}</td>
+                                    <td data-label="&Delta; {{ __('ordini') }}">
+                                        <span class="delta-badge" style="{{ $ordersBadge['style'] }}">{{ $ordersBadge['label'] }}</span>
+                                    </td>
+                                    <td data-label="{{ __('Ricavi') }}">{{ $row['revenue'] !== null ? '€ ' . number_format($row['revenue'], 2) : '-' }}</td>
+                                    <td data-label="&Delta; {{ __('ricavi') }}">
+                                        @if($row['revenue'] !== null)
+                                            <span class="delta-badge" style="{{ $revenueBadge['style'] }}">{{ $revenueBadge['label'] }}</span>
+                                        @else
+                                            <span class="text-muted">-</span>
+                                        @endif
+                                    </td>
+                                @endif
+                                @if($usesReservations)
+                                    @php
+                                        $reservationsBadge = $deltaBadge($row['changes']['reservations'] ?? []);
+                                        $coversBadge = $deltaBadge($row['changes']['covers'] ?? []);
+                                    @endphp
+                                    <td data-label="{{ __('Prenotazioni') }}">{{ number_format($row['reservations'] ?? 0) }}</td>
+                                    <td data-label="&Delta; {{ __('prenotazioni') }}">
+                                        <span class="delta-badge" style="{{ $reservationsBadge['style'] }}">{{ $reservationsBadge['label'] }}</span>
+                                    </td>
+                                    <td data-label="{{ __('Coperti') }}">{{ number_format($row['covers'] ?? 0) }}</td>
+                                    <td data-label="&Delta; {{ __('coperti') }}">
+                                        <span class="delta-badge" style="{{ $coversBadge['style'] }}">{{ $coversBadge['label'] }}</span>
+                                    </td>
+                                @endif
+                                <td data-label="{{ __('Risparmio stimato') }}">€ {{ number_format($row['savings'] ?? 0, 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     @elseif($hasBusiness)
-        <div class="panel muted" style="margin-bottom: 18px; font-size: 13px;">
-            Dati mensili disponibili dopo uno snapshot con andamento mensile.
+        <div class="panel text-muted mb-5" style="font-size: 13px;">
+            {{ __('Dati mensili disponibili dopo uno snapshot con andamento mensile.') }}
         </div>
     @endif
 
-    {{-- Sezione 5: Info sito --}}
-    <h2>Info sito</h2>
-    <div class="grid" style="margin-bottom: 18px;">
-        <div class="metric">
-            <span class="muted">Pack</span>
+    {{-- Section: Info sito --}}
+    <div class="section-header" style="margin-bottom: 12px;">
+        <h2 class="section-title">{{ __('Info sito') }}</h2>
+    </div>
+
+    <div class="show-metric-grid mb-4">
+        <div class="show-metric">
+            <span>{{ __('Pack') }}</span>
             <strong>{{ $site->pack ?? '-' }}</strong>
         </div>
-        <div class="metric">
-            <span class="muted">Stato</span>
+        <div class="show-metric">
+            <span>{{ __('Stato') }}</span>
             <strong>
-                <span class="badge {{ $site->active ? '' : 'off' }}">{{ $site->active ? 'Attivo' : 'Inattivo' }}</span>
+                <span class="badge {{ $site->active ? 'badge-green' : 'badge-muted' }}">{{ $site->active ? __('Attivo') : __('Inattivo') }}</span>
             </strong>
         </div>
-        <div class="metric">
-            <span class="muted">Ultima sync riuscita</span>
+        <div class="show-metric">
+            <span>{{ __('Ultima sync riuscita') }}</span>
             <strong>{{ $site->last_success_at?->format('d/m/Y H:i') ?? 'Mai' }}</strong>
         </div>
-        <div class="metric" style="{{ $site->consecutive_failures > 0 ? 'border-color: #fecdca; background: #fff8f8;' : '' }}">
-            <span class="muted">Failures consecutive</span>
-            <strong style="{{ $site->consecutive_failures > 0 ? 'color: #b42318;' : '' }}">{{ $site->consecutive_failures }}</strong>
+        <div class="show-metric" style="{{ $site->consecutive_failures > 0 ? 'border-color: var(--red-border); background: var(--red-soft);' : '' }}">
+            <span>{{ __('Failures consecutive') }}</span>
+            <strong style="{{ $site->consecutive_failures > 0 ? 'color: var(--red);' : '' }}">{{ $site->consecutive_failures }}</strong>
         </div>
         @if($snapshot)
-            <div class="metric">
-                <span class="muted">Response time ultimo snapshot</span>
+            <div class="show-metric">
+                <span>{{ __('Response time ultimo snapshot') }}</span>
                 <strong>{{ $snapshot->response_time_ms ?? '-' }} ms</strong>
             </div>
-            <div class="metric">
-                <span class="muted">HTTP status ultimo snapshot</span>
+            <div class="show-metric">
+                <span>{{ __('HTTP status ultimo snapshot') }}</span>
                 <strong>{{ $snapshot->http_status_code ?? '-' }}</strong>
             </div>
         @endif
     </div>
 
     @if($site->notes)
-        <div class="panel muted" style="font-size: 13px; margin-bottom: 18px;">
-            <strong style="color: var(--ink);">Note</strong><br>
+        <div class="panel text-muted mb-5" style="font-size: 13px;">
+            <strong style="color: var(--ink);">{{ __('Note') }}</strong><br>
             {{ $site->notes }}
         </div>
     @endif
 
-    {{-- Sezione 6: Sync manuale --}}
-    <h2>Sincronizzazione manuale</h2>
-    <div class="panel" style="margin-bottom: 18px;">
+    {{-- Section: Sincronizzazione manuale --}}
+    <div class="section-header" style="margin-bottom: 12px;">
+        <h2 class="section-title">{{ __('Sincronizzazione manuale') }}</h2>
+    </div>
+
+    <div class="panel mb-5">
         <form method="POST" action="{{ route('sites.sync', $site) }}">
             @csrf
             <div class="actions" style="flex-wrap: wrap; gap: 12px; align-items: flex-end;">
                 <div class="field" style="margin: 0;">
-                    <label for="from">Da</label>
+                    <label for="from">{{ __('Da') }}</label>
                     <input type="date" id="from" name="from" value="{{ old('from') }}" style="width: auto; min-width: 150px;">
                 </div>
                 <div class="field" style="margin: 0;">
-                    <label for="to">A</label>
+                    <label for="to">{{ __('A') }}</label>
                     <input type="date" id="to" name="to" value="{{ old('to') }}" style="width: auto; min-width: 150px;">
                 </div>
-                <button class="btn primary" type="submit">Esegui sync</button>
+                <button class="btn btn-primary" type="submit">{{ __('Esegui sync') }}</button>
             </div>
-            <div class="muted" style="font-size: 12px; margin-top: 8px;">Lascia vuoti per usare il periodo di default del servizio.</div>
+            <div class="text-muted text-sm mt-2">{{ __('Lascia vuoti per usare il periodo di default del servizio.') }}</div>
         </form>
     </div>
 
-    {{-- Sezione 8: Errori sync (collassabile) --}}
+    {{-- Section: Errori sync (collassabile) --}}
     <details style="margin-bottom: 18px;">
-        <summary style="cursor: pointer; font-size: 16px; font-weight: 700; padding: 10px 0; user-select: none; list-style: none;">
-            &#9654; Errori di sincronizzazione ({{ $site->syncErrors->count() }})
-        </summary>
-        <div style="margin-top: 12px;">
-            @if($site->syncErrors->count() > 0)
-                <div class="table-wrap" style="margin-bottom: 10px;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Data</th>
-                                <th>Codice</th>
-                                <th>HTTP</th>
-                                <th>Messaggio</th>
-                                <th>Failures al momento</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($site->syncErrors as $error)
-                                <tr>
-                                    <td style="white-space: nowrap;">{{ $error->occurred_at?->format('d/m/Y H:i') ?? $error->created_at?->format('d/m/Y H:i') ?? '-' }}</td>
-                                    <td>
+        <div class="collapsible">
+            <summary>
+                {{ __('Errori di sincronizzazione') }} ({{ $site->syncErrors->count() }})
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </summary>
+            <div class="collapsible-body">
+                @if($site->syncErrors->count() > 0)
+                    <div class="card-table" style="margin-top: 12px;">
+                        <div class="table-wrap" style="margin-bottom: 10px;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>{{ __('Data') }}</th>
+                                        <th>{{ __('Codice') }}</th>
+                                        <th>{{ __('HTTP') }}</th>
+                                        <th>{{ __('Messaggio') }}</th>
+                                        <th>{{ __('Failures al momento') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($site->syncErrors as $error)
                                         @php
                                             $codeBadgeStyle = match($error->code ?? '') {
                                                 'TIMEOUT'      => 'color: #93370d; background: #fffaeb;',
@@ -528,35 +563,45 @@
                                                 default        => 'color: #475467; background: #f2f4f7;',
                                             };
                                         @endphp
-                                        <span style="display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; {{ $codeBadgeStyle }}">
-                                            {{ $error->code ?? '-' }}
-                                        </span>
-                                    </td>
-                                    <td>{{ $error->http_status_code ?? '-' }}</td>
-                                    <td>{{ $error->message }}</td>
-                                    <td>{{ $error->consecutive_failures }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <a href="{{ route('sync-errors.index', ['site_id' => $site->id]) }}" style="font-size: 13px;">
-                    Vedi tutti gli errori di questo sito &rarr;
-                </a>
-            @else
-                <div class="panel muted" style="text-align: center; padding: 20px;">Nessun errore di sincronizzazione.</div>
-            @endif
+                                        <tr>
+                                            <td data-label="{{ __('Data') }}" style="white-space: nowrap;">{{ $error->occurred_at?->format('d/m/Y H:i') ?? $error->created_at?->format('d/m/Y H:i') ?? '-' }}</td>
+                                            <td data-label="{{ __('Codice') }}">
+                                                <span style="display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; {{ $codeBadgeStyle }}">
+                                                    {{ $error->code ?? '-' }}
+                                                </span>
+                                            </td>
+                                            <td data-label="{{ __('HTTP') }}">{{ $error->http_status_code ?? '-' }}</td>
+                                            <td data-label="{{ __('Messaggio') }}">{{ $error->message }}</td>
+                                            <td data-label="{{ __('Failures al momento') }}">{{ $error->consecutive_failures }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <a href="{{ route('sync-errors.index', ['site_id' => $site->id]) }}" style="font-size: 13px;">
+                        {{ __('Vedi tutti gli errori di questo sito') }} &rarr;
+                    </a>
+                @else
+                    <div class="panel text-muted mt-3" style="text-align: center; padding: 20px;">{{ __('Nessun errore di sincronizzazione.') }}</div>
+                @endif
+            </div>
         </div>
     </details>
 
-    {{-- Sezione 9: Payload grezzo (collassabile, chiuso di default) --}}
+    {{-- Section: Payload grezzo (collassabile) --}}
     @if($snapshot)
         <details style="margin-bottom: 18px;">
-            <summary style="cursor: pointer; font-size: 16px; font-weight: 700; padding: 10px 0; user-select: none; list-style: none;">
-                &#9654; Payload grezzo (JSON)
-            </summary>
-            <div style="margin-top: 12px;">
-                <pre>{{ json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
+            <div class="collapsible">
+                <summary>
+                    {{ __('Payload grezzo (JSON)') }}
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                    </svg>
+                </summary>
+                <div class="collapsible-body" style="padding-top: 12px;">
+                    <pre>{{ json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
+                </div>
             </div>
         </details>
     @endif
@@ -638,7 +683,7 @@
     }
 
     select.addEventListener('change', function () { update(this.value); });
-    update(select.value); // init con current_month (selected by default)
+    update(select.value);
 })();
 </script>
 @endif

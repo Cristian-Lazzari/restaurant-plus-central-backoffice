@@ -1,48 +1,55 @@
 @csrf
+
 <div class="field">
-    <label for="name">Name</label>
-    <input id="name" name="name" type="text" value="{{ old('name', $site->name) }}" required>
+    <label for="name">{{ __('Nome sito') }}</label>
+    <input id="name" name="name" type="text" value="{{ old('name', $site->name) }}" required autocomplete="off">
 </div>
+
 <div class="field">
-    <label for="url">Dashboard URL</label>
-    <input id="url" name="url" type="url" value="{{ old('url', $site->url) }}" placeholder="https://dashboard.ristorante.it" required>
+    <label for="url">{{ __('URL dashboard') }}</label>
+    <input id="url" name="url" type="url" value="{{ old('url', $site->url) }}" placeholder="https://dashboard.ristorante.it" required autocomplete="off">
 </div>
+
 <div class="field">
-    <label for="token">Private report token</label>
-    <div class="actions" style="align-items: flex-start;">
-        <div style="flex: 1 1 360px;">
-            <input id="token" name="token" type="password" autocomplete="new-password" placeholder="{{ $site->exists ? 'Lascia vuoto per mantenere il token attuale' : '' }}" {{ $site->exists ? '' : 'required' }}>
+    <label for="token">{{ __('Token report privato') }}</label>
+    <div style="display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap;">
+        <div style="flex: 1 1 280px;">
+            <input id="token" name="token" type="password" autocomplete="new-password" placeholder="{{ $site->exists ? __('Lascia vuoto per mantenere il token attuale') : '' }}" {{ $site->exists ? '' : 'required' }}>
         </div>
-        <button class="btn" id="generate-report-token" type="button">Genera token</button>
-        <button class="btn" id="copy-report-token" type="button" disabled>Copia token</button>
+        <button class="btn" id="generate-report-token" type="button">{{ __('Genera token') }}</button>
+        <button class="btn" id="copy-report-token" type="button" disabled>{{ __('Copia token') }}</button>
     </div>
     @if($site->exists)
-        <div class="muted" style="margin-top: 6px;">Se rigeneri il token, ricordati di aggiornarlo anche nel .env della dashboard ristorante.</div>
+        <div class="text-muted text-sm" style="margin-top: 6px;">{{ __('Se rigeneri il token, ricordati di aggiornarlo anche nel .env della dashboard ristorante.') }}</div>
     @endif
     <div id="report-token-snippet-wrap" style="display: none; margin-top: 10px;">
-        <label for="report-token-snippet">Dashboard sorgente .env</label>
+        <label for="report-token-snippet">{{ __('Dashboard sorgente .env') }}</label>
         <textarea id="report-token-snippet" rows="3" readonly></textarea>
-        <div class="muted" style="margin-top: 6px;">Copia questo token nel file .env della dashboard ristorante, poi esegui php artisan optimize:clear e php artisan config:cache sulla dashboard sorgente.</div>
+        <div class="text-muted text-sm" style="margin-top: 6px;">{{ __('Copia questo token nel file .env della dashboard ristorante, poi esegui php artisan optimize:clear e php artisan config:cache sulla dashboard sorgente.') }}</div>
     </div>
 </div>
+
 <div class="field">
-    <label class="inline">
+    <label class="check-label">
         <input name="active" type="checkbox" value="1" @checked(old('active', $site->exists ? $site->active : true))>
-        Active
+        {{ __('Sito attivo') }}
     </label>
 </div>
+
 <div class="field">
-    <label for="retention_days">Retention days</label>
-    <input id="retention_days" name="retention_days" type="text" value="{{ old('retention_days', $site->retention_days ?? 90) }}">
-    <div class="muted">For now this is stored only; automatic cleanup is reserved for V2.</div>
+    <label for="retention_days">{{ __('Giorni di retention') }}</label>
+    <input id="retention_days" name="retention_days" type="text" value="{{ old('retention_days', $site->retention_days ?? 90) }}" style="max-width: 160px;">
+    <div class="text-muted text-sm" style="margin-top: 6px;">{{ __('Il valore viene salvato; la pulizia automatica è prevista per la V2.') }}</div>
 </div>
+
 <div class="field">
-    <label for="notes">Private notes</label>
+    <label for="notes">{{ __('Note interne') }}</label>
     <textarea id="notes" name="notes" rows="4">{{ old('notes', $site->notes) }}</textarea>
 </div>
-<div class="actions">
-    <button class="btn primary" type="submit">Save</button>
-    <a class="btn" href="{{ $site->exists ? route('sites.show', $site) : route('dashboard') }}">Cancel</a>
+
+<div class="actions" style="padding-top: 4px;">
+    <button class="btn btn-primary" type="submit">{{ __('Salva') }}</button>
+    <a class="btn" href="{{ $site->exists ? route('sites.show', $site) : route('dashboard') }}">{{ __('Annulla') }}</a>
 </div>
 
 <script>
@@ -61,12 +68,12 @@
             snippet.value = tokenSnippet(token);
             snippetWrap.style.display = 'block';
             copyButton.disabled = false;
-            copyButton.textContent = 'Copia token';
+            copyButton.textContent = '{{ __('Copia token') }}';
         }
 
         window.generateReportToken = function generateReportToken() {
             if (! window.crypto || ! window.crypto.getRandomValues) {
-                alert('Generazione sicura non disponibile in questo browser.');
+                alert('{{ __('Generazione sicura non disponibile in questo browser.') }}');
                 return;
             }
 
@@ -90,16 +97,16 @@
 
             try {
                 await navigator.clipboard.writeText(snippet.value);
-                copyButton.textContent = 'Copiato';
+                copyButton.textContent = '{{ __('Copiato') }}';
             } catch (error) {
                 snippet.focus();
                 snippet.select();
                 document.execCommand('copy');
-                copyButton.textContent = 'Copiato';
+                copyButton.textContent = '{{ __('Copiato') }}';
             }
 
             setTimeout(function () {
-                copyButton.textContent = 'Copia token';
+                copyButton.textContent = '{{ __('Copia token') }}';
             }, 1600);
         });
     })();
