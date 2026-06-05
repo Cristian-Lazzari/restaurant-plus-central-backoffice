@@ -68,10 +68,21 @@
         .collapsible-body { padding: 0 16px 16px; border-top: 1px solid var(--border-soft); }
         .period-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--surface); margin-bottom: 12px; box-shadow: var(--shadow-sm); }
         .delta-badge { display: inline-block; padding: 2px 8px; border: 1px solid; border-radius: 999px; font-size: 11px; font-weight: 600; }
-        .show-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+        .show-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .show-metric { border: 1px solid var(--border-soft); border-radius: var(--radius); padding: 14px 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
         .show-metric span { display: block; color: var(--muted); font-size: 12px; }
         .show-metric strong { display: block; font-size: 20px; line-height: 1.2; margin-top: 4px; font-weight: 760; }
+        .site-url-link { word-break: break-all; overflow-wrap: anywhere; }
+        .page-header-actions { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+        @media (max-width: 600px) {
+            .show-metric-grid { grid-template-columns: repeat(2, 1fr); }
+            .page-header-actions { flex-direction: column; align-items: stretch; }
+            .page-header-actions .actions { flex-direction: row; }
+            .page-header-actions .actions .btn,
+            .page-header-actions .actions form { flex: 1; }
+            .page-header-actions .actions form .btn { width: 100%; }
+            .period-selector { flex-direction: column; align-items: flex-start; }
+        }
     </style>
 
     {{-- Section: Breadcrumb + Page header --}}
@@ -82,14 +93,14 @@
             <span>{{ $site->name }}</span>
         </nav>
 
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
-            <div>
+        <div class="page-header-actions">
+            <div style="min-width: 0; flex: 1;">
                 <h1 class="page-title">{{ $site->name }}</h1>
                 <div class="page-subtitle">
-                    <a href="{{ $site->url }}" target="_blank" rel="noopener noreferrer" style="color: var(--muted);">{{ $site->url }}</a>
+                    <a href="{{ $site->url }}" target="_blank" rel="noopener noreferrer" class="site-url-link" style="color: var(--muted);">{{ $site->url }}</a>
                 </div>
             </div>
-            <div class="actions">
+            <div class="actions" style="flex-shrink: 0;">
                 <a class="btn" href="{{ route('sites.edit', $site) }}">{{ __('Modifica') }}</a>
                 <form method="POST" action="{{ route('sites.toggle', $site) }}">
                     @csrf

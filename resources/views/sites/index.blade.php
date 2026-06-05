@@ -69,7 +69,20 @@
         .dashboard-table th { white-space: nowrap; }
         .site-order-controls { gap: 4px; flex-wrap: nowrap; }
         @media (max-width: 980px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } .dashboard-hero { grid-template-columns: 1fr; } .hero-actions { justify-content: flex-start; } }
-        @media (max-width: 768px) { .kpi-grid { grid-template-columns: 1fr; } .dashboard-hero { gap: 14px; margin-bottom: 18px; } .hero-actions .btn, .hero-actions form { width: 100%; } .hero-actions form .btn { width: 100%; } .chart-box { height: 260px; padding: 14px; } .site-url-text { max-width: 100%; white-space: normal; word-break: break-word; } .footer-note { text-align: left; } .info-strip { flex-direction: column; align-items: flex-start; } }
+        @media (max-width: 768px) {
+            .kpi-grid { grid-template-columns: 1fr; }
+            .dashboard-hero { gap: 14px; margin-bottom: 18px; }
+            .hero-actions { width: 100%; flex-direction: column; }
+            .hero-actions .btn,
+            .hero-actions form,
+            .hero-actions form .btn,
+            .hero-actions .sync-chip { width: 100%; box-sizing: border-box; }
+            .sync-chip { white-space: normal; }
+            .chart-box { height: 240px; padding: 12px; }
+            .site-url-text { max-width: 100%; white-space: normal; word-break: break-word; }
+            .footer-note { text-align: left; }
+            .info-strip { flex-direction: column; align-items: flex-start; }
+        }
     </style>
 
     {{-- Section: Dashboard hero --}}

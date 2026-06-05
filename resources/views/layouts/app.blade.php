@@ -50,6 +50,7 @@
             font-size: 14px;
             line-height: 1.5;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
         a { color: var(--brand); text-decoration: none; }
@@ -196,16 +197,17 @@
 
         /* ─── Sidebar backdrop ─── */
         .sidebar-backdrop {
-            display: none;
             position: fixed;
             inset: 0;
             background: rgba(0,0,0,0.45);
             z-index: 45;
             opacity: 0;
+            pointer-events: none;
             transition: opacity 0.25s ease;
         }
         .sidebar-backdrop.visible {
             opacity: 1;
+            pointer-events: auto;
         }
 
         /* ─── Layout ─── */
@@ -375,7 +377,8 @@
             border-radius: var(--radius);
             box-shadow: var(--shadow-sm);
         }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        table { width: 100%; border-collapse: collapse; }
+        .table-wrap table { min-width: 560px; }
         th {
             color: #475467;
             background: #fbfcfe;
@@ -575,6 +578,7 @@
                 overflow-x: visible;
                 border-radius: 0;
             }
+            .card-table .table-wrap table { min-width: 0; }
             .card-table table,
             .card-table thead,
             .card-table tbody,
@@ -582,6 +586,7 @@
             .card-table td {
                 display: block;
                 width: 100%;
+                min-width: 0;
             }
             .card-table thead { display: none; }
             .card-table tr {
@@ -630,8 +635,7 @@
         /* ─── Responsive ─── */
         @media (max-width: 768px) {
             .sidebar { transform: translateX(-100%); }
-            .sidebar.open { transform: translateX(0); }
-            .sidebar-backdrop { display: block; }
+            .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.25); }
             .main-area { margin-left: 0; }
             .topbar { display: flex; }
             .page-content { padding: 16px 14px 36px; }
@@ -639,11 +643,14 @@
             .grid-3 { grid-template-columns: repeat(2, 1fr); }
             .page-title { font-size: 22px; }
             .alert-strip { flex-direction: column; align-items: flex-start; }
+            .hero-copy { max-width: 100%; }
+            .actions { gap: 6px; }
         }
 
         @media (max-width: 480px) {
             .grid-4 { grid-template-columns: 1fr; }
             .grid-3 { grid-template-columns: 1fr; }
+            .btn { min-height: 40px; }
         }
     </style>
 </head>
