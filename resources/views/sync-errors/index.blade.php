@@ -88,7 +88,7 @@
 
                                 {{-- Codice --}}
                                 <td data-label="{{ __('Codice') }}">
-                                    <span style="display:inline-block; padding: 3px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; {{ $codeBadgeStyle }}">
+                                    <span style="display:inline-flex; align-items:center; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; {{ $codeBadgeStyle }}">
                                         {{ $error->code ?? '-' }}
                                     </span>
                                 </td>
@@ -97,7 +97,7 @@
                                 <td data-label="{{ __('HTTP Status') }}">{{ $error->http_status_code ?? '-' }}</td>
 
                                 {{-- Messaggio --}}
-                                <td data-label="{{ __('Messaggio') }}">{{ $error->message }}</td>
+                                <td class="td-full" data-label="{{ __('Messaggio') }}" style="word-break: break-word; overflow-wrap: anywhere;">{{ $error->message }}</td>
 
                                 {{-- Failures al momento --}}
                                 <td data-label="{{ __('Failures') }}">{{ $error->consecutive_failures }}</td>

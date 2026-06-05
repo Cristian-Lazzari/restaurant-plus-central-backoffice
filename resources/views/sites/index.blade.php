@@ -78,7 +78,12 @@
             .hero-actions form .btn,
             .hero-actions .sync-chip { width: 100%; box-sizing: border-box; }
             .sync-chip { white-space: normal; }
-            .chart-box { height: 240px; padding: 12px; }
+            .chart-box {
+                height: clamp(260px, 72vw, 340px);
+                margin: 0 -14px;
+                border-left: 0; border-right: 0; border-radius: 0;
+                padding: 14px 10px 10px;
+            }
             .site-url-text { max-width: 100%; white-space: normal; word-break: break-word; }
             .footer-note { text-align: left; }
             .info-strip { flex-direction: column; align-items: flex-start; }

@@ -67,7 +67,19 @@
         details[open] .collapsible summary svg { transform: rotate(90deg); }
         .collapsible-body { padding: 0 16px 16px; border-top: 1px solid var(--border-soft); }
         .period-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--surface); margin-bottom: 12px; box-shadow: var(--shadow-sm); }
-        .delta-badge { display: inline-block; padding: 2px 8px; border: 1px solid; border-radius: 999px; font-size: 11px; font-weight: 600; }
+        .delta-badge { display: inline-flex; align-items: center; padding: 2px 8px; border: 1px solid; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .chart-monthly-wrap { overflow: hidden; }
+        @media (max-width: 768px) {
+            .chart-monthly-wrap {
+                margin: 0 -14px;
+                border-left: 0; border-right: 0; border-radius: 0;
+                padding: 12px 10px 12px;
+            }
+            .chart-monthly-wrap canvas {
+                max-height: none !important;
+                height: clamp(240px, 65vw, 320px) !important;
+            }
+        }
         .show-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
         .show-metric { border: 1px solid var(--border-soft); border-radius: var(--radius); padding: 14px 16px; background: var(--surface); box-shadow: var(--shadow-sm); }
         .show-metric span { display: block; color: var(--muted); font-size: 12px; }
@@ -347,25 +359,25 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td data-label="{{ __('Elemento') }}">{{ __('Prodotti') }}</td>
+                            <td class="td-primary" data-label="{{ __('Elemento') }}">{{ __('Prodotti') }}</td>
                             <td data-label="{{ __('Ultimo aggiornamento') }}" class="text-muted">{{ !empty($usageMenu['last_product_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_product_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
                             <td data-label="{{ __('Aggiornati 7gg') }}">{{ $usageMenu['products_updated_last_7_days'] ?? '-' }}</td>
                             <td data-label="{{ __('Aggiornati 30gg') }}">{{ $usageMenu['products_updated_last_30_days'] ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <td data-label="{{ __('Elemento') }}">{{ __('Categorie') }}</td>
+                            <td class="td-primary" data-label="{{ __('Elemento') }}">{{ __('Categorie') }}</td>
                             <td data-label="{{ __('Ultimo aggiornamento') }}" class="text-muted">{{ !empty($usageMenu['last_category_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_category_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
                             <td data-label="{{ __('Aggiornati 7gg') }}">{{ $usageMenu['categories_updated_last_7_days'] ?? '-' }}</td>
                             <td data-label="{{ __('Aggiornati 30gg') }}">{{ $usageMenu['categories_updated_last_30_days'] ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <td data-label="{{ __('Elemento') }}">{{ __('Ingredienti') }}</td>
+                            <td class="td-primary" data-label="{{ __('Elemento') }}">{{ __('Ingredienti') }}</td>
                             <td data-label="{{ __('Ultimo aggiornamento') }}" class="text-muted">{{ !empty($usageMenu['last_ingredient_updated_at']) ? \Carbon\Carbon::parse($usageMenu['last_ingredient_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
                             <td data-label="{{ __('Aggiornati 7gg') }}">{{ $usageMenu['ingredients_updated_last_7_days'] ?? '-' }}</td>
                             <td data-label="{{ __('Aggiornati 30gg') }}">{{ $usageMenu['ingredients_updated_last_30_days'] ?? '-' }}</td>
                         </tr>
                         <tr>
-                            <td data-label="{{ __('Elemento') }}">{{ __('Post') }}</td>
+                            <td class="td-primary" data-label="{{ __('Elemento') }}">{{ __('Post') }}</td>
                             <td data-label="{{ __('Ultimo aggiornamento') }}" class="text-muted">{{ !empty($usageContent['last_post_updated_at']) ? \Carbon\Carbon::parse($usageContent['last_post_updated_at'])->format('d/m/Y H:i') : '-' }}</td>
                             <td data-label="{{ __('Aggiornati 7gg') }}">{{ $usageContent['posts_updated_last_7_days'] ?? '-' }}</td>
                             <td data-label="{{ __('Aggiornati 30gg') }}">{{ $usageContent['posts_updated_last_30_days'] ?? '-' }}</td>
@@ -392,8 +404,8 @@
     </div>
 
     @if($hasBusiness && $hasMonthlyTrend)
-        <div class="panel mb-3" style="padding: 16px;">
-            <canvas id="chartMonthly" style="max-height: 280px;"></canvas>
+        <div class="panel mb-3 chart-monthly-wrap" style="padding: 16px;">
+            <canvas id="chartMonthly"></canvas>
         </div>
 
         @if(($monthlyTrend['source'] ?? null) === 'daily')
@@ -426,7 +438,7 @@
                     <tbody>
                         @foreach(array_reverse($monthlyRows) as $row)
                             <tr>
-                                <td data-label="{{ __('Mese') }}">
+                                <td class="td-primary" data-label="{{ __('Mese') }}">
                                     <strong>{{ ucfirst($row['label']) }}</strong>
                                 </td>
                                 @if($usesOrders)
@@ -461,7 +473,7 @@
                                         <span class="delta-badge" style="{{ $coversBadge['style'] }}">{{ $coversBadge['label'] }}</span>
                                     </td>
                                 @endif
-                                <td data-label="{{ __('Risparmio stimato') }}">€ {{ number_format($row['savings'] ?? 0, 2) }}</td>
+                                <td class="td-full" data-label="{{ __('Risparmio stimato') }}">€ {{ number_format($row['savings'] ?? 0, 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -577,12 +589,12 @@
                                         <tr>
                                             <td data-label="{{ __('Data') }}" style="white-space: nowrap;">{{ $error->occurred_at?->format('d/m/Y H:i') ?? $error->created_at?->format('d/m/Y H:i') ?? '-' }}</td>
                                             <td data-label="{{ __('Codice') }}">
-                                                <span style="display:inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; {{ $codeBadgeStyle }}">
+                                                <span style="display:inline-flex; align-items:center; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; {{ $codeBadgeStyle }}">
                                                     {{ $error->code ?? '-' }}
                                                 </span>
                                             </td>
                                             <td data-label="{{ __('HTTP') }}">{{ $error->http_status_code ?? '-' }}</td>
-                                            <td data-label="{{ __('Messaggio') }}">{{ $error->message }}</td>
+                                            <td class="td-full" data-label="{{ __('Messaggio') }}" style="word-break: break-word; overflow-wrap: anywhere;">{{ $error->message }}</td>
                                             <td data-label="{{ __('Failures al momento') }}">{{ $error->consecutive_failures }}</td>
                                         </tr>
                                     @endforeach

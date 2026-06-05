@@ -571,65 +571,90 @@
 
         /* ─── Mobile card-table ─── */
         @media (max-width: 768px) {
+            /* Rimuovi bordi del wrapper */
             .card-table .table-wrap {
-                border: 0;
-                box-shadow: none;
-                background: transparent;
-                overflow-x: visible;
-                border-radius: 0;
+                border: 0; box-shadow: none; background: transparent;
+                overflow-x: visible; border-radius: 0;
             }
             .card-table .table-wrap table { min-width: 0; }
-            .card-table table,
-            .card-table thead,
-            .card-table tbody,
-            .card-table tr,
-            .card-table td {
-                display: block;
-                width: 100%;
-                min-width: 0;
+
+            /* Reset display su tutti gli elementi della tabella */
+            .card-table table, .card-table thead,
+            .card-table tbody, .card-table tr, .card-table td {
+                display: block; width: 100%; min-width: 0;
             }
             .card-table thead { display: none; }
+
+            /* Ogni riga diventa una card a 2 colonne */
             .card-table tr {
                 background: var(--surface);
                 border: 1px solid var(--border-soft);
                 border-radius: var(--radius);
-                padding: 14px;
+                padding: 12px 10px 6px;
                 margin-bottom: 10px;
                 box-shadow: var(--shadow-sm);
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                column-gap: 4px;
+                align-items: start;
             }
+
+            /* Ogni cella: etichetta sopra, valore sotto */
             .card-table td {
                 border: none;
-                padding: 6px 0;
-                display: grid;
-                grid-template-columns: minmax(100px, 35%) 1fr;
-                gap: 8px;
-                align-items: start;
+                padding: 5px 4px 8px;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
                 font-size: 13px;
+                min-width: 0;
+                overflow: hidden;
             }
             .card-table td::before {
                 content: attr(data-label);
                 color: var(--muted);
+                font-size: 10px;
                 font-weight: 760;
-                font-size: 11px;
                 text-transform: uppercase;
-                padding-top: 1px;
+                letter-spacing: 0.03em;
+                flex-shrink: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
+
+            /* Cella primaria (nome sito, mese, ecc.) → piena larghezza */
             .card-table td.td-primary {
+                grid-column: 1 / -1;
                 display: block;
-                padding-bottom: 10px;
+                padding: 0 4px 10px;
                 border-bottom: 1px solid var(--border-soft);
                 margin-bottom: 4px;
             }
             .card-table td.td-primary::before { display: none; }
+
+            /* Cella full-width (risparmio, messaggi lunghi) */
+            .card-table td.td-full {
+                grid-column: 1 / -1;
+            }
+
+            /* Cella azioni → piena larghezza, bottoni 2 colonne */
             .card-table td.td-actions {
+                grid-column: 1 / -1;
                 display: block;
-                padding-top: 10px;
+                padding: 10px 4px 4px;
                 border-top: 1px solid var(--border-soft);
                 margin-top: 4px;
             }
             .card-table td.td-actions::before { display: none; }
-            .card-table td.td-actions .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-            .card-table td.td-actions .btn { width: 100%; }
+            .card-table td.td-actions .actions {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            .card-table td.td-actions .btn,
+            .card-table td.td-actions form { width: 100%; }
+            .card-table td.td-actions form .btn { width: 100%; }
         }
 
         /* ─── Responsive ─── */
