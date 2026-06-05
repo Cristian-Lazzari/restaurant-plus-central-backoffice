@@ -39,382 +39,205 @@
     @endphp
 
     <style>
-        .dashboard-page { display: flex; flex-direction: column; gap: 22px; }
-        .dashboard-hero {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 18px;
-            align-items: end;
-            padding: 8px 0 2px;
-        }
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--muted);
-            font-size: 13px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-        .hero-copy { margin-top: 8px; color: var(--muted); max-width: 680px; line-height: 1.5; }
+        .icon { width: 16px; height: 16px; flex-shrink: 0; }
+        .dashboard-hero { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 18px; align-items: end; margin-bottom: 24px; }
+        .eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+        .hero-copy { margin-top: 8px; color: var(--muted); max-width: 680px; line-height: 1.5; font-size: 13.5px; }
         .hero-actions { justify-content: flex-end; }
-        .sync-summary {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 11px;
-            border: 1px solid var(--border-soft);
-            border-radius: 8px;
-            background: #fff;
-            color: var(--muted);
-            box-shadow: var(--shadow);
-            font-size: 13px;
-        }
-        .dashboard-kpis {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 12px;
-        }
-        .kpi-card {
-            display: flex;
-            gap: 13px;
-            align-items: flex-start;
-            min-height: 124px;
-            border: 1px solid var(--border-soft);
-            border-radius: 8px;
-            background: #fff;
-            padding: 16px;
-            box-shadow: var(--shadow);
-        }
-        .kpi-card.featured {
-            border-color: #fedf89;
-            background: #fffdf5;
-        }
-        .kpi-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex: 0 0 38px;
-            background: var(--brand-soft);
-            color: var(--brand);
-        }
+        .kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 20px; }
+        .kpi-card { display: flex; gap: 13px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow-sm); }
+        .kpi-card.featured { border-color: #fedf89; background: #fffdf5; }
+        .kpi-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; background: var(--brand-soft); color: var(--brand); }
         .kpi-icon.green { background: var(--green-soft); color: var(--green); }
         .kpi-icon.amber { background: var(--amber-soft); color: var(--amber); }
         .kpi-icon.red { background: var(--red-soft); color: var(--red); }
-        .kpi-label { color: var(--muted); font-size: 12px; font-weight: 760; text-transform: uppercase; }
-        .kpi-value { display: block; margin-top: 6px; font-size: 25px; line-height: 1.15; font-weight: 780; }
-        .kpi-sub { margin-top: 6px; color: var(--muted); font-size: 12px; line-height: 1.35; }
-        .info-strip {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 14px;
-            border: 1px solid var(--border-soft);
-            border-radius: 8px;
-            background: #fff;
-            box-shadow: var(--shadow);
-            color: var(--muted);
-            font-size: 13px;
-        }
-        .alert-strip {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            border: 1px solid #fecdca;
-            border-radius: 8px;
-            background: var(--red-soft);
-            padding: 13px 14px;
-            color: var(--red);
-        }
-        .alert-strip strong { display: inline-flex; align-items: center; gap: 8px; }
-        .chart-panel { height: 320px; }
-        .chart-panel canvas { width: 100%; height: 100% !important; }
-        .empty-state {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 18px;
-            border: 1px dashed var(--border);
-            border-radius: 8px;
-            background: #fff;
-            color: var(--muted);
-        }
-        .dashboard-table { min-width: 0; }
-        .dashboard-table th { white-space: nowrap; }
-        .site-cell strong { font-size: 14px; }
-        .site-url {
-            display: block;
-            max-width: 280px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: var(--muted);
-            font-size: 12px;
-            margin-top: 3px;
-        }
+        .kpi-label { color: var(--muted); font-size: 11px; font-weight: 760; text-transform: uppercase; }
+        .kpi-value { display: block; font-size: 24px; font-weight: 780; line-height: 1.15; margin-top: 5px; }
+        .kpi-sub { margin-top: 5px; color: var(--muted); font-size: 12px; }
+        .sync-chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 11px; border: 1px solid var(--border-soft); border-radius: var(--radius-sm); background: var(--surface); color: var(--muted); font-size: 12px; box-shadow: var(--shadow-sm); }
+        .info-strip { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-sm); color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+        .site-name { font-weight: 700; font-size: 13px; }
+        .site-url-text { display: block; font-size: 11px; color: var(--muted); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
         .metric-main { display: block; font-weight: 760; }
-        .metric-note { color: var(--muted); font-size: 12px; margin-top: 3px; }
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 9px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 760;
-        }
-        .site-order-controls { gap: 4px; flex-wrap: nowrap; }
-        .order-handle {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            color: var(--muted);
-            font-size: 12px;
-            font-weight: 700;
-            margin-right: 4px;
-        }
-        .mobile-card-table { width: 100%; }
+        .metric-note { color: var(--muted); font-size: 11px; margin-top: 2px; }
+        .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 760; }
+        .chart-box { background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow-sm); height: 320px; margin-bottom: 20px; }
+        .chart-box canvas { width: 100% !important; height: 100% !important; }
+        .order-handle { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; font-weight: 700; }
+        .footer-note { text-align: right; font-size: 12px; margin-top: 8px; }
         .compact-table { min-width: 0; }
-        .footer-link { text-align: right; font-size: 13px; margin-top: -6px; }
-        @media (max-width: 980px) {
-            .dashboard-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-            .dashboard-hero { grid-template-columns: 1fr; align-items: start; }
-            .hero-actions { justify-content: flex-start; }
-        }
-        @media (max-width: 760px) {
-            .dashboard-page { gap: 18px; }
-            .hero-actions .btn, .hero-actions form { width: 100%; }
-            .hero-actions form .btn { width: 100%; }
-            .sync-summary, .info-strip { width: 100%; align-items: flex-start; }
-            .dashboard-kpis { grid-template-columns: 1fr; }
-            .kpi-card { min-height: 0; padding: 14px; }
-            .kpi-value { font-size: 23px; }
-            .alert-strip, .info-strip { flex-direction: column; align-items: flex-start; }
-            .chart-panel { height: 280px; }
-            .table-wrap.mobile-card-table {
-                border: 0;
-                box-shadow: none;
-                background: transparent;
-                border-radius: 0;
-                overflow-x: visible;
-            }
-            .mobile-card-table table,
-            .mobile-card-table thead,
-            .mobile-card-table tbody,
-            .mobile-card-table tr,
-            .mobile-card-table td {
-                display: block;
-                width: 100%;
-            }
-            .mobile-card-table thead { display: none; }
-            .mobile-card-table tr {
-                background: #fff;
-                border: 1px solid var(--border-soft);
-                border-radius: 8px;
-                box-shadow: var(--shadow);
-                padding: 13px 14px;
-                margin-bottom: 12px;
-            }
-            .mobile-card-table td {
-                border: 0;
-                padding: 7px 0;
-                display: grid;
-                grid-template-columns: minmax(96px, 36%) minmax(0, 1fr);
-                gap: 10px;
-                align-items: start;
-                font-size: 13px;
-            }
-            .mobile-card-table td::before {
-                content: attr(data-label);
-                color: var(--muted);
-                font-weight: 760;
-            }
-            .mobile-card-table td.primary-cell {
-                display: block;
-                padding-top: 0;
-                padding-bottom: 10px;
-                border-bottom: 1px solid var(--border-soft);
-                margin-bottom: 5px;
-            }
-            .mobile-card-table td.primary-cell::before { content: ""; display: none; }
-            .mobile-card-table td.actions-cell {
-                display: block;
-                padding-top: 10px;
-            }
-            .mobile-card-table td.actions-cell::before { content: ""; display: none; }
-            .mobile-card-table .actions-cell .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-            .mobile-card-table .actions-cell .btn { width: 100%; }
-            .site-url { max-width: 100%; white-space: normal; word-break: break-word; }
-            .footer-link { text-align: left; }
-        }
+        .dashboard-table th { white-space: nowrap; }
+        .site-order-controls { gap: 4px; flex-wrap: nowrap; }
+        @media (max-width: 980px) { .kpi-grid { grid-template-columns: repeat(2,1fr); } .dashboard-hero { grid-template-columns: 1fr; } .hero-actions { justify-content: flex-start; } }
+        @media (max-width: 768px) { .kpi-grid { grid-template-columns: 1fr; } .dashboard-hero { gap: 14px; margin-bottom: 18px; } .hero-actions .btn, .hero-actions form { width: 100%; } .hero-actions form .btn { width: 100%; } .chart-box { height: 260px; padding: 14px; } .site-url-text { max-width: 100%; white-space: normal; word-break: break-word; } .footer-note { text-align: left; } .info-strip { flex-direction: column; align-items: flex-start; } }
     </style>
 
-    <div class="dashboard-page">
-        <section class="dashboard-hero">
-            <div>
-                <div class="eyebrow">
-                    {!! $iconSvg('activity') !!}
-                    Monitoraggio centrale
-                </div>
-                <h1>Dashboard</h1>
-                <div class="hero-copy">
-                    Controllo rapido dei siti collegati, dati business e stato delle sincronizzazioni.
-                </div>
+    {{-- Section: Dashboard hero --}}
+    <section class="dashboard-hero">
+        <div>
+            <div class="eyebrow">
+                {!! $iconSvg('activity') !!}
+                {{ __('Monitoraggio centrale') }}
             </div>
-            <div class="actions hero-actions">
-                <span class="sync-summary">
-                    {!! $iconSvg('sync') !!}
-                    Ultimo sync:
-                    <strong style="color: var(--ink);">{{ $lastGlobalSyncAt ? $lastGlobalSyncAt->format('d/m/Y H:i') : 'Mai' }}</strong>
-                </span>
-                <form method="POST" action="{{ route('sync.all') }}">
-                    @csrf
-                    <button class="btn" type="submit">{!! $iconSvg('sync') !!}Sync tutti</button>
-                </form>
-                <a class="btn primary" href="{{ route('sites.create') }}">{!! $iconSvg('plus') !!}Nuovo sito</a>
+            <h1 class="page-title">{{ __('Dashboard') }}</h1>
+            <div class="hero-copy">
+                {{ __('Controllo rapido dei siti collegati, dati business e stato delle sincronizzazioni.') }}
             </div>
+        </div>
+        <div class="actions hero-actions">
+            <span class="sync-chip">
+                {!! $iconSvg('sync') !!}
+                {{ __('Ultimo sync:') }}
+                <strong style="color: var(--ink);">{{ $lastGlobalSyncAt ? $lastGlobalSyncAt->format('d/m/Y H:i') : 'Mai' }}</strong>
+            </span>
+            <form method="POST" action="{{ route('sync.all') }}">
+                @csrf
+                <button class="btn" type="submit">{!! $iconSvg('sync') !!}{{ __('Sync tutti') }}</button>
+            </form>
+            <a class="btn btn-primary" href="{{ route('sites.create') }}">{!! $iconSvg('plus') !!}{{ __('Nuovo sito') }}</a>
+        </div>
+    </section>
+
+    {{-- Section: KPI globali --}}
+    @if(! $kpis['has_v2_data'])
+        <div class="empty-state" style="margin-bottom: 20px;">
+            {!! $iconSvg('chart') !!}
+            <span>{{ __('Nessun dato aggregato disponibile ancora. Esegui una sync per raccogliere i dati.') }}</span>
+        </div>
+    @else
+        <section class="kpi-grid" aria-label="{{ __('KPI globali') }}">
+            @if(($kpis['uses_orders'] || $kpis['uses_reservations']) && ($kpis['estimated_total_savings'] ?? 0) > 0)
+                <article class="kpi-card featured">
+                    <span class="kpi-icon amber">{!! $iconSvg('savings') !!}</span>
+                    <div>
+                        <span class="kpi-label">{{ __('Risparmio stimato Future Plus') }}</span>
+                        <strong class="kpi-value">€ {{ number_format($kpis['estimated_total_savings'], 2) }}</strong>
+                        <div class="kpi-sub">{{ __('Benchmark: Just Eat/Deliveroo/Glovo') }} {{ $benchmarkOrderPercent }}%, TheFork € {{ $benchmarkCoverFee }}/{{ __('coperto') }}.</div>
+                    </div>
+                </article>
+            @endif
+
+            @if($kpis['uses_orders'])
+                <article class="kpi-card">
+                    <span class="kpi-icon">{!! $iconSvg('list') !!}</span>
+                    <div>
+                        <span class="kpi-label">{{ __('Ordini') }}</span>
+                        <strong class="kpi-value">{{ number_format($kpis['orders_all_time']) }}</strong>
+                        <div class="kpi-sub">
+                            {{ __('Media mese:') }}
+                            <strong>{{ $kpis['orders_monthly_avg'] !== null ? number_format($kpis['orders_monthly_avg']) : '-' }}</strong>
+                        </div>
+                    </div>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-icon green">{!! $iconSvg('revenue') !!}</span>
+                    <div>
+                        <span class="kpi-label">{{ __('Ricavi ordini') }}</span>
+                        <strong class="kpi-value">€ {{ number_format($kpis['revenue_all_time'], 2) }}</strong>
+                        <div class="kpi-sub">
+                            {{ __('Media mese:') }}
+                            <strong>{{ $kpis['revenue_monthly_avg'] !== null ? '€ ' . number_format($kpis['revenue_monthly_avg'], 2) : '-' }}</strong>
+                        </div>
+                    </div>
+                </article>
+            @endif
+
+            @if($kpis['uses_reservations'])
+                <article class="kpi-card">
+                    <span class="kpi-icon">{!! $iconSvg('reservation') !!}</span>
+                    <div>
+                        <span class="kpi-label">{{ __('Prenotazioni') }}</span>
+                        <strong class="kpi-value">{{ number_format($kpis['reservations_all_time']) }}</strong>
+                        <div class="kpi-sub">
+                            {{ __('Media mese:') }}
+                            <strong>{{ $kpis['reservations_monthly_avg'] !== null ? number_format($kpis['reservations_monthly_avg']) : '-' }}</strong>
+                        </div>
+                    </div>
+                </article>
+                <article class="kpi-card">
+                    <span class="kpi-icon green">{!! $iconSvg('cover') !!}</span>
+                    <div>
+                        <span class="kpi-label">{{ __('Coperti') }}</span>
+                        <strong class="kpi-value">{{ number_format($kpis['covers_all_time']) }}</strong>
+                        <div class="kpi-sub">
+                            {{ __('Media mese:') }}
+                            <strong>{{ $kpis['covers_monthly_avg'] !== null ? number_format($kpis['covers_monthly_avg']) : '-' }}</strong>
+                        </div>
+                    </div>
+                </article>
+            @endif
         </section>
 
-        @if(! $kpis['has_v2_data'])
-            <div class="empty-state">
-                {!! $iconSvg('chart') !!}
-                <span>Nessun dato aggregato disponibile ancora. Esegui una sync per raccogliere i dati.</span>
+        @if(! $kpis['uses_orders'] || ! $kpis['uses_reservations'])
+            <div class="info-strip">
+                <span>
+                    @if(! $kpis['uses_orders'] && ! $kpis['uses_reservations'])
+                        {{ __('Nessun ristorante sta usando ordini o prenotazioni.') }}
+                    @elseif(! $kpis['uses_orders'])
+                        {{ __('Nessun ristorante sta usando il servizio ordini/asporto.') }}
+                    @else
+                        {{ __('Nessun ristorante sta usando il servizio prenotazioni.') }}
+                    @endif
+                </span>
+            </div>
+        @endif
+    @endif
+
+    {{-- Section: Alert errori sync --}}
+    @if($kpis['sites_with_failures'] > 0)
+        <div class="alert-strip" style="margin-bottom: 20px;" role="alert">
+            <strong>
+                {!! $iconSvg('alert') !!}
+                {{ $kpis['sites_with_failures'] }} {{ $kpis['sites_with_failures'] === 1 ? __('sito ha') : __('siti hanno') }} {{ __('errori di sincronizzazione') }}
+            </strong>
+            <a class="btn btn-danger" href="{{ route('sync-errors.index') }}">{{ __('Vedi errori') }}</a>
+        </div>
+    @endif
+
+    @php
+        $chartSites = $sites->filter(fn($s) => $s->latestSnapshot !== null)->values();
+        $hasBarData = $chartSites->contains(
+            fn($s) => ($s->latestSnapshot->orders_today ?? 0) > 0
+                   || ($s->latestSnapshot->orders_last_7_days ?? 0) > 0
+                   || ($s->latestSnapshot->reservations_today ?? 0) > 0
+                   || ($s->latestSnapshot->reservations_last_7_days ?? 0) > 0
+        );
+    @endphp
+
+    {{-- Section: Confronto siti (grafico) --}}
+    <section style="margin-bottom: 4px;">
+        <div class="section-header">
+            <h2 class="section-title">{{ __('Confronto siti') }}</h2>
+            <span class="text-muted text-sm">{{ __('Oggi e ultimi 7 giorni') }}</span>
+        </div>
+        @if($chartSites->isNotEmpty() && $hasBarData)
+            <div class="chart-box">
+                <canvas id="chartSites"></canvas>
             </div>
         @else
-            <section class="dashboard-kpis" aria-label="KPI globali">
-                @if(($kpis['uses_orders'] || $kpis['uses_reservations']) && ($kpis['estimated_total_savings'] ?? 0) > 0)
-                    <article class="kpi-card featured">
-                        <span class="kpi-icon amber">{!! $iconSvg('savings') !!}</span>
-                        <div>
-                            <span class="kpi-label">Risparmio stimato Future Plus</span>
-                            <strong class="kpi-value">€ {{ number_format($kpis['estimated_total_savings'], 2) }}</strong>
-                            <div class="kpi-sub">Benchmark: Just Eat/Deliveroo/Glovo {{ $benchmarkOrderPercent }}%, TheFork € {{ $benchmarkCoverFee }}/coperto.</div>
-                        </div>
-                    </article>
-                @endif
-
-                @if($kpis['uses_orders'])
-                    <article class="kpi-card">
-                        <span class="kpi-icon">{!! $iconSvg('list') !!}</span>
-                        <div>
-                            <span class="kpi-label">Ordini</span>
-                            <strong class="kpi-value">{{ number_format($kpis['orders_all_time']) }}</strong>
-                            <div class="kpi-sub">
-                                Media mese:
-                                <strong>{{ $kpis['orders_monthly_avg'] !== null ? number_format($kpis['orders_monthly_avg']) : '-' }}</strong>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="kpi-card">
-                        <span class="kpi-icon green">{!! $iconSvg('revenue') !!}</span>
-                        <div>
-                            <span class="kpi-label">Ricavi ordini</span>
-                            <strong class="kpi-value">€ {{ number_format($kpis['revenue_all_time'], 2) }}</strong>
-                            <div class="kpi-sub">
-                                Media mese:
-                                <strong>{{ $kpis['revenue_monthly_avg'] !== null ? '€ ' . number_format($kpis['revenue_monthly_avg'], 2) : '-' }}</strong>
-                            </div>
-                        </div>
-                    </article>
-                @endif
-
-                @if($kpis['uses_reservations'])
-                    <article class="kpi-card">
-                        <span class="kpi-icon">{!! $iconSvg('reservation') !!}</span>
-                        <div>
-                            <span class="kpi-label">Prenotazioni</span>
-                            <strong class="kpi-value">{{ number_format($kpis['reservations_all_time']) }}</strong>
-                            <div class="kpi-sub">
-                                Media mese:
-                                <strong>{{ $kpis['reservations_monthly_avg'] !== null ? number_format($kpis['reservations_monthly_avg']) : '-' }}</strong>
-                            </div>
-                        </div>
-                    </article>
-                    <article class="kpi-card">
-                        <span class="kpi-icon green">{!! $iconSvg('cover') !!}</span>
-                        <div>
-                            <span class="kpi-label">Coperti</span>
-                            <strong class="kpi-value">{{ number_format($kpis['covers_all_time']) }}</strong>
-                            <div class="kpi-sub">
-                                Media mese:
-                                <strong>{{ $kpis['covers_monthly_avg'] !== null ? number_format($kpis['covers_monthly_avg']) : '-' }}</strong>
-                            </div>
-                        </div>
-                    </article>
-                @endif
-            </section>
-
-            @if(! $kpis['uses_orders'] || ! $kpis['uses_reservations'])
-                <div class="info-strip">
-                    <span>
-                        @if(! $kpis['uses_orders'] && ! $kpis['uses_reservations'])
-                            Nessun ristorante sta usando ordini o prenotazioni.
-                        @elseif(! $kpis['uses_orders'])
-                            Nessun ristorante sta usando il servizio ordini/asporto.
-                        @else
-                            Nessun ristorante sta usando il servizio prenotazioni.
-                        @endif
-                    </span>
-                </div>
-            @endif
-        @endif
-
-        @if($kpis['sites_with_failures'] > 0)
-            <div class="alert-strip">
-                <strong>
-                    {!! $iconSvg('alert') !!}
-                    {{ $kpis['sites_with_failures'] }} {{ $kpis['sites_with_failures'] === 1 ? 'sito ha' : 'siti hanno' }} errori di sincronizzazione
-                </strong>
-                <a class="btn danger" href="{{ route('sync-errors.index') }}">Vedi errori</a>
+            <div class="empty-state" style="margin-bottom: 20px;">
+                {!! $iconSvg('chart') !!}
+                <span>{{ __('Dati grafico disponibili dopo il primo snapshot V2.') }}</span>
             </div>
         @endif
+    </section>
 
-        @php
-            $chartSites = $sites->filter(fn($s) => $s->latestSnapshot !== null)->values();
-            $hasBarData = $chartSites->contains(
-                fn($s) => ($s->latestSnapshot->orders_today ?? 0) > 0
-                       || ($s->latestSnapshot->orders_last_7_days ?? 0) > 0
-                       || ($s->latestSnapshot->reservations_today ?? 0) > 0
-                       || ($s->latestSnapshot->reservations_last_7_days ?? 0) > 0
-            );
-        @endphp
-
-        <section>
-            <div class="section-head">
-                <h2>Confronto siti</h2>
-                <span class="muted" style="font-size: 13px;">Oggi e ultimi 7 giorni</span>
+    {{-- Section: Dashboard da controllare --}}
+    @if(! empty($inactiveSites))
+        <section style="margin-bottom: 4px;">
+            <div class="section-header">
+                <h2 class="section-title">{{ __('Dashboard da controllare') }}</h2>
+                <span class="text-muted text-sm">{{ __('Massimo 5 prioritarie') }}</span>
             </div>
-            @if($chartSites->isNotEmpty() && $hasBarData)
-                <div class="panel chart-panel">
-                    <canvas id="chartSites"></canvas>
-                </div>
-            @else
-                <div class="empty-state">
-                    {!! $iconSvg('chart') !!}
-                    <span>Dati grafico disponibili dopo il primo snapshot V2.</span>
-                </div>
-            @endif
-        </section>
-
-        @if(! empty($inactiveSites))
-            <section>
-                <div class="section-head">
-                    <h2>Dashboard da controllare</h2>
-                    <span class="muted" style="font-size: 13px;">Massimo 5 prioritarie</span>
-                </div>
-                <div class="table-wrap mobile-card-table">
+            <div class="card-table">
+                <div class="table-wrap">
                     <table class="dashboard-table compact-table">
                         <thead>
                             <tr>
-                                <th>Sito</th>
-                                <th>Ultima attivita menu</th>
-                                <th>Motivo</th>
-                                <th>Azione</th>
+                                <th>{{ __('Sito') }}</th>
+                                <th>{{ __('Ultima attivita menu') }}</th>
+                                <th>{{ __('Motivo') }}</th>
+                                <th>{{ __('Azione') }}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -429,50 +252,53 @@
                                     };
                                 @endphp
                                 <tr>
-                                    <td class="primary-cell" data-label="Sito"><strong>{{ $item['site']->name }}</strong></td>
-                                    <td data-label="Ultima attivita">{{ $item['last_activity'] ? \Carbon\Carbon::parse($item['last_activity'])->format('d/m/Y') : '-' }}</td>
-                                    <td data-label="Motivo"><span style="color: {{ $reason['color'] }}; font-weight: 700;">{{ $reason['label'] }}</span></td>
-                                    <td class="actions-cell" data-label="Azione">
-                                        <a class="btn" href="{{ route('sites.show', $item['site']) }}">{!! $iconSvg('external') !!}Dettaglio</a>
+                                    <td class="td-primary" data-label="{{ __('Sito') }}"><strong>{{ $item['site']->name }}</strong></td>
+                                    <td data-label="{{ __('Ultima attivita') }}">{{ $item['last_activity'] ? \Carbon\Carbon::parse($item['last_activity'])->format('d/m/Y') : '-' }}</td>
+                                    <td data-label="{{ __('Motivo') }}"><span style="color: {{ $reason['color'] }}; font-weight: 700;">{{ $reason['label'] }}</span></td>
+                                    <td class="td-actions" data-label="{{ __('Azione') }}">
+                                        <a class="btn" href="{{ route('sites.show', $item['site']) }}">{!! $iconSvg('external') !!}{{ __('Dettaglio') }}</a>
                                     </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
-            </section>
-        @endif
-
-        <section>
-            <div class="section-head">
-                <h2>Siti</h2>
-                @if($canReorderSites && $sites->count() > 1)
-                    <div class="actions">
-                        <button id="editSiteOrder" class="btn" type="button">{!! $iconSvg('list') !!}Modifica ordine</button>
-                        <form id="siteOrderForm" method="POST" action="{{ route('sites.reorder') }}" style="display: none;">
-                            @csrf
-                            <button id="saveSiteOrder" class="btn primary" type="submit" disabled>{!! $iconSvg('check') !!}Salva ordine</button>
-                        </form>
-                        <button id="cancelSiteOrder" class="btn" type="button" style="display: none;">Annulla</button>
-                    </div>
-                @endif
             </div>
+        </section>
+    @endif
 
-            <div class="table-wrap mobile-card-table">
+    {{-- Section: Tabella siti --}}
+    <section>
+        <div class="section-header">
+            <h2 class="section-title">{{ __('Siti') }}</h2>
+            @if($canReorderSites && $sites->count() > 1)
+                <div class="actions">
+                    <button id="editSiteOrder" class="btn" type="button">{!! $iconSvg('list') !!}{{ __('Modifica ordine') }}</button>
+                    <form id="siteOrderForm" method="POST" action="{{ route('sites.reorder') }}" style="display: none;">
+                        @csrf
+                        <button id="saveSiteOrder" class="btn btn-primary" type="submit" disabled>{!! $iconSvg('check') !!}{{ __('Salva ordine') }}</button>
+                    </form>
+                    <button id="cancelSiteOrder" class="btn" type="button" style="display: none;">{{ __('Annulla') }}</button>
+                </div>
+            @endif
+        </div>
+
+        <div class="card-table">
+            <div class="table-wrap">
                 <table class="dashboard-table">
                     <thead>
                         <tr>
                             @if($canReorderSites)
-                                <th data-order-cell style="width: 110px; display: none;">Ordine</th>
+                                <th data-order-cell style="width: 110px; display: none;">{{ __('Ordine') }}</th>
                             @endif
-                            <th>Sito</th>
-                            <th>Ordini</th>
-                            <th>Ricavi</th>
-                            <th>Prenotazioni</th>
-                            <th>Coperti</th>
-                            <th>Risparmio</th>
-                            <th>Stato</th>
-                            <th>Azioni</th>
+                            <th>{{ __('Sito') }}</th>
+                            <th>{{ __('Ordini') }}</th>
+                            <th>{{ __('Ricavi') }}</th>
+                            <th>{{ __('Prenotazioni') }}</th>
+                            <th>{{ __('Coperti') }}</th>
+                            <th>{{ __('Risparmio') }}</th>
+                            <th>{{ __('Stato') }}</th>
+                            <th>{{ __('Azioni') }}</th>
                         </tr>
                     </thead>
                     <tbody id="sitesTableBody">
@@ -506,114 +332,109 @@
                             @endphp
                             <tr data-site-row data-site-id="{{ $site->id }}" draggable="false">
                                 @if($canReorderSites)
-                                    <td data-order-cell data-label="Ordine" style="display: none;">
-                                        <span class="order-handle">Trascina</span>
+                                    <td data-order-cell data-label="{{ __('Ordine') }}" style="display: none;">
+                                        <span class="order-handle">{{ __('Trascina') }}</span>
                                         <div class="actions site-order-controls">
-                                            <button class="btn icon-only site-order-btn" type="button" data-move="up" title="Sposta su" aria-label="Sposta {{ $site->name }} su" @disabled($sites->count() <= 1)>{!! $iconSvg('arrow-up') !!}</button>
-                                            <button class="btn icon-only site-order-btn" type="button" data-move="down" title="Sposta giu" aria-label="Sposta {{ $site->name }} giu" @disabled($sites->count() <= 1)>{!! $iconSvg('arrow-down') !!}</button>
+                                            <button class="btn btn-icon site-order-btn" type="button" data-move="up" title="{{ __('Sposta su') }}" aria-label="{{ __('Sposta') }} {{ $site->name }} {{ __('su') }}" @disabled($sites->count() <= 1)>{!! $iconSvg('arrow-up') !!}</button>
+                                            <button class="btn btn-icon site-order-btn" type="button" data-move="down" title="{{ __('Sposta giu') }}" aria-label="{{ __('Sposta') }} {{ $site->name }} {{ __('giu') }}" @disabled($sites->count() <= 1)>{!! $iconSvg('arrow-down') !!}</button>
                                         </div>
                                     </td>
                                 @endif
 
-                                <td class="primary-cell site-cell" data-label="Sito">
-                                    <a href="{{ route('sites.show', $site) }}"><strong>{{ $site->name }}</strong></a>
-                                    <a class="site-url" href="{{ $site->url }}" target="_blank" rel="noopener noreferrer">{{ $site->url }}</a>
+                                <td class="td-primary" data-label="{{ __('Sito') }}">
+                                    <a href="{{ route('sites.show', $site) }}"><strong class="site-name">{{ $site->name }}</strong></a>
+                                    <a class="site-url-text" href="{{ $site->url }}" target="_blank" rel="noopener noreferrer">{{ $site->url }}</a>
                                 </td>
 
-                                <td data-label="Ordini">
+                                <td data-label="{{ __('Ordini') }}">
                                     @if($siteOrders > 0)
                                         <span class="metric-main">{{ number_format($siteOrders) }}</span>
                                         <div class="metric-note">{{ $avgOrd !== null ? '~' . number_format($avgOrd) . '/mese' : 'Media da aggiornare' }}</div>
                                     @elseif($hasAllTime)
-                                        <span class="metric-note">Non usa ordini</span>
+                                        <span class="metric-note">{{ __('Non usa ordini') }}</span>
                                     @else
                                         <span class="muted">-</span>
                                     @endif
                                 </td>
 
-                                <td data-label="Ricavi">
+                                <td data-label="{{ __('Ricavi') }}">
                                     @if($siteRev !== null && $siteRev > 0)
                                         <span class="metric-main">€ {{ number_format($siteRev, 2) }}</span>
                                         <div class="metric-note">{{ $avgRev !== null ? '€ ' . number_format($avgRev, 2) . '/mese' : 'Media da aggiornare' }}</div>
-                                    @elseif($hasAllTime)
-                                        <span class="muted">-</span>
                                     @else
                                         <span class="muted">-</span>
                                     @endif
                                 </td>
 
-                                <td data-label="Prenotazioni">
+                                <td data-label="{{ __('Prenotazioni') }}">
                                     @if($siteRes > 0)
                                         <span class="metric-main">{{ number_format($siteRes) }}</span>
                                         <div class="metric-note">{{ $avgRes !== null ? '~' . number_format($avgRes) . '/mese' : 'Media da aggiornare' }}</div>
                                     @elseif($hasAllTime)
-                                        <span class="metric-note">Non usa prenotazioni</span>
+                                        <span class="metric-note">{{ __('Non usa prenotazioni') }}</span>
                                     @else
                                         <span class="muted">-</span>
                                     @endif
                                 </td>
 
-                                <td data-label="Coperti">
+                                <td data-label="{{ __('Coperti') }}">
                                     @if($siteCov > 0)
                                         <span class="metric-main">{{ number_format($siteCov) }}</span>
                                         <div class="metric-note">{{ $avgCov !== null ? '~' . number_format($avgCov) . '/mese' : 'Media da aggiornare' }}</div>
-                                    @elseif($hasAllTime)
-                                        <span class="muted">-</span>
                                     @else
                                         <span class="muted">-</span>
                                     @endif
                                 </td>
 
-                                <td data-label="Risparmio">
+                                <td data-label="{{ __('Risparmio') }}">
                                     @if($siteSavings > 0)
                                         <span class="metric-main">€ {{ number_format($siteSavings, 2) }}</span>
                                         <div class="metric-note">
                                             @if($siteOrderSavings > 0)
-                                                ordini € {{ number_format($siteOrderSavings, 2) }}
+                                                {{ __('ordini') }} € {{ number_format($siteOrderSavings, 2) }}
                                             @endif
                                             @if($siteReservationSavings > 0)
-                                                {{ $siteOrderSavings > 0 ? ' / ' : '' }}pren. € {{ number_format($siteReservationSavings, 2) }}
+                                                {{ $siteOrderSavings > 0 ? ' / ' : '' }}{{ __('pren.') }} € {{ number_format($siteReservationSavings, 2) }}
                                             @endif
                                         </div>
-                                    @elseif($hasAllTime)
-                                        <span class="muted">-</span>
                                     @else
                                         <span class="muted">-</span>
                                     @endif
                                 </td>
 
-                                <td data-label="Stato">
+                                <td data-label="{{ __('Stato') }}">
                                     <span class="status-pill" style="color:{{ $sc }};background:{{ $sb }};">
                                         {{ $st }}
                                     </span>
                                 </td>
 
-                                <td class="actions-cell" data-label="Azioni">
+                                <td class="td-actions" data-label="{{ __('Azioni') }}">
                                     <div class="actions">
-                                        <a class="btn" href="{{ route('sites.show', $site) }}">{!! $iconSvg('external') !!}Dettaglio</a>
+                                        <a class="btn" href="{{ route('sites.show', $site) }}">{!! $iconSvg('external') !!}{{ __('Dettaglio') }}</a>
                                         <form method="POST" action="{{ route('sites.sync', $site) }}">
                                             @csrf
-                                            <button class="btn" type="submit">{!! $iconSvg('sync') !!}Sync</button>
+                                            <button class="btn" type="submit">{!! $iconSvg('sync') !!}{{ __('Sync') }}</button>
                                         </form>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="{{ $canReorderSites ? 9 : 8 }}" class="primary-cell" data-label="Siti" style="text-align:center;padding:28px;">
-                                    Nessun sito configurato. <a href="{{ route('sites.create') }}">Aggiungine uno</a>.
+                                <td colspan="{{ $canReorderSites ? 9 : 8 }}" class="td-primary" data-label="{{ __('Siti') }}" style="text-align:center;padding:28px;">
+                                    {{ __('Nessun sito configurato.') }} <a href="{{ route('sites.create') }}">{{ __('Aggiungine uno') }}</a>.
                                 </td>
                             </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+        </div>
 
-            <div class="footer-link">
-                <a href="{{ route('sync-errors.index') }}" class="muted">Log errori di sincronizzazione</a>
-            </div>
-        </section>
-    </div>
+        <div class="footer-note">
+            <a href="{{ route('sync-errors.index') }}" class="muted">{{ __('Log errori di sincronizzazione') }}</a>
+        </div>
+    </section>
+
 @endsection
 
 @push('scripts')
