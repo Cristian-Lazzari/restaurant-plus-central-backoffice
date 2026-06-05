@@ -49,7 +49,7 @@
                 ],
                 'new' => [
                     'label' => 'Nuovo',
-                    'style' => 'color:#155eef;background:#eef4ff;border-color:#b2ccff;',
+                    'style' => 'color:#066a52;background:#e6faf7;border-color:#7ae8d2;',
                 ],
                 default => [
                     'label' => 'Primo mese',
@@ -723,15 +723,15 @@
             type: 'bar',
             label: 'Ordini',
             data: rows.map(row => row.orders ?? 0),
-            backgroundColor: 'rgba(21,94,239,0.72)',
+            backgroundColor: 'rgba(14,183,146,0.75)',
             yAxisID: 'count',
         });
         datasets.push({
             type: 'line',
             label: 'Ricavi (€)',
             data: rows.map(row => row.revenue ?? 0),
-            borderColor: '#039855',
-            backgroundColor: 'rgba(3,152,85,0.12)',
+            borderColor: '#0eb792',
+            backgroundColor: 'rgba(14,183,146,0.1)',
             tension: 0.35,
             pointRadius: 3,
             yAxisID: 'money',
@@ -743,15 +743,15 @@
             type: 'bar',
             label: 'Prenotazioni',
             data: rows.map(row => row.reservations ?? 0),
-            backgroundColor: 'rgba(122,90,248,0.68)',
+            backgroundColor: 'rgba(9,3,51,0.65)',
             yAxisID: 'count',
         });
         datasets.push({
             type: 'line',
             label: 'Coperti',
             data: rows.map(row => row.covers ?? 0),
-            borderColor: '#f04438',
-            backgroundColor: 'rgba(240,68,56,0.1)',
+            borderColor: '#090333',
+            backgroundColor: 'rgba(9,3,51,0.08)',
             tension: 0.35,
             pointRadius: 3,
             yAxisID: 'count',

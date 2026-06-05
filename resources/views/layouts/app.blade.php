@@ -19,10 +19,10 @@
             --muted: #667085;
             --border: #d8dee8;
             --border-soft: #edf0f5;
-            --brand: #155eef;
-            --brand-hover: #004eeb;
-            --brand-soft: #eef4ff;
-            --brand-muted: #b2ccff;
+            --brand: #0eb792;
+            --brand-hover: #0ca07f;
+            --brand-soft: #e6faf7;
+            --brand-muted: #7ae8d2;
             --green: #027a48;
             --green-soft: #ecfdf3;
             --green-border: #abefc6;
@@ -63,7 +63,7 @@
             left: 0;
             width: var(--sidebar-w);
             height: 100vh;
-            background: #1a2033;
+            background: #090333;
             display: flex;
             flex-direction: column;
             z-index: 50;
@@ -75,22 +75,20 @@
         .sidebar-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
-            padding: 18px 16px 14px;
-            color: #fff;
-            font-weight: 700;
-            font-size: 15px;
-            text-decoration: none;
-            border-bottom: 1px solid rgba(255,255,255,0.07);
+            justify-content: center;
+            padding: 18px 16px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             flex-shrink: 0;
+            text-decoration: none;
         }
-        .sidebar-brand:hover { text-decoration: none; color: #fff; }
+        .sidebar-brand:hover { text-decoration: none; opacity: 0.9; }
+        .sidebar-brand img { height: 30px; width: auto; display: block; object-fit: contain; }
 
         .brand-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: var(--radius-sm);
-            background: linear-gradient(135deg, #155eef, #039855);
+            width: 26px;
+            height: 26px;
+            border-radius: 5px;
+            background: #0eb792;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -127,7 +125,7 @@
         }
         .nav-item:hover svg { opacity: 1; }
         .nav-item.active {
-            background: rgba(21,94,239,0.22);
+            background: rgba(14,183,146,0.18);
             color: #fff;
         }
         .nav-item.active svg { opacity: 1; }
@@ -162,7 +160,7 @@
             top: 0;
             z-index: 40;
             height: var(--topbar-h);
-            background: #1a2033;
+            background: #090333;
             padding: 0 14px;
             align-items: center;
             justify-content: space-between;
@@ -330,7 +328,7 @@
             font-size: 12px;
             font-weight: 700;
             background: var(--brand-soft);
-            color: #3538cd;
+            color: #066a52;
         }
         .badge-muted, .badge.off { background: #f2f4f7; color: #475467; }
         .badge-green { background: var(--green-soft); color: var(--green); border: 1px solid var(--green-border); }
@@ -430,7 +428,7 @@
         input:focus, textarea:focus, select:focus {
             outline: none;
             border-color: var(--brand);
-            box-shadow: 0 0 0 3px rgba(21,94,239,0.12);
+            box-shadow: 0 0 0 3px rgba(14,183,146,0.15);
         }
         input:disabled, textarea:disabled, select:disabled {
             background: var(--surface-2);
@@ -686,12 +684,7 @@
     <aside class="sidebar" id="sidebar" role="navigation" aria-label="{{ __('Navigazione principale') }}">
 
         <a class="sidebar-brand" href="{{ route('dashboard') }}">
-            <span class="brand-icon" aria-hidden="true">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z"/>
-                </svg>
-            </span>
-            {{ config('app.name') }}
+            <img src="/images/logo-futureplus.png" alt="Future Plus" aria-label="Future Plus — torna alla dashboard">
         </a>
 
         @if(session('backoffice_authenticated'))
@@ -754,12 +747,7 @@
         {{-- ─── Topbar (mobile only) ─── --}}
         <div class="topbar" role="banner">
             <a class="topbar-brand" href="{{ route('dashboard') }}">
-                <span class="brand-icon" style="width:26px;height:26px;" aria-hidden="true">
-                    <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" d="M0 0h1v15h15v1H0V0Zm14.817 3.113a.5.5 0 0 1 .07.704l-4.5 5.5a.5.5 0 0 1-.74.037L7.06 6.767l-3.656 5.027a.5.5 0 0 1-.808-.588l4-5.5a.5.5 0 0 1 .758-.06l2.609 2.61 4.15-5.073a.5.5 0 0 1 .704-.07Z"/>
-                    </svg>
-                </span>
-                {{ config('app.name') }}
+                <img src="/images/logo-futureplus.png" alt="Future Plus" style="height:24px;width:auto;display:block;object-fit:contain;">
             </a>
             <button class="hamburger" id="menuToggle" aria-label="{{ __('Apri menu') }}" aria-expanded="false" aria-controls="sidebar">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">

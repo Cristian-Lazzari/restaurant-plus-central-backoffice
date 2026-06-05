@@ -637,10 +637,10 @@
         data: {
             labels,
             datasets: [
-                { label: 'Ordini oggi', data: ordToday, backgroundColor: 'rgba(21,94,239,0.75)', borderRadius: 5 },
-                { label: 'Ordini ultimi 7 giorni', data: ordLast7, backgroundColor: 'rgba(3,152,85,0.75)', borderRadius: 5 },
-                { label: 'Prenotazioni oggi', data: resToday, backgroundColor: 'rgba(181,71,8,0.68)', borderRadius: 5 },
-                { label: 'Prenotazioni ultimi 7 giorni', data: resLast7, backgroundColor: 'rgba(180,35,24,0.58)', borderRadius: 5 },
+                { label: 'Ordini oggi', data: ordToday, backgroundColor: 'rgba(14,183,146,0.82)', borderRadius: 5 },
+                { label: 'Ordini ultimi 7 giorni', data: ordLast7, backgroundColor: 'rgba(14,183,146,0.38)', borderRadius: 5 },
+                { label: 'Prenotazioni oggi', data: resToday, backgroundColor: 'rgba(9,3,51,0.75)', borderRadius: 5 },
+                { label: 'Prenotazioni ultimi 7 giorni', data: resLast7, backgroundColor: 'rgba(9,3,51,0.38)', borderRadius: 5 },
             ]
         },
         options: {
