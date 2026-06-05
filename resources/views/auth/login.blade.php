@@ -58,7 +58,7 @@
     <div class="login-wrap">
         <div class="login-box">
             <div class="login-logo-area">
-                <img src="/images/logo-futureplus.png" alt="Future Plus">
+                <img src="{{ asset('images/logo-futureplus.png') }}" alt="Future Plus">
                 <div class="login-subtitle">{{ __('Accesso backoffice privato') }}</div>
             </div>
             <div class="login-card">

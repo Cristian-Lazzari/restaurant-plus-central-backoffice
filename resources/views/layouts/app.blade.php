@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ config('app.name') }}</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/favicon.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/favicon.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -76,13 +79,19 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 18px 16px 16px;
+            padding: 20px 20px 18px;
             border-bottom: 1px solid rgba(255,255,255,0.08);
             flex-shrink: 0;
             text-decoration: none;
         }
-        .sidebar-brand:hover { text-decoration: none; opacity: 0.9; }
-        .sidebar-brand img { height: 30px; width: auto; display: block; object-fit: contain; }
+        .sidebar-brand:hover { text-decoration: none; opacity: 0.85; }
+        .sidebar-brand img {
+            height: 32px;
+            width: auto;
+            max-width: 192px;
+            display: block;
+            object-fit: contain;
+        }
 
         .brand-icon {
             width: 26px;
@@ -685,7 +694,7 @@
     <aside class="sidebar" id="sidebar" role="navigation" aria-label="{{ __('Navigazione principale') }}">
 
         <a class="sidebar-brand" href="{{ route('dashboard') }}">
-            <img src="/images/logo-futureplus.png" alt="Future Plus" aria-label="Future Plus — torna alla dashboard">
+            <img src="{{ asset('images/logo-futureplus.png') }}" alt="Future Plus">
         </a>
 
         @if(session('backoffice_authenticated'))
@@ -748,7 +757,7 @@
         {{-- ─── Topbar (mobile only) ─── --}}
         <div class="topbar" role="banner">
             <a class="topbar-brand" href="{{ route('dashboard') }}">
-                <img src="/images/logo-futureplus.png" alt="Future Plus" style="height:24px;width:auto;display:block;object-fit:contain;">
+                <img src="{{ asset('images/logo-futureplus.png') }}" alt="Future Plus" style="height:24px;width:auto;display:block;object-fit:contain;">
             </a>
             <button class="hamburger" id="menuToggle" aria-label="{{ __('Apri menu') }}" aria-expanded="false" aria-controls="sidebar">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
