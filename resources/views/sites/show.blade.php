@@ -69,15 +69,20 @@
         .period-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border: 1px solid var(--border-soft); border-radius: var(--radius); background: var(--surface); margin-bottom: 12px; box-shadow: var(--shadow-sm); }
         .delta-badge { display: inline-flex; align-items: center; padding: 2px 8px; border: 1px solid; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
         .chart-monthly-wrap { overflow: hidden; }
+        /* Contenitore a altezza fissa — Chart.js riempie questo, non si stira */
+        .chart-monthly-wrap .chart-canvas-wrap {
+            position: relative;
+            height: 280px;
+        }
         @media (max-width: 768px) {
             .chart-monthly-wrap {
                 margin: 0 -14px;
                 border-left: 0; border-right: 0; border-radius: 0;
-                padding: 12px 10px 12px;
+                padding: 10px 10px 14px;
+                margin-bottom: 20px !important;
             }
-            .chart-monthly-wrap canvas {
-                max-height: none !important;
-                height: clamp(240px, 65vw, 320px) !important;
+            .chart-monthly-wrap .chart-canvas-wrap {
+                height: clamp(210px, 58vw, 280px);
             }
         }
         .show-metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
@@ -404,8 +409,10 @@
     </div>
 
     @if($hasBusiness && $hasMonthlyTrend)
-        <div class="panel mb-3 chart-monthly-wrap" style="padding: 16px;">
-            <canvas id="chartMonthly"></canvas>
+        <div class="panel mb-4 chart-monthly-wrap" style="padding: 14px 16px;">
+            <div class="chart-canvas-wrap">
+                <canvas id="chartMonthly"></canvas>
+            </div>
         </div>
 
         @if(($monthlyTrend['source'] ?? null) === 'daily')
@@ -715,7 +722,20 @@
 <script>
 (function () {
     const rows = @json($monthlyRows);
-    const labels = rows.map(row => row.label.charAt(0).toUpperCase() + row.label.slice(1));
+
+    // Abbrevia "giugno 2024" → "Giu '24"
+    const monthMap = {
+        'gennaio':'Gen','febbraio':'Feb','marzo':'Mar','aprile':'Apr',
+        'maggio':'Mag','giugno':'Giu','luglio':'Lug','agosto':'Ago',
+        'settembre':'Set','ottobre':'Ott','novembre':'Nov','dicembre':'Dic'
+    };
+    const labels = rows.map(row => {
+        const parts = (row.label || '').toLowerCase().split(' ');
+        const m = monthMap[parts[0]] || parts[0].charAt(0).toUpperCase() + parts[0].slice(1,3);
+        const y = parts[1] ? " '" + String(parts[1]).slice(-2) : '';
+        return m + y;
+    });
+
     const datasets = [];
 
     @if($usesOrders)
@@ -724,16 +744,18 @@
             label: 'Ordini',
             data: rows.map(row => row.orders ?? 0),
             backgroundColor: 'rgba(14,183,146,0.75)',
+            borderRadius: 3,
             yAxisID: 'count',
         });
         datasets.push({
             type: 'line',
-            label: 'Ricavi (€)',
+            label: 'Ricavi €',
             data: rows.map(row => row.revenue ?? 0),
             borderColor: '#0eb792',
             backgroundColor: 'rgba(14,183,146,0.1)',
             tension: 0.35,
-            pointRadius: 3,
+            pointRadius: 2,
+            borderWidth: 2,
             yAxisID: 'money',
         });
     @endif
@@ -741,9 +763,10 @@
     @if($usesReservations)
         datasets.push({
             type: 'bar',
-            label: 'Prenotazioni',
+            label: 'Pren.',
             data: rows.map(row => row.reservations ?? 0),
             backgroundColor: 'rgba(9,3,51,0.65)',
+            borderRadius: 3,
             yAxisID: 'count',
         });
         datasets.push({
@@ -753,41 +776,79 @@
             borderColor: '#090333',
             backgroundColor: 'rgba(9,3,51,0.08)',
             tension: 0.35,
-            pointRadius: 3,
+            pointRadius: 2,
+            borderWidth: 2,
             yAxisID: 'count',
         });
     @endif
 
     datasets.push({
         type: 'line',
-        label: 'Risparmio stimato (€)',
+        label: 'Risparmio €',
         data: rows.map(row => row.savings ?? 0),
         borderColor: '#dc6803',
         backgroundColor: 'rgba(220,104,3,0.12)',
         tension: 0.35,
-        pointRadius: 3,
+        pointRadius: 2,
+        borderWidth: 2,
         yAxisID: 'money',
     });
 
+    // Helper: abbrevia i valori monetari (1500 → 1.5K, 12000 → 12K)
+    function fmtMoney(v) {
+        if (v >= 1000) {
+            const k = v / 1000;
+            return '€' + (k % 1 === 0 ? k : k.toFixed(1)) + 'K';
+        }
+        return '€' + v;
+    }
+
     new Chart(document.getElementById('chartMonthly'), {
         type: 'line',
-        data: {
-            labels,
-            datasets
-        },
+        data: { labels, datasets },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { position: 'top' } },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 10,
+                        boxHeight: 10,
+                        padding: 10,
+                        font: { size: 11 },
+                    },
+                },
+            },
             scales: {
-                count: { beginAtZero: true, ticks: { precision: 0 }, position: 'left' },
+                x: {
+                    ticks: {
+                        font: { size: 11 },
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 8,
+                    },
+                    grid: { display: false },
+                },
+                count: {
+                    beginAtZero: true,
+                    position: 'left',
+                    ticks: {
+                        precision: 0,
+                        font: { size: 11 },
+                        maxTicksLimit: 6,
+                    },
+                },
                 money: {
                     beginAtZero: true,
                     position: 'right',
                     display: @json($hasBusiness),
                     grid: { drawOnChartArea: false },
                     ticks: {
-                        callback: value => '€ ' + new Intl.NumberFormat('it-IT').format(value),
+                        font: { size: 11 },
+                        maxTicksLimit: 6,
+                        callback: fmtMoney,
                     },
                 },
             },
