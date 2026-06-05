@@ -563,6 +563,9 @@
             align-items: center;
         }
 
+        /* ─── Decimali ridotti ─── */
+        .dec { font-size: .5em; vertical-align: baseline; opacity: 0.8; }
+
         /* ─── Section header ─── */
         .section-header {
             display: flex;
@@ -833,6 +836,24 @@
     toggle.addEventListener('click', function() { sidebar.classList.contains('open') ? closeSidebar() : openSidebar(); });
     backdrop.addEventListener('click', closeSidebar);
     document.addEventListener('keydown', function(e) { if(e.key==='Escape') closeSidebar(); });
+})();
+</script>
+<script>
+(function(){
+    // Avvolge i decimali (,XX o .XX a fine stringa) con .dec per ridurne il font
+    function wrapDec(el){
+        if(!el || el.querySelector('.dec')) return;
+        var t = el.textContent.trim();
+        if(!/[.,]\d{2}$/.test(t)) return;
+        el.innerHTML = t.replace(/([.,])(\d{2})$/, '$1<span class="dec">$2</span>');
+    }
+    function run(){
+        document.querySelectorAll(
+            '.kpi-value, .kpi-sub strong, .metric-main, .show-metric strong, .metric-value'
+        ).forEach(wrapDec);
+    }
+    if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
 })();
 </script>
 @stack('scripts')

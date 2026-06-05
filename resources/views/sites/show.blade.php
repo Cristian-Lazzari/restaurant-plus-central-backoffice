@@ -670,7 +670,8 @@
     }
     function fmtMoney(n) {
         if (n === null || n === undefined) return 'N/D';
-        return '€ ' + new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+        var s = '€ ' + new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+        return s.replace(/([.,])(\d{2})$/, '$1<span class="dec">$2</span>');
     }
     function fmtEur(n) {
         if (n === null || n === undefined || revUnit !== 'euros') return 'N/D';
@@ -705,11 +706,11 @@
         elFrom.textContent         = p.from  || '-';
         elTo.textContent           = p.to    || '-';
         if (elOrders) elOrders.textContent   = fmtN(p.orders_total);
-        if (elRevenue) elRevenue.textContent = fmtEur(p.orders_revenue);
-        if (elAverage) elAverage.textContent = fmtEur(p.orders_average);
-        if (elRes) elRes.textContent         = fmtN(p.reservations_total);
-        if (elCovers) elCovers.textContent   = fmtN(p.reservations_covers);
-        if (elSavings) elSavings.textContent = fmtMoney(estimatedSavings(p));
+        if (elRevenue) elRevenue.innerHTML = fmtEur(p.orders_revenue);
+        if (elAverage) elAverage.innerHTML = fmtEur(p.orders_average);
+        if (elRes) elRes.textContent       = fmtN(p.reservations_total);
+        if (elCovers) elCovers.textContent = fmtN(p.reservations_covers);
+        if (elSavings) elSavings.innerHTML = fmtMoney(estimatedSavings(p));
     }
 
     select.addEventListener('change', function () { update(this.value); });
