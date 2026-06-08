@@ -45,7 +45,7 @@
     </div>
 
     {{-- Section: Tabella errori --}}
-    @if($errors->count() > 0)
+    @if($syncErrors->count() > 0)
         <div class="card-table">
             <div class="table-wrap">
                 <table>
@@ -61,7 +61,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($errors as $error)
+                        @foreach($syncErrors as $error)
                             @php
                                 $codeBadgeStyle = match($error->code ?? '') {
                                     'TIMEOUT'      => 'color: #93370d; background: #fffaeb;',
@@ -117,7 +117,7 @@
             </div>
         </div>
         <div class="text-muted text-sm" style="margin-top: 8px; text-align: right;">
-            {{ __('Visualizzati') }} {{ $errors->count() }} {{ __('errori (max 100 per query).') }}
+            {{ __('Visualizzati') }} {{ $syncErrors->count() }} {{ __('errori (max 100 per query).') }}
         </div>
     @else
         <div class="empty-state">

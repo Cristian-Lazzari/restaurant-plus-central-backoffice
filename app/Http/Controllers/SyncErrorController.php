@@ -20,10 +20,10 @@ class SyncErrorController extends Controller
             $query->where('code', $request->query('code'));
         }
 
-        $errors = $query->get();
+        $syncErrors = $query->get();
 
         $sites = Site::connected()->orderBy('name')->get(['id', 'name']);
 
-        return view('sync-errors.index', compact('errors', 'sites'));
+        return view('sync-errors.index', compact('syncErrors', 'sites'));
     }
 }
