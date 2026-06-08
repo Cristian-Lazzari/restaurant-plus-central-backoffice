@@ -55,7 +55,15 @@ class ReportController extends Controller
 
             $orders       = $snap !== null ? (int) ($snap->{$ordersCol} ?? 0) : 0;
             $reservations = $snap !== null ? (int) ($snap->{$resCol}    ?? 0) : 0;
-            $covers       = ($cols['covers'] && $snap !== null) ? ((int) ($snap->{$cols['covers']} ?? 0)) : null;
+            $coversRaw = ($cols['covers'] && $snap !== null) ? $snap->{$cols['covers']} : null;
+            // Fallback dal payload JSON per snapshot precedenti al fix del sync
+            if ($coversRaw === null && $snap !== null && is_array($snap->payload)) {
+                $p         = $snap->payload;
+                $coversRaw = $p['periods']['all_time']['total_covers']
+                    ?? $p['reservations']['total_covers']
+                    ?? null;
+            }
+            $covers = $coversRaw !== null ? (int) $coversRaw : null;
             $revenue      = $this->resolveRevenue($snap, $cols['revenue']);
 
             if ($revenue !== null) { $hasRevenue = true; }
@@ -93,7 +101,9 @@ class ReportController extends Controller
             ->select([
                 'rs.site_id',
                 'sites.name as site_name',
-                DB::raw("DATE_FORMAT(rs.fetched_at, '%Y-%m') as month"),
+                DB::raw(DB::getDriverName() === 'sqlite'
+                    ? "strftime('%Y-%m', rs.fetched_at) as month"
+                    : "DATE_FORMAT(rs.fetched_at, '%Y-%m') as month"),
                 'rs.orders_last_30_days',
                 'rs.reservations_last_30_days',
                 'rs.orders_revenue',
@@ -115,11 +125,27 @@ class ReportController extends Controller
 
     private function resolveRevenue($snap, ?string $col): ?float
     {
-        if ($col === null || $snap === null || $snap->{$col} === null) {
+        if ($snap === null) {
             return null;
         }
-        $raw = (float) $snap->{$col};
-        return round(($snap->revenue_unit === 'cents') ? $raw / 100 : $raw, 2);
+
+        // Usa la colonna pre-calcolata se disponibile
+        $raw = ($col !== null) ? $snap->{$col} : null;
+
+        // Fallback: leggi dal payload JSON (per snapshot precedenti al fix del sync)
+        if ($raw === null && is_array($snap->payload)) {
+            $p   = $snap->payload;
+            $raw = $p['periods']['all_time']['revenue_confirmed']
+                ?? $p['orders']['revenue_confirmed']
+                ?? null;
+        }
+
+        if ($raw === null) {
+            return null;
+        }
+
+        $unit = strtolower(trim((string) ($snap->revenue_unit ?? '')));
+        return round($unit === 'cents' ? (float) $raw / 100 : (float) $raw, 2);
     }
 
     private function buildMonthlyData($rawSnaps): array

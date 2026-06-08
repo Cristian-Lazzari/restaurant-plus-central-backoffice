@@ -307,15 +307,8 @@ class SiteReportSyncService
 
     private function ordersRevenueForSnapshot(array $payload): ?int
     {
-        $revenueUnit = strtolower(trim((string) Arr::get($payload, 'revenue_unit', '')));
-
-        // Accetta varianti comuni: cents, euros, euro, eur
-        $knownUnits = ['cents', 'euros', 'euro', 'eur'];
-        if (! in_array($revenueUnit, $knownUnits, true)) {
-            return null;
-        }
-
-        // V2 può esporre il totale anche in periods.all_time
+        // Salva sempre il valore grezzo se presente — l'unità è già in revenue_unit
+        // e viene gestita da resolveRevenue() al momento della lettura.
         $raw = Arr::get($payload, 'periods.all_time.revenue_confirmed')
             ?? Arr::get($payload, 'orders.revenue_confirmed');
 
