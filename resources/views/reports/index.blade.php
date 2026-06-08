@@ -56,6 +56,13 @@
     </div>
 </div>
 
+@if($allTimeMissing)
+<div style="margin-bottom:16px;padding:10px 14px;background:var(--amber-soft);border:1px solid var(--amber-border);border-radius:var(--radius);font-size:13px;color:#92400e;">
+    I dati storici totali non sono ancora disponibili — vengono mostrati i valori degli ultimi 30 giorni.
+    Esegui una sincronizzazione per aggiornare i totali.
+</div>
+@endif
+
 {{-- KPI cards --}}
 <div class="kpi-grid">
 
@@ -81,8 +88,13 @@
         </div>
         <div>
             <div class="kpi-label">Revenue — {{ $periodLabels[$period] }}</div>
-            <span class="kpi-value">€ {{ number_format($totals['revenue'], 2, ',', '.') }}</span>
-            <div class="kpi-sub">Totale siti attivi</div>
+            @if($hasRevenue)
+                <span class="kpi-value">€ {{ number_format($totals['revenue'], 2, ',', '.') }}</span>
+                <div class="kpi-sub">Totale siti attivi</div>
+            @else
+                <span class="kpi-value" style="font-size:15px;color:var(--muted)">Non disp.</span>
+                <div class="kpi-sub">Sync prossima sincronizzazione</div>
+            @endif
         </div>
     </div>
     @endif
@@ -111,8 +123,13 @@
         </div>
         <div>
             <div class="kpi-label">Coperti — {{ $periodLabels[$period] }}</div>
-            <span class="kpi-value">{{ number_format($totals['covers'], 0, ',', '.') }}</span>
-            <div class="kpi-sub">Totale siti attivi</div>
+            @if($hasCovers)
+                <span class="kpi-value">{{ number_format($totals['covers'], 0, ',', '.') }}</span>
+                <div class="kpi-sub">Totale siti attivi</div>
+            @else
+                <span class="kpi-value" style="font-size:15px;color:var(--muted)">Non disp.</span>
+                <div class="kpi-sub">Sync prossima sincronizzazione</div>
+            @endif
         </div>
     </div>
     @endif

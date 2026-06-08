@@ -168,10 +168,20 @@ class SiteReportSyncService
             'has_warnings' => count($warnings) > 0,
             'http_status_code' => $httpStatusCode,
             'response_time_ms' => $responseTimeMs,
-            'orders_total' => $this->nullableInteger(Arr::get($payload, 'orders.total')),
+            // V2 usa periods.all_time.*, V1 usa orders.total / reservations.total
+            'orders_total' => $this->nullableInteger(
+                Arr::get($payload, 'periods.all_time.orders_total')
+                ?? Arr::get($payload, 'orders.total')
+            ),
             'orders_revenue' => $this->ordersRevenueForSnapshot($payload),
-            'reservations_total' => $this->nullableInteger(Arr::get($payload, 'reservations.total')),
-            'reservations_covers' => $this->nullableInteger(Arr::get($payload, 'reservations.total_covers')),
+            'reservations_total' => $this->nullableInteger(
+                Arr::get($payload, 'periods.all_time.reservations_total')
+                ?? Arr::get($payload, 'reservations.total')
+            ),
+            'reservations_covers' => $this->nullableInteger(
+                Arr::get($payload, 'periods.all_time.total_covers')
+                ?? Arr::get($payload, 'reservations.total_covers')
+            ),
             // Colonne per-periodo: presenti solo nel payload V2 (chiave "periods").
             // nullableInteger(null) restituisce null, quindi i payload V1 restano compatibili.
             'orders_today'              => $this->nullableInteger(Arr::get($payload, 'periods.today.orders_total')),
@@ -297,13 +307,19 @@ class SiteReportSyncService
 
     private function ordersRevenueForSnapshot(array $payload): ?int
     {
-        $revenueUnit = Arr::get($payload, 'revenue_unit');
+        $revenueUnit = strtolower(trim((string) Arr::get($payload, 'revenue_unit', '')));
 
-        if (! in_array($revenueUnit, ['cents', 'euros'], true)) {
+        // Accetta varianti comuni: cents, euros, euro, eur
+        $knownUnits = ['cents', 'euros', 'euro', 'eur'];
+        if (! in_array($revenueUnit, $knownUnits, true)) {
             return null;
         }
 
-        return $this->nullableInteger(Arr::get($payload, 'orders.revenue_confirmed'));
+        // V2 può esporre il totale anche in periods.all_time
+        $raw = Arr::get($payload, 'periods.all_time.revenue_confirmed')
+            ?? Arr::get($payload, 'orders.revenue_confirmed');
+
+        return $this->nullableInteger($raw);
     }
 
     private function sanitizeContext(array $context): array

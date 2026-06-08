@@ -37,14 +37,29 @@ class ReportController extends Controller
         $totRevenue       = 0.0;
         $totReservations  = 0;
         $totCovers        = 0;
+        $hasRevenue       = false;
+        $hasCovers        = false;
+        $allTimeMissing   = false; // true se 'all' fallback ai 30gg
 
         foreach ($sites as $site) {
             $snap = $site->latestSnapshot;
 
-            $orders       = (int) ($snap?->{$cols['orders']} ?? 0);
-            $reservations = (int) ($snap?->{$cols['res']}    ?? 0);
-            $covers       = $cols['covers']  ? (int) ($snap?->{$cols['covers']}  ?? 0) : null;
+            // Per 'all' prova le colonne total; se nulle, usa le 30gg come fallback
+            $ordersCol = $cols['orders'];
+            $resCol    = $cols['res'];
+            if ($period === 'all' && $snap && $snap->{$ordersCol} === null) {
+                $ordersCol      = 'orders_last_30_days';
+                $resCol         = 'reservations_last_30_days';
+                $allTimeMissing = true;
+            }
+
+            $orders       = $snap !== null ? (int) ($snap->{$ordersCol} ?? 0) : 0;
+            $reservations = $snap !== null ? (int) ($snap->{$resCol}    ?? 0) : 0;
+            $covers       = ($cols['covers'] && $snap !== null) ? ((int) ($snap->{$cols['covers']} ?? 0)) : null;
             $revenue      = $this->resolveRevenue($snap, $cols['revenue']);
+
+            if ($revenue !== null) { $hasRevenue = true; }
+            if ($covers  !== null && $covers > 0) { $hasCovers = true; }
 
             $totOrders       += $orders;
             $totRevenue      += $revenue ?? 0.0;
@@ -91,7 +106,8 @@ class ReportController extends Controller
 
         return view('reports.index', compact(
             'ordersRows', 'reservationRows', 'totals',
-            'period', 'monthlyData', 'siteNames'
+            'period', 'monthlyData', 'siteNames',
+            'hasRevenue', 'hasCovers', 'allTimeMissing'
         ));
     }
 
