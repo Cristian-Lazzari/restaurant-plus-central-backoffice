@@ -39,8 +39,8 @@ Route::middleware('backoffice.auth')->group(function () {
     Route::get('pipeline', [PipelineController::class, 'index'])->name('pipeline.index');
     Route::get('pipeline/leads', [PipelineController::class, 'leads'])->name('pipeline.leads');
     Route::post('pipeline/leads', [PipelineController::class, 'storeLead'])->name('pipeline.leads.store');
-    Route::put('pipeline/leads/{lead}', [PipelineController::class, 'updateLead'])->name('pipeline.leads.update');
-    Route::delete('pipeline/leads/{lead}', [PipelineController::class, 'destroyLead'])->name('pipeline.leads.destroy');
+    Route::put('pipeline/leads/{site}', [PipelineController::class, 'updateLead'])->name('pipeline.leads.update');
+    Route::delete('pipeline/leads/{site}', [PipelineController::class, 'destroyLead'])->name('pipeline.leads.destroy');
     Route::get('pipeline/smm', [PipelineController::class, 'smmList'])->name('pipeline.smm');
     Route::post('pipeline/smm', [PipelineController::class, 'storeSmm'])->name('pipeline.smm.store');
     Route::put('pipeline/smm/{smm}', [PipelineController::class, 'updateSmm'])->name('pipeline.smm.update');

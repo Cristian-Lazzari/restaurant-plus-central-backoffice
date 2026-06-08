@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\PipelineLead;
 use App\Models\PipelineSmm;
 use App\Models\Site;
 use Illuminate\Http\Request;
@@ -20,7 +19,9 @@ class PipelineController extends Controller
 
     public function leads(Request $request)
     {
-        $q = PipelineLead::query();
+        // La pipeline mostra tutti i Site, sia prospect che clienti connessi.
+        // Il campo has_dashboard nel payload indica se il sito ha già una dashboard.
+        $q = Site::query();
 
         if ($s = $request->input('stato')) {
             $q->where('stato', $s);
@@ -33,20 +34,28 @@ class PipelineController extends Controller
         }
         if ($search = $request->input('q')) {
             $q->where(function ($sub) use ($search) {
-                $sub->where('nome', 'like', "%{$search}%")
-                    ->orWhere('ristorante', 'like', "%{$search}%")
+                $sub->where('name', 'like', "%{$search}%")
                     ->orWhere('citta', 'like', "%{$search}%");
             });
         }
 
         $sort = $request->input('sort', 'created_at');
         $dir  = $request->input('dir', 'desc');
-        $allowedSorts = ['nome', 'stato', 'valore', 'data_contatto', 'created_at'];
-        if (in_array($sort, $allowedSorts)) {
-            $q->orderBy($sort, $dir === 'asc' ? 'asc' : 'desc');
+
+        // Mappa i nomi frontend → colonne reali in sites
+        $sortMap = [
+            'nome'          => 'name',
+            'stato'         => 'stato',
+            'valore'        => 'valore',
+            'data_contatto' => 'data_contatto',
+            'created_at'    => 'created_at',
+        ];
+
+        if (isset($sortMap[$sort])) {
+            $q->orderBy($sortMap[$sort], $dir === 'asc' ? 'asc' : 'desc');
         }
 
-        $leads = $q->get()->map(fn ($l) => $this->formatLead($l));
+        $leads = $q->get()->map(fn ($s) => $this->formatSite($s));
 
         return response()->json($leads);
     }
@@ -54,22 +63,35 @@ class PipelineController extends Controller
     public function storeLead(Request $request)
     {
         $data = $this->validateLead($request);
-        $lead = PipelineLead::create($data);
 
-        return response()->json($this->formatLead($lead), 201);
+        $site = Site::create(array_merge(
+            $this->pipelineToSiteData($data),
+            ['is_prospect' => true, 'url' => '', 'token' => '']
+        ));
+
+        return response()->json($this->formatSite($site), 201);
     }
 
-    public function updateLead(Request $request, PipelineLead $lead)
+    public function updateLead(Request $request, Site $site)
     {
         $data = $this->validateLead($request);
-        $lead->update($data);
 
-        return response()->json($this->formatLead($lead->fresh()));
+        // Aggiorna solo i campi CRM; non toccare url/token/active/consecutive_failures
+        $site->update($this->pipelineToSiteData($data));
+
+        return response()->json($this->formatSite($site->fresh()));
     }
 
-    public function destroyLead(PipelineLead $lead)
+    public function destroyLead(Site $site)
     {
-        $lead->delete();
+        // I clienti connessi non si eliminano dalla pipeline: rischio perdita dati sync
+        if (! $site->is_prospect) {
+            return response()->json([
+                'error' => 'Non puoi eliminare un cliente connesso dalla pipeline',
+            ], 403);
+        }
+
+        $site->delete();
 
         return response()->json(['ok' => true]);
     }
@@ -122,7 +144,8 @@ class PipelineController extends Controller
 
     public function stats()
     {
-        $leads = PipelineLead::all();
+        // Usa Site::all() come unica sorgente di verità per i lead della pipeline
+        $leads = Site::all();
         $smm   = PipelineSmm::all();
 
         $totali  = $leads->count();
@@ -157,7 +180,7 @@ class PipelineController extends Controller
         foreach (['interessato', 'demo', 'proposta'] as $stato) {
             $items = $leads->where('stato', $stato);
             $pipelineValore[$stato] = [
-                'count' => $items->count(),
+                'count'  => $items->count(),
                 'valore' => $items->sum('valore'),
             ];
         }
@@ -174,7 +197,8 @@ class PipelineController extends Controller
 
     public function seed()
     {
-        if (PipelineLead::count() > 0) {
+        // Se esistono già Site con stato pipeline valorizzato, il seed è già stato fatto
+        if (Site::whereNotNull('stato')->exists()) {
             return response()->json(['skipped' => true]);
         }
 
@@ -185,19 +209,19 @@ class PipelineController extends Controller
             5 => ['pacchetto' => 'top',   'valore' => 1199],
         ];
 
-        $sites = Site::whereNotNull('pack')
+        // I siti connessi (is_prospect = false) con pack valorizzato sono già nella pipeline
+        // come "chiuso". Li aggiorniamo aggiungendo i dati CRM senza creare duplicati.
+        $sites = Site::connected()
+            ->whereNotNull('pack')
             ->whereIn('pack', array_keys($packMap))
             ->orderBy('sort_order')
             ->get();
 
         foreach ($sites as $site) {
             $map = $packMap[$site->pack];
-            PipelineLead::create([
-                'nome'          => $site->name,
-                'ristorante'    => $site->name,
+            $site->update([
                 'stato'         => 'chiuso',
                 'priorita'      => 'bassa',
-                'pacchetto'     => $map['pacchetto'],
                 'valore'        => $map['valore'],
                 'data_contatto' => $site->created_at?->toDateString() ?? now()->toDateString(),
                 'fonte'         => 'diretto',
@@ -212,24 +236,29 @@ class PipelineController extends Controller
 
     public function exportCsv()
     {
-        $leads = PipelineLead::orderBy('created_at', 'desc')->get();
+        $leads = Site::orderBy('created_at', 'desc')->get();
+
+        static $packStr = [1 => 'base', 2 => 'inter', 3 => 'top', 5 => 'top'];
 
         $headers = [
             'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="pipeline_' . now()->format('Y-m-d') . '.csv"',
         ];
 
-        $callback = function () use ($leads) {
+        $callback = function () use ($leads, $packStr) {
             $handle = fopen('php://output', 'w');
             // BOM per Excel italiano
             fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-            fputcsv($handle, ['Nome', 'Ristorante', 'Città', 'Telefono', 'Email', 'Fonte', 'Stato', 'Priorità', 'Pacchetto', 'Valore €', 'Data contatto', 'Follow-up', 'Prossimo step', 'Note'], ';');
+            fputcsv($handle, ['Nome', 'Ristorante', 'Città', 'Telefono', 'Email', 'Fonte', 'Stato', 'Priorità', 'Pacchetto', 'Valore €', 'Data contatto', 'Follow-up', 'Prossimo step', 'Note', 'Connesso'], ';');
             foreach ($leads as $l) {
                 fputcsv($handle, [
-                    $l->nome, $l->ristorante, $l->citta, $l->telefono, $l->email,
-                    $l->fonte, $l->stato, $l->priorita, $l->pacchetto, $l->valore,
+                    $l->name, $l->name, $l->citta, $l->telefono, $l->email,
+                    $l->fonte, $l->stato, $l->priorita,
+                    $l->pack ? ($packStr[$l->pack] ?? '') : '',
+                    $l->valore,
                     $l->data_contatto?->format('d/m/Y'), $l->followup_date?->format('d/m/Y'),
-                    $l->nextstep, $l->note,
+                    $l->nextstep, $l->notes,
+                    $l->is_prospect ? 'No' : 'Sì',
                 ], ';');
             }
             fclose($handle);
@@ -279,27 +308,35 @@ class PipelineController extends Controller
         ]);
     }
 
-    private function formatLead(PipelineLead $l): array
+    /**
+     * Formatta un Site come risposta JSON per il frontend pipeline.
+     * Espone il campo has_dashboard per distinguere clienti connessi da prospect.
+     */
+    private function formatSite(Site $s): array
     {
+        static $packStr = [1 => 'base', 2 => 'inter', 3 => 'top', 5 => 'top'];
+        static $packVal = [1 => 399, 2 => 999, 3 => 1199, 5 => 1199];
+
         return [
-            'id'            => $l->id,
-            'nome'          => $l->nome,
-            'ristorante'    => $l->ristorante,
-            'citta'         => $l->citta,
-            'telefono'      => $l->telefono,
-            'email'         => $l->email,
-            'fonte'         => $l->fonte,
-            'smm_ref'       => $l->smm_ref,
-            'stato'         => $l->stato,
-            'priorita'      => $l->priorita,
-            'pacchetto'     => $l->pacchetto,
-            'valore'        => $l->valore,
-            'data_contatto' => $l->data_contatto?->format('Y-m-d'),
-            'followup_date' => $l->followup_date?->format('Y-m-d'),
-            'nextstep'      => $l->nextstep,
-            'note'          => $l->note,
-            'tag'           => $l->tag,
-            'overdue'       => $l->isOverdue(),
+            'id'            => $s->id,
+            'nome'          => $s->name,
+            'ristorante'    => $s->name,
+            'citta'         => $s->citta,
+            'telefono'      => $s->telefono,
+            'email'         => $s->email,
+            'fonte'         => $s->fonte,
+            'smm_ref'       => $s->smm_ref,
+            'stato'         => $s->stato,
+            'priorita'      => $s->priorita,
+            'pacchetto'     => $s->pack ? ($packStr[$s->pack] ?? null) : null,
+            'valore'        => $s->valore ?? ($s->pack ? ($packVal[$s->pack] ?? null) : null),
+            'data_contatto' => $s->data_contatto?->format('Y-m-d'),
+            'followup_date' => $s->followup_date?->format('Y-m-d'),
+            'nextstep'      => $s->nextstep,
+            'note'          => $s->notes,
+            'tag'           => $s->tag,
+            'has_dashboard' => ! $s->is_prospect,
+            'overdue'       => $s->isOverdue(),
         ];
     }
 
@@ -320,5 +357,37 @@ class PipelineController extends Controller
             'note'          => $s->note,
             'guadagno'      => $s->guadagnoTotale(),
         ];
+    }
+
+    /**
+     * Converte i dati del form pipeline (chiavi frontend) nelle colonne di sites.
+     */
+    private function pipelineToSiteData(array $data): array
+    {
+        return [
+            'name'          => $data['nome'],
+            'citta'         => $data['citta'] ?? null,
+            'telefono'      => $data['telefono'] ?? null,
+            'email'         => $data['email'] ?? null,
+            'fonte'         => $data['fonte'] ?? null,
+            'smm_ref'       => $data['smm_ref'] ?? null,
+            'stato'         => $data['stato'] ?? null,
+            'priorita'      => $data['priorita'] ?? null,
+            'pack'          => $this->pacchettoPack($data['pacchetto'] ?? null),
+            'valore'        => $data['valore'] ?? null,
+            'data_contatto' => $data['data_contatto'] ?? null,
+            'followup_date' => $data['followup_date'] ?? null,
+            'nextstep'      => $data['nextstep'] ?? null,
+            'notes'         => $data['note'] ?? null,
+            'tag'           => $data['tag'] ?? null,
+        ];
+    }
+
+    /**
+     * Converte la stringa pacchetto (base/inter/top) nell'integer pack usato in sites.
+     */
+    private function pacchettoPack(?string $pacchetto): ?int
+    {
+        return ['base' => 1, 'inter' => 2, 'top' => 3][$pacchetto] ?? null;
     }
 }

@@ -334,9 +334,9 @@
                 <div class="field"><label class="f-label">Pacchetto</label>
                     <select id="f-pacchetto">
                         <option value="">Non definito</option>
-                        <option value="base">Base — €399/anno</option>
-                        <option value="inter">Intermedio — €999/anno</option>
-                        <option value="top">Top CRM — €1.200/anno</option>
+                        <option value="base">Essential — €399/anno</option>
+                        <option value="inter">Work On — €999/anno</option>
+                        <option value="top">Boost Up — €1.199/anno</option>
                     </select>
                 </div>
                 <div class="field"><label class="f-label">Valore stimato (€/anno)</label><input type="number" id="f-valore" placeholder="399" min="0"></div>
@@ -432,7 +432,7 @@ const statusLabel = { nuovo:'Nuovo', contattato:'Contattato', interessato:'Inter
 const statusClass = { nuovo:'s-nuovo', contattato:'s-contattato', interessato:'s-interessato', demo:'s-demo', proposta:'s-proposta', followup:'s-followup', chiuso:'s-chiuso', perso:'s-perso' };
 const sourceLabel = { smm:'SMM', ads:'Meta Ads', referral:'Referral', organico:'Organico', webinar:'Webinar', diretto:'Diretto' };
 const sourceClass = { smm:'src-smm', ads:'src-ads', referral:'src-referral', organico:'src-organico', webinar:'src-webinar', diretto:'src-diretto' };
-const packLabel   = { base:'Base €399', inter:'Interm. €999', top:'Top €1.200' };
+const packLabel   = { base:'Essential €399', inter:'Work On €999', top:'Boost Up €1.199' };
 const packClass   = { base:'pack-base', inter:'pack-inter', top:'pack-top' };
 const prioClass   = { alta:'p-alta', media:'p-media', bassa:'p-bassa' };
 const smmStatusLabel = { nuovo:'Da contattare', contattato:'Contattato', interessato:'Interessato', partner:'Partner ✓', rifiutato:'Rifiutato' };
@@ -500,7 +500,7 @@ async function renderLeadsLocal() {
         <tr style="cursor:pointer" onclick="editLead(${l.id})">
             <td><div class="prio-dot ${prioClass[l.priorita] || 'p-bassa'}"></div></td>
             <td>
-                <strong style="font-size:13px">${l.nome || '—'}</strong>
+                <strong style="font-size:13px">${l.nome || '—'} ${l.has_dashboard ? '<span style="font-size:10px;background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;padding:1px 5px;border-radius:4px">🔗</span>' : ''}</strong>
                 <div style="font-size:11px;color:var(--muted)">${l.ristorante || ''}</div>
             </td>
             <td>${l.citta || '—'}</td>

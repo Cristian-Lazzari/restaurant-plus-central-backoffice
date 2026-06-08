@@ -24,6 +24,20 @@ class Site extends Model
         'last_sync_at',
         'last_success_at',
         'last_error_at',
+        // Campi CRM/pipeline (is_prospect = true → non è ancora cliente connesso)
+        'is_prospect',
+        'citta',
+        'telefono',
+        'email',
+        'fonte',
+        'smm_ref',
+        'stato',
+        'priorita',
+        'valore',
+        'data_contatto',
+        'followup_date',
+        'nextstep',
+        'tag',
     ];
 
     protected $hidden = [
@@ -40,7 +54,36 @@ class Site extends Model
         'last_sync_at' => 'datetime',
         'last_success_at' => 'datetime',
         'last_error_at' => 'datetime',
+        'is_prospect' => 'boolean',
+        'data_contatto' => 'date',
+        'followup_date' => 'date',
+        'valore' => 'integer',
     ];
+
+    // ─── Scopes ──────────────────────────────────────────────────────────────────
+
+    /**
+     * Filtra solo i siti realmente connessi (clienti con dashboard attiva).
+     * Usato ovunque nella dashboard per escludere i prospect della pipeline CRM.
+     */
+    public function scopeConnected($query)
+    {
+        return $query->where('is_prospect', false);
+    }
+
+    // ─── Accessor / metodi di business ───────────────────────────────────────────
+
+    /**
+     * True se il follow-up è scaduto e il lead non è ancora chiuso/perso.
+     */
+    public function isOverdue(): bool
+    {
+        return $this->followup_date
+            && $this->followup_date->isPast()
+            && ! in_array($this->stato, ['chiuso', 'perso']);
+    }
+
+    // ─── Relazioni ───────────────────────────────────────────────────────────────
 
     public function reportSnapshots(): HasMany
     {

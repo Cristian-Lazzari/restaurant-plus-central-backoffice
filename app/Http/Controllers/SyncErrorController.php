@@ -22,7 +22,7 @@ class SyncErrorController extends Controller
 
         $errors = $query->get();
 
-        $sites = Site::orderBy('name')->get(['id', 'name']);
+        $sites = Site::connected()->orderBy('name')->get(['id', 'name']);
 
         return view('sync-errors.index', compact('errors', 'sites'));
     }

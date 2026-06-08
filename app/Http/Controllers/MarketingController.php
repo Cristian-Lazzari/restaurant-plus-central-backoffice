@@ -9,9 +9,9 @@ class MarketingController extends Controller
 {
     public function index()
     {
-        $activeCount = Site::where('active', true)->count();
+        $activeCount = Site::connected()->where('active', true)->count();
 
-        $sites = Site::with('latestSnapshot')->where('active', true)->get();
+        $sites = Site::connected()->with('latestSnapshot')->where('active', true)->get();
 
         $orders30Values = [];
         $top5 = [];
@@ -34,7 +34,7 @@ class MarketingController extends Controller
         usort($top5, fn ($a, $b) => $b['orders30'] <=> $a['orders30']);
         $top5 = array_slice($top5, 0, 5);
 
-        $packDistribution = Site::select('pack', DB::raw('count(*) as total'))
+        $packDistribution = Site::connected()->select('pack', DB::raw('count(*) as total'))
             ->groupBy('pack')
             ->orderBy('pack')
             ->get();

@@ -21,7 +21,7 @@ class SiteController extends Controller
 
         $canReorderSites = Schema::hasColumn('sites', 'sort_order');
 
-        $sitesQuery = Site::with(['latestSnapshot', 'latestError']);
+        $sitesQuery = Site::connected()->with(['latestSnapshot', 'latestError']);
 
         if ($canReorderSites) {
             $sitesQuery

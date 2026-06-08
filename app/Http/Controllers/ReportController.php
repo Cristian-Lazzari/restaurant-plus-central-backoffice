@@ -8,7 +8,7 @@ class ReportController extends Controller
 {
     public function index()
     {
-        $sites = Site::with('latestSnapshot')->where('active', true)->orderBy('name')->get();
+        $sites = Site::connected()->with('latestSnapshot')->where('active', true)->orderBy('name')->get();
 
         $rows = [];
         $totalOrders30 = 0;

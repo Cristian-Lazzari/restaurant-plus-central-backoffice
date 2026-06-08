@@ -18,7 +18,7 @@ class SiteSyncController extends Controller
 
     public function syncAll(Request $request, SiteReportSyncService $syncService)
     {
-        $sites   = Site::where('active', true)->orderBy('name')->get();
+        $sites   = Site::connected()->where('active', true)->orderBy('name')->get();
         $success = 0;
         $failed  = 0;
         $failureSummaries = [];
