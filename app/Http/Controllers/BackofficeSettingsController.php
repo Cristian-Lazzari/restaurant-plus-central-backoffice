@@ -2,16 +2,29 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Site;
+use App\Models\SyncError;
 use App\Services\BackofficeSettingsService;
 use Illuminate\Http\Request;
 
 class BackofficeSettingsController extends Controller
 {
-    public function edit(BackofficeSettingsService $settings)
+    public function edit(Request $request, BackofficeSettingsService $settings)
     {
+        $errorsQuery = SyncError::with('site')->latest('occurred_at')->limit(100);
+
+        if ($request->filled('site_id')) {
+            $errorsQuery->where('site_id', (int) $request->query('site_id'));
+        }
+        if ($request->filled('code')) {
+            $errorsQuery->where('code', $request->query('code'));
+        }
+
         return view('backoffice-settings.edit', [
-            'benchmark' => $settings->savingsBenchmark(),
+            'benchmark'           => $settings->savingsBenchmark(),
             'settingsTableExists' => $settings->settingsTableExists(),
+            'syncErrors'          => $errorsQuery->get(),
+            'sites'               => Site::connected()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 

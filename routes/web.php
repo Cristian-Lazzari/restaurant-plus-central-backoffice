@@ -25,7 +25,7 @@ Route::middleware('backoffice.auth')->group(function () {
     Route::post('sites/{site}/toggle', [SiteController::class, 'toggle'])->name('sites.toggle');
     Route::post('sites/{site}/sync', [SiteSyncController::class, 'sync'])->name('sites.sync');
     Route::post('sync-all', [SiteSyncController::class, 'syncAll'])->name('sync.all');
-    Route::get('sync-errors', [SyncErrorController::class, 'index'])->name('sync-errors.index');
+    Route::get('sync-errors', fn() => redirect()->route('backoffice-settings.edit', ['tab' => 'errori']))->name('sync-errors.index');
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('sites/{site}/snapshots', [SnapshotController::class, 'index'])->name('sites.snapshots');
     Route::get('marketing', [MarketingController::class, 'index'])->name('marketing.index');
