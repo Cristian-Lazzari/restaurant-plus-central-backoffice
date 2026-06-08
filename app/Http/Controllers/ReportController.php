@@ -78,7 +78,7 @@ class ReportController extends Controller
             ->select([
                 'rs.site_id',
                 'sites.name as site_name',
-                DB::raw("strftime('%Y-%m', rs.fetched_at) as month"),
+                DB::raw("DATE_FORMAT(rs.fetched_at, '%Y-%m') as month"),
                 'rs.orders_last_30_days',
                 'rs.reservations_last_30_days',
                 'rs.orders_revenue',
