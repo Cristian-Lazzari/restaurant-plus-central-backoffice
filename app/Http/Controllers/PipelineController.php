@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\PipelineLead;
 use App\Models\PipelineSmm;
+use App\Models\Site;
 use Illuminate\Http\Request;
 
 class PipelineController extends Controller
@@ -177,30 +178,34 @@ class PipelineController extends Controller
             return response()->json(['skipped' => true]);
         }
 
-        $today = now()->toDateString();
-        $fu1   = now()->addDays(1)->toDateString();
-        $fu2   = now()->addDays(2)->toDateString();
-        $fu3   = now()->addDays(3)->toDateString();
-
-        $clienti = [
-            ['nome' => 'Locanda del Duca',        'ristorante' => 'Locanda del Duca',        'stato' => 'chiuso', 'priorita' => 'bassa', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'nextstep' => 'Cliente sicuro — chiedi testimonianza video', 'note' => 'Cliente storico. 118 coperti/mese. Candidato per caso studio.', 'tag' => 'sicuro'],
-            ['nome' => 'Classico Maglie',          'ristorante' => 'Classico Maglie',          'stato' => 'chiuso', 'priorita' => 'bassa', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'nextstep' => 'Cliente sicuro — chiedi video-testimonianza 60s', 'note' => 'Cliente sicuro. 154 coperti/mese. Candidato ideale per video-testimonianza.', 'tag' => 'sicuro'],
-            ['nome' => 'Il Tuo Lounge Restaurant', 'ristorante' => 'Il Tuo Lounge Restaurant', 'stato' => 'chiuso', 'priorita' => 'bassa', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'nextstep' => 'Cliente sicuro — aggiorna su nuove funzioni CRM', 'note' => 'Cliente confermato.', 'tag' => 'sicuro'],
-            ['nome' => 'I Capricci di Leo',        'ristorante' => 'I Capricci di Leo',        'stato' => 'chiuso', 'priorita' => 'bassa', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'nextstep' => 'Cliente sicuro — aggiorna su nuove funzioni CRM', 'note' => 'Cliente confermato.', 'tag' => 'sicuro'],
-            ['nome' => 'Zona Pub',                 'ristorante' => 'Zona Pub',                 'stato' => 'chiuso', 'priorita' => 'bassa', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'nextstep' => 'Cliente assicurato — rafforza rapporto, chiedi referral', 'note' => 'Cliente assicurato. Ottimo candidato per referral program.', 'tag' => 'sicuro'],
-            ['nome' => 'Cliente a rischio 1', 'ristorante' => '(aggiorna nome)', 'stato' => 'followup', 'priorita' => 'alta', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'followup_date' => $fu1, 'nextstep' => 'WhatsApp oggi — aggiornamento CRM incluso nel piano. Se non risponde: chiama domani.', 'note' => '⚠ A RISCHIO. Non sa delle ultime modifiche CRM. Contattare con urgenza.', 'tag' => 'rischio'],
-            ['nome' => 'Cliente a rischio 2', 'ristorante' => '(aggiorna nome)', 'stato' => 'followup', 'priorita' => 'alta', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'followup_date' => $fu1, 'nextstep' => 'WhatsApp oggi — aggiornamento CRM incluso nel piano. Se non risponde: chiama domani.', 'note' => '⚠ A RISCHIO. Non sa delle ultime modifiche CRM. Contattare con urgenza.', 'tag' => 'rischio'],
-            ['nome' => 'Cliente a rischio 3', 'ristorante' => '(aggiorna nome)', 'stato' => 'followup', 'priorita' => 'alta', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'followup_date' => $fu2, 'nextstep' => 'WhatsApp oggi — aggiornamento CRM incluso nel piano. Se non risponde: chiama domani.', 'note' => '⚠ A RISCHIO. Non sa delle ultime modifiche CRM.', 'tag' => 'rischio'],
-            ['nome' => 'Cliente a rischio 4', 'ristorante' => '(aggiorna nome)', 'stato' => 'followup', 'priorita' => 'alta', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'followup_date' => $fu2, 'nextstep' => 'WhatsApp oggi — aggiornamento CRM incluso nel piano. Se non risponde: chiama domani.', 'note' => '⚠ A RISCHIO. Non sa delle ultime modifiche CRM.', 'tag' => 'rischio'],
-            ['nome' => 'Cliente a rischio 5', 'ristorante' => '(aggiorna nome)', 'stato' => 'followup', 'priorita' => 'alta', 'pacchetto' => 'base', 'valore' => 399, 'data_contatto' => '2025-01-01', 'followup_date' => $fu3, 'nextstep' => 'WhatsApp oggi — aggiornamento CRM incluso nel piano. Se non risponde: chiama domani.', 'note' => '⚠ A RISCHIO. Non sa delle ultime modifiche CRM.', 'tag' => 'rischio'],
+        $packMap = [
+            1 => ['pacchetto' => 'base',  'valore' => 399],
+            2 => ['pacchetto' => 'inter', 'valore' => 999],
+            3 => ['pacchetto' => 'top',   'valore' => 1199],
+            5 => ['pacchetto' => 'top',   'valore' => 1199],
         ];
 
-        foreach ($clienti as $c) {
-            $c['fonte'] = 'diretto';
-            PipelineLead::create($c);
+        $sites = Site::whereNotNull('pack')
+            ->whereIn('pack', array_keys($packMap))
+            ->orderBy('sort_order')
+            ->get();
+
+        foreach ($sites as $site) {
+            $map = $packMap[$site->pack];
+            PipelineLead::create([
+                'nome'          => $site->name,
+                'ristorante'    => $site->name,
+                'stato'         => 'chiuso',
+                'priorita'      => 'bassa',
+                'pacchetto'     => $map['pacchetto'],
+                'valore'        => $map['valore'],
+                'data_contatto' => $site->created_at?->toDateString() ?? now()->toDateString(),
+                'fonte'         => 'diretto',
+                'tag'           => 'sicuro',
+            ]);
         }
 
-        return response()->json(['seeded' => true]);
+        return response()->json(['seeded' => $sites->count()]);
     }
 
     // ─── EXPORT CSV ──────────────────────────────────────────────────────────

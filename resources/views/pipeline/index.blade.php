@@ -121,12 +121,7 @@
 .pipe-empty { text-align: center; padding: 50px 20px; color: var(--muted); }
 .pipe-empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
 
-/* Banner retention */
-.retention-banner {
-    background: var(--red-soft); border: 1px solid var(--red-border);
-    border-left: 4px solid var(--red); border-radius: var(--radius);
-    padding: 14px 16px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 12px;
-}
+
 </style>
 
 <div class="page-header">
@@ -183,20 +178,6 @@
 
 {{-- ── LEADS PANEL ── --}}
 <div class="pipe-panel active" id="panel-leads">
-
-    <div id="retention-banner" class="retention-banner">
-        <span style="font-size:1.1rem;flex-shrink:0">⚠️</span>
-        <div>
-            <strong style="color:var(--red);font-size:13px">PRIORITÀ RETENTION — Clienti a rischio</strong>
-            <div style="font-size:12.5px;color:var(--ink-2);margin-top:4px;line-height:1.6">
-                5 clienti non sono a conoscenza degli aggiornamenti CRM inclusi nel loro pacchetto.
-                <strong style="color:var(--amber)">Azione immediata:</strong> WhatsApp personalizzato → se non rispondono entro 24h → chiamata diretta.<br>
-                <strong style="color:var(--green)">Clienti sicuri:</strong> Locanda del Duca · Classico Maglie · Il Tuo Lounge · I Capricci di Leo · Zona Pub
-            </div>
-        </div>
-        <button onclick="document.getElementById('retention-banner').style.display='none'"
-            style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;flex-shrink:0;padding:2px 6px;margin-left:auto">✕</button>
-    </div>
 
     <div class="pipe-toolbar">
         <button class="btn btn-primary" onclick="openLeadModal()">＋ Nuovo Lead</button>
