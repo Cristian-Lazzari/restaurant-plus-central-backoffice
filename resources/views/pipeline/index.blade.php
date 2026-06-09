@@ -94,6 +94,19 @@
 }
 .funnel-add:hover { border-color: var(--brand); color: var(--brand); }
 
+/* Drag & Drop */
+.funnel-item[draggable="true"] { cursor: grab; user-select: none; }
+.funnel-item.dnd-dragging      { opacity: .3; transform: scale(.97); transition: none; }
+.funnel-col.drag-over .funnel-items {
+    outline: 2px dashed var(--brand); outline-offset: 2px;
+    background: var(--brand-soft); border-radius: var(--radius-sm); min-height: 48px;
+}
+.dnd-ghost {
+    position: fixed; z-index: 9999; pointer-events: none;
+    opacity: .88; box-shadow: 0 8px 28px rgba(0,0,0,.22);
+    border-radius: 8px; transform: rotate(2deg); transition: none; will-change: left,top;
+}
+
 /* KPI */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 12px; margin-bottom: 20px; }
 .kpi-card { background: var(--surface); border: 1px solid var(--border-soft); border-radius: var(--radius); padding: 16px; text-align: center; box-shadow: var(--shadow-sm); }
@@ -790,7 +803,7 @@ function renderFunnel() {
     FUNNEL_STAGES.forEach(stage => {
         const items = leads.filter(l => l.stato === stage.key);
         const val   = items.reduce((s, l) => s + (Number(l.valore) || 0), 0);
-        html += `<div class="funnel-col">
+        html += `<div class="funnel-col" data-stage="${stage.key}">
             <div class="funnel-header" style="background:${stage.color}18;color:${stage.color};border:1px solid ${stage.color}33">
                 <div class="funnel-count">${items.length}</div>
                 <div style="font-size:10px;margin-top:2px">${stage.label}</div>
@@ -798,10 +811,10 @@ function renderFunnel() {
             </div>
             <div class="funnel-items">
                 ${items.length ? items.map(l => `
-                    <div class="funnel-item" onclick="editLead(${l.id})">
+                    <div class="funnel-item" draggable="true" data-id="${l.id}" onclick="editLead(${l.id})">
                         <div class="fi-name">${l.nome || '—'}</div>
                         <div class="fi-meta">${l.ristorante || ''} ${l.citta ? '· ' + l.citta : ''}</div>
-                        ${l.valore ? `<div style="font-size:11px;color:var(--brand);margin-top:3px;font-weight:700">€${Number(l.valore).toLocaleString('it')}</div>` : ''}
+                        ${l.arr ? `<div style="font-size:11px;color:var(--brand);margin-top:3px;font-weight:700">€${Number(l.arr).toLocaleString('it')}</div>` : ''}
                     </div>`).join('') : '<div style="font-size:11px;color:var(--muted);padding:10px;text-align:center">vuoto</div>'}
                 <button class="funnel-add" onclick="openLeadModal('${stage.key}')">＋ Aggiungi</button>
             </div>
@@ -875,6 +888,147 @@ async function renderKPI() {
         </div>`;
 }
 
+// ─── FUNNEL DRAG & DROP ───────────────────────────────────────────────────────
+let dndLeadId  = null;
+let touchState = null;
+let dndInited  = false;
+
+function initFunnelDnD() {
+    if (dndInited) return;
+    dndInited = true;
+    const wrap = document.getElementById('funnel-content');
+
+    // ── Desktop (HTML5 DnD) ──────────────────────────────────────────────────
+    wrap.addEventListener('dragstart', e => {
+        const item = e.target.closest('.funnel-item[data-id]');
+        if (!item) return;
+        dndLeadId = parseInt(item.dataset.id);
+        item.classList.add('dnd-dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', dndLeadId);
+    });
+
+    wrap.addEventListener('dragend', () => {
+        wrap.querySelectorAll('.funnel-item.dnd-dragging').forEach(el => el.classList.remove('dnd-dragging'));
+        wrap.querySelectorAll('.funnel-col.drag-over').forEach(el => el.classList.remove('drag-over'));
+        dndLeadId = null;
+    });
+
+    wrap.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const col = e.target.closest('.funnel-col[data-stage]');
+        if (col) {
+            wrap.querySelectorAll('.funnel-col.drag-over').forEach(el => el.classList.remove('drag-over'));
+            col.classList.add('drag-over');
+        }
+    });
+
+    wrap.addEventListener('dragleave', e => {
+        const col = e.target.closest('.funnel-col[data-stage]');
+        if (col && !col.contains(e.relatedTarget)) col.classList.remove('drag-over');
+    });
+
+    wrap.addEventListener('drop', e => {
+        e.preventDefault();
+        const col = e.target.closest('.funnel-col[data-stage]');
+        if (!col || !dndLeadId) return;
+        wrap.querySelectorAll('.funnel-col.drag-over').forEach(el => el.classList.remove('drag-over'));
+        moveLeadToStage(dndLeadId, col.dataset.stage);
+        dndLeadId = null;
+    });
+
+    // ── Touch ────────────────────────────────────────────────────────────────
+    wrap.addEventListener('touchstart', e => {
+        const item = e.target.closest('.funnel-item[data-id]');
+        if (!item) return;
+        const t = e.touches[0];
+        const r = item.getBoundingClientRect();
+        touchState = {
+            id: parseInt(item.dataset.id), item, clone: null, started: false,
+            ox: t.clientX - r.left, oy: t.clientY - r.top,
+            sx: t.clientX, sy: t.clientY,
+        };
+    }, { passive: true });
+
+    wrap.addEventListener('touchmove', e => {
+        if (!touchState) return;
+        const t = e.touches[0];
+        if (!touchState.started) {
+            if (Math.hypot(t.clientX - touchState.sx, t.clientY - touchState.sy) < 8) return;
+            // soglia superata → avvia drag visivo
+            touchState.started = true;
+            touchState.item.classList.add('dnd-dragging');
+            const r    = touchState.item.getBoundingClientRect();
+            const clone = touchState.item.cloneNode(true);
+            clone.classList.add('dnd-ghost');
+            clone.style.width = r.width + 'px';
+            clone.style.left  = (t.clientX - touchState.ox) + 'px';
+            clone.style.top   = (t.clientY - touchState.oy) + 'px';
+            document.body.appendChild(clone);
+            touchState.clone = clone;
+        }
+        if (touchState.started) {
+            e.preventDefault();
+            touchState.clone.style.left = (t.clientX - touchState.ox) + 'px';
+            touchState.clone.style.top  = (t.clientY - touchState.oy) + 'px';
+            const under = document.elementFromPoint(t.clientX, t.clientY);
+            const col   = under?.closest('.funnel-col[data-stage]');
+            wrap.querySelectorAll('.funnel-col.drag-over').forEach(el => el.classList.remove('drag-over'));
+            if (col) col.classList.add('drag-over');
+        }
+    }, { passive: false });
+
+    wrap.addEventListener('touchend', e => {
+        if (!touchState) return;
+        if (!touchState.started) { touchState = null; return; }
+        const t = e.changedTouches[0];
+        if (touchState.clone) touchState.clone.remove();
+        touchState.item.classList.remove('dnd-dragging');
+        wrap.querySelectorAll('.funnel-col.drag-over').forEach(el => el.classList.remove('drag-over'));
+        const under = document.elementFromPoint(t.clientX, t.clientY);
+        const col   = under?.closest('.funnel-col[data-stage]');
+        if (col) moveLeadToStage(touchState.id, col.dataset.stage);
+        touchState = null;
+    });
+}
+
+async function moveLeadToStage(leadId, newStato) {
+    const lead = leadsCache.find(l => l.id === leadId);
+    if (!lead || lead.stato === newStato) return;
+    const prev = lead.stato;
+    lead.stato = newStato;
+    renderFunnel();
+    const res = await fetch(`${API.storeLead}/${leadId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+        body: JSON.stringify({
+            nome:          lead.nome,
+            ristorante:    lead.ristorante || lead.nome,
+            citta:         lead.citta         || '',
+            telefono:      lead.telefono      || '',
+            email:         lead.email         || '',
+            fonte:         lead.fonte         || 'diretto',
+            smm_ref:       lead.smm_ref       || '',
+            stato:         newStato,
+            priorita:      lead.priorita      || 'bassa',
+            pacchetto:     lead.pacchetto     || '',
+            sconto:        lead.sconto        ?? null,
+            tipo_sconto:   lead.tipo_sconto   || null,
+            data_contatto: lead.data_contatto || null,
+            followup_date: lead.followup_date || null,
+            nextstep:      lead.nextstep      || '',
+            note:          lead.note          || '',
+        }),
+    });
+    if (!res.ok) { lead.stato = prev; renderFunnel(); return; }
+    const updated = await res.json();
+    const idx = leadsCache.findIndex(l => l.id === leadId);
+    if (idx !== -1) leadsCache[idx] = updated;
+    renderFunnel();
+    loadStats();
+}
+
 // ─── EXPORT ───────────────────────────────────────────────────────────────────
 function exportCsv() { window.location.href = API.exportCsv; }
 
@@ -887,6 +1041,7 @@ document.getElementById('smm-modal').addEventListener('click',  e => { if (e.tar
     await fetch(API.seed, { method: 'POST', headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
     await loadLeads();
     await loadStats();
+    initFunnelDnD();
 })();
 </script>
 @endpush
