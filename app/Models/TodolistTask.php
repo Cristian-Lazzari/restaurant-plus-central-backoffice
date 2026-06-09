@@ -14,6 +14,7 @@ class TodolistTask extends Model
         'text',
         'tag',
         'is_done',
+        'locked',
         'original_week_id',
         'original_day_index',
         'original_block_index',
@@ -21,6 +22,7 @@ class TodolistTask extends Model
 
     protected $casts = [
         'is_done'               => 'boolean',
+        'locked'                => 'boolean',
         'day_index'             => 'integer',
         'block_index'           => 'integer',
         'sort_order'            => 'integer',

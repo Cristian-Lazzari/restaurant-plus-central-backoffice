@@ -613,6 +613,59 @@
     padding: 7px 10px;
     min-height: 28px;
 }
+
+/* ─── SLOT 6/GIORNO ─────────────────────────────────────────────────────────── */
+.slot-section-header {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    padding: 8px 0 4px;
+    border-top: 1px solid var(--border-soft);
+    margin-top: 4px;
+}
+.slot-section-header:first-child { border-top: none; margin-top: 0; }
+.slot-empty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border: 1px dashed var(--border-soft);
+    border-radius: 7px;
+    margin-bottom: 6px;
+    opacity: 0.4;
+}
+.slot-empty-num {
+    width: 18px; height: 18px;
+    background: var(--border-soft);
+    border-radius: 50%;
+    font-size: 10px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+.slot-empty-label { font-size: 12px; color: var(--muted); font-style: italic; }
+.hole-slots-info { font-size: 11px; color: #b45309; margin-top: 1px; }
+
+/* ─── LOCK TASK ──────────────────────────────────────────────────────────────── */
+.lock-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 3px 5px;
+    cursor: pointer;
+    color: var(--muted);
+    border-radius: 4px;
+    opacity: 0.4;
+    transition: opacity 0.15s, color 0.15s;
+    display: flex; align-items: center;
+    margin-left: 2px;
+}
+.lock-btn:hover, .lock-btn.is-locked { opacity: 1; }
+.lock-btn.is-locked { color: #d97706; }
+.task-locked { background: rgba(254,243,199,0.4) !important; }
+.task-locked .task-text { font-style: italic; }
 </style>
 
 {{-- ─── TOGGLE ─────────────────────────────────────────────────────────────── --}}
@@ -716,13 +769,9 @@
                             $dayDone       = $allDayTasks->where('is_done', true)->count();
                             $allDone       = $dayTotal > 0 && $dayTotal === $dayDone;
                             $dayPanelId    = "day-{$week['id']}-{$di}";
-                            $blockLabels   = array_values(array_map(fn($b) => $b['time'].' — '.$b['label'], $day['blocks']));
-                            $blockTimes    = array_values(array_map(fn($b) => $b['time'], $day['blocks']));
                         @endphp
                         <div class="day-card" id="card-{{ $dayPanelId }}"
-                             data-day-key="{{ $dayKey }}"
-                             data-blocks="{{ json_encode($blockLabels) }}"
-                             data-block-times="{{ json_encode($blockTimes) }}">
+                             data-day-key="{{ $dayKey }}">
                             <div class="day-header" onclick="toggleDay('{{ $dayPanelId }}')">
                                 <div class="day-name">{{ $day['name'] }}</div>
                                 <div class="day-theme">{{ $day['theme'] }}</div>
@@ -738,7 +787,7 @@
                             </div>
                             <div class="day-body" id="body-{{ $dayPanelId }}">
 
-                                {{-- Buchi all'inizio della giornata (insert_after = -1) --}}
+                                {{-- Buco visivo (slot_start=-1) prima di tutto --}}
                                 @foreach ($dayHoles->where('insert_after', -1) as $hole)
                                     <div class="hole-block" id="hole-{{ $hole->id }}">
                                         <div class="hole-icon">🚫</div>
@@ -750,36 +799,112 @@
                                     </div>
                                 @endforeach
 
-                                @foreach ($day['blocks'] as $bi => $block)
-                                    <div class="time-block">
-                                        <div class="time-label">{{ $block['time'] }} — {{ $block['label'] }}</div>
-                                        @foreach ($dayTaskGroups->get($bi, collect()) as $task)
-                                            <div class="task-item" id="task-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this)">
-                                                <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="cb-{{ $task->id }}"></div>
-                                                <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="txt-{{ $task->id }}">{{ $task->text }}</div>
-                                                <span class="task-tag tag-{{ $task->tag }}">{{ $tagLabels[$task->tag] ?? $task->tag }}</span>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                    {{-- Buchi dopo questo blocco --}}
-                                    @foreach ($dayHoles->where('insert_after', $bi) as $hole)
-                                        <div class="hole-block" id="hole-{{ $hole->id }}">
-                                            <div class="hole-icon">🚫</div>
-                                            <div class="hole-info">
-                                                <div class="hole-label">{{ $hole->label }}</div>
-                                                @if ($hole->time_label)<div class="hole-time">{{ $hole->time_label }}</div>@endif
-                                            </div>
-                                            <button class="hole-delete-btn" onclick="deleteHole({{ $hole->id }})" title="Rimuovi buco">✕</button>
-                                        </div>
-                                    @endforeach
-                                @endforeach
+                                @php
+                                    // Costruisce la mappa slot → hole per questo giorno
+                                    $slotToHole = [];
+                                    foreach ($dayHoles->where('insert_after', '>=', 0) as $hole) {
+                                        $hEnd = $hole->insert_after + $hole->slot_count - 1;
+                                        for ($s = $hole->insert_after; $s <= min($hEnd, 5); $s++) {
+                                            $slotToHole[$s] = $hole;
+                                        }
+                                    }
+                                    $renderedHoleIds = [];
+                                @endphp
 
-                                {{-- Overflow: task slittate dal giorno precedente --}}
+                                <div class="slot-section-header">Mattina</div>
+                                @for ($slot = 0; $slot < 3; $slot++)
+                                    @if (isset($slotToHole[$slot]))
+                                        @php $holeHere = $slotToHole[$slot]; @endphp
+                                        @if (!in_array($holeHere->id, $renderedHoleIds))
+                                            @php $renderedHoleIds[] = $holeHere->id; @endphp
+                                            <div class="hole-block" id="hole-{{ $holeHere->id }}">
+                                                <div class="hole-icon">🚫</div>
+                                                <div class="hole-info">
+                                                    <div class="hole-label">{{ $holeHere->label }}</div>
+                                                    @if ($holeHere->time_label)<div class="hole-time">{{ $holeHere->time_label }}</div>@endif
+                                                    <div class="hole-slots-info">{{ $holeHere->slot_count }} slot{{ $holeHere->slot_count > 1 ? ' bloccati' : ' bloccato' }}</div>
+                                                </div>
+                                                <button class="hole-delete-btn" onclick="deleteHole({{ $holeHere->id }})" title="Rimuovi buco">✕</button>
+                                            </div>
+                                        @endif
+                                    @else
+                                        @php $slotTask = $dayTaskGroups->get($slot, collect())->first(); @endphp
+                                        @if ($slotTask)
+                                            <div class="task-item{{ $slotTask->locked ? ' task-locked' : '' }}" id="task-{{ $slotTask->id }}" onclick="if(!event.target.closest('.lock-btn'))toggleTask({{ $slotTask->id }}, this)">
+                                                <div class="task-cb {{ $slotTask->is_done ? 'done' : '' }}" id="cb-{{ $slotTask->id }}"></div>
+                                                <div class="task-text {{ $slotTask->is_done ? 'done' : '' }}" id="txt-{{ $slotTask->id }}">{{ $slotTask->text }}</div>
+                                                @if ($slotTask->original_week_id !== null)
+                                                    @php $originKey = $slotTask->original_week_id.'_'.$slotTask->original_day_index; @endphp
+                                                    <span class="task-origin">da {{ $dayNames[$originKey] ?? '?' }}</span>
+                                                @endif
+                                                <span class="task-tag tag-{{ $slotTask->tag }}">{{ $tagLabels[$slotTask->tag] ?? $slotTask->tag }}</span>
+                                                <button class="lock-btn{{ $slotTask->locked ? ' is-locked' : '' }}" onclick="toggleLock({{ $slotTask->id }}, this)" title="{{ $slotTask->locked ? 'Sblocca task' : 'Blocca task (non slitterà)' }}">
+                                                    @if ($slotTask->locked)
+                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                                                    @else
+                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1C9.24 1 7 3.24 7 6v1H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V6c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v1H9V6c0-1.66 1.34-3 3-3zm0 9c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/></svg>
+                                                    @endif
+                                                </button>
+                                            </div>
+                                        @else
+                                            <div class="slot-empty">
+                                                <span class="slot-empty-num">{{ $slot + 1 }}</span>
+                                                <span class="slot-empty-label">Slot libero</span>
+                                            </div>
+                                        @endif
+                                    @endif
+                                @endfor
+
+                                <div class="slot-section-header">Pomeriggio</div>
+                                @for ($slot = 3; $slot < 6; $slot++)
+                                    @if (isset($slotToHole[$slot]))
+                                        @php $holeHere = $slotToHole[$slot]; @endphp
+                                        @if (!in_array($holeHere->id, $renderedHoleIds))
+                                            @php $renderedHoleIds[] = $holeHere->id; @endphp
+                                            <div class="hole-block" id="hole-{{ $holeHere->id }}">
+                                                <div class="hole-icon">🚫</div>
+                                                <div class="hole-info">
+                                                    <div class="hole-label">{{ $holeHere->label }}</div>
+                                                    @if ($holeHere->time_label)<div class="hole-time">{{ $holeHere->time_label }}</div>@endif
+                                                    <div class="hole-slots-info">{{ $holeHere->slot_count }} slot{{ $holeHere->slot_count > 1 ? ' bloccati' : ' bloccato' }}</div>
+                                                </div>
+                                                <button class="hole-delete-btn" onclick="deleteHole({{ $holeHere->id }})" title="Rimuovi buco">✕</button>
+                                            </div>
+                                        @endif
+                                    @else
+                                        @php $slotTask = $dayTaskGroups->get($slot, collect())->first(); @endphp
+                                        @if ($slotTask)
+                                            <div class="task-item{{ $slotTask->locked ? ' task-locked' : '' }}" id="task-{{ $slotTask->id }}" onclick="if(!event.target.closest('.lock-btn'))toggleTask({{ $slotTask->id }}, this)">
+                                                <div class="task-cb {{ $slotTask->is_done ? 'done' : '' }}" id="cb-{{ $slotTask->id }}"></div>
+                                                <div class="task-text {{ $slotTask->is_done ? 'done' : '' }}" id="txt-{{ $slotTask->id }}">{{ $slotTask->text }}</div>
+                                                @if ($slotTask->original_week_id !== null)
+                                                    @php $originKey = $slotTask->original_week_id.'_'.$slotTask->original_day_index; @endphp
+                                                    <span class="task-origin">da {{ $dayNames[$originKey] ?? '?' }}</span>
+                                                @endif
+                                                <span class="task-tag tag-{{ $slotTask->tag }}">{{ $tagLabels[$slotTask->tag] ?? $slotTask->tag }}</span>
+                                                <button class="lock-btn{{ $slotTask->locked ? ' is-locked' : '' }}" onclick="toggleLock({{ $slotTask->id }}, this)" title="{{ $slotTask->locked ? 'Sblocca task' : 'Blocca task (non slitterà)' }}">
+                                                    @if ($slotTask->locked)
+                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                                                    @else
+                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1C9.24 1 7 3.24 7 6v1H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V6c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v1H9V6c0-1.66 1.34-3 3-3zm0 9c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/></svg>
+                                                    @endif
+                                                </button>
+                                            </div>
+                                        @else
+                                            <div class="slot-empty">
+                                                <span class="slot-empty-num">{{ $slot - 2 }}</span>
+                                                <span class="slot-empty-label">Slot libero</span>
+                                            </div>
+                                        @endif
+                                    @endif
+                                @endfor
+
+                                {{-- Overflow: task che non entrano nei 6 slot --}}
                                 @if ($dayTaskGroups->has(99) && $dayTaskGroups->get(99)->isNotEmpty())
                                     <div class="time-block time-block-overflow">
                                         <div class="time-label">⏩ Task slittate da un imprevisto</div>
                                         @foreach ($dayTaskGroups->get(99) as $task)
-                                            <div class="task-item" id="task-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this)">
+                                            <div class="task-item" id="task-{{ $task->id }}" onclick="if(!event.target.closest('.lock-btn'))toggleTask({{ $task->id }}, this)">
                                                 <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="cb-{{ $task->id }}"></div>
                                                 <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="txt-{{ $task->id }}">{{ $task->text }}</div>
                                                 @if ($task->original_week_id !== null)
@@ -938,7 +1063,8 @@
             $tplDayTaskGroups = $tasks->get($tplDayKey, collect());
         @endphp
         <div id="modal-tpl-{{ $week['id'] }}-{{ $di }}" style="display:none">
-            {{-- Buchi all'inizio --}}
+
+            {{-- Buco visivo (slot_start=-1) prima di tutto --}}
             @foreach ($tplDayHoles->where('insert_after', -1) as $hole)
                 <div class="hole-block" id="mhole-{{ $hole->id }}" style="margin:6px 0">
                     <div class="hole-icon">🚫</div>
@@ -949,28 +1075,88 @@
                 </div>
             @endforeach
 
-            @foreach ($day['blocks'] as $bi => $block)
-                <div class="time-block" style="padding-top:14px">
-                    <div class="time-label">{{ $block['time'] }} — {{ $block['label'] }}</div>
-                    @foreach ($tplDayTaskGroups->get($bi, collect()) as $task)
-                        <div class="task-item" id="mtask-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this, true)">
-                            <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="mcb-{{ $task->id }}"></div>
-                            <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="mtxt-{{ $task->id }}">{{ $task->text }}</div>
-                            <span class="task-tag tag-{{ $task->tag }}">{{ $tagLabels[$task->tag] ?? $task->tag }}</span>
+            @php
+                $tplSlotToHole = [];
+                foreach ($tplDayHoles->where('insert_after', '>=', 0) as $hole) {
+                    $hEnd = $hole->insert_after + $hole->slot_count - 1;
+                    for ($s = $hole->insert_after; $s <= min($hEnd, 5); $s++) {
+                        $tplSlotToHole[$s] = $hole;
+                    }
+                }
+                $tplRenderedHoleIds = [];
+            @endphp
+
+            <div class="slot-section-header">Mattina</div>
+            @for ($slot = 0; $slot < 3; $slot++)
+                @if (isset($tplSlotToHole[$slot]))
+                    @php $holeHere = $tplSlotToHole[$slot]; @endphp
+                    @if (!in_array($holeHere->id, $tplRenderedHoleIds))
+                        @php $tplRenderedHoleIds[] = $holeHere->id; @endphp
+                        <div class="hole-block" id="mhole-{{ $holeHere->id }}" style="margin:6px 0">
+                            <div class="hole-icon">🚫</div>
+                            <div class="hole-info">
+                                <div class="hole-label">{{ $holeHere->label }}</div>
+                                @if ($holeHere->time_label)<div class="hole-time">{{ $holeHere->time_label }}</div>@endif
+                                <div class="hole-slots-info">{{ $holeHere->slot_count }} slot{{ $holeHere->slot_count > 1 ? ' bloccati' : ' bloccato' }}</div>
+                            </div>
                         </div>
-                    @endforeach
-                </div>
-                {{-- Buchi dopo questo blocco --}}
-                @foreach ($tplDayHoles->where('insert_after', $bi) as $hole)
-                    <div class="hole-block" id="mhole-{{ $hole->id }}" style="margin:6px 0">
-                        <div class="hole-icon">🚫</div>
-                        <div class="hole-info">
-                            <div class="hole-label">{{ $hole->label }}</div>
-                            @if ($hole->time_label)<div class="hole-time">{{ $hole->time_label }}</div>@endif
+                    @endif
+                @else
+                    @php $slotTask = $tplDayTaskGroups->get($slot, collect())->first(); @endphp
+                    @if ($slotTask)
+                        <div class="task-item" id="mtask-{{ $slotTask->id }}" onclick="toggleTask({{ $slotTask->id }}, this, true)">
+                            <div class="task-cb {{ $slotTask->is_done ? 'done' : '' }}" id="mcb-{{ $slotTask->id }}"></div>
+                            <div class="task-text {{ $slotTask->is_done ? 'done' : '' }}" id="mtxt-{{ $slotTask->id }}">{{ $slotTask->text }}</div>
+                            @if ($slotTask->original_week_id !== null)
+                                @php $originKey = $slotTask->original_week_id.'_'.$slotTask->original_day_index; @endphp
+                                <span class="task-origin">da {{ $dayNames[$originKey] ?? '?' }}</span>
+                            @endif
+                            <span class="task-tag tag-{{ $slotTask->tag }}">{{ $tagLabels[$slotTask->tag] ?? $slotTask->tag }}</span>
                         </div>
-                    </div>
-                @endforeach
-            @endforeach
+                    @else
+                        <div class="slot-empty">
+                            <span class="slot-empty-num">{{ $slot + 1 }}</span>
+                            <span class="slot-empty-label">Slot libero</span>
+                        </div>
+                    @endif
+                @endif
+            @endfor
+
+            <div class="slot-section-header">Pomeriggio</div>
+            @for ($slot = 3; $slot < 6; $slot++)
+                @if (isset($tplSlotToHole[$slot]))
+                    @php $holeHere = $tplSlotToHole[$slot]; @endphp
+                    @if (!in_array($holeHere->id, $tplRenderedHoleIds))
+                        @php $tplRenderedHoleIds[] = $holeHere->id; @endphp
+                        <div class="hole-block" id="mhole-{{ $holeHere->id }}" style="margin:6px 0">
+                            <div class="hole-icon">🚫</div>
+                            <div class="hole-info">
+                                <div class="hole-label">{{ $holeHere->label }}</div>
+                                @if ($holeHere->time_label)<div class="hole-time">{{ $holeHere->time_label }}</div>@endif
+                                <div class="hole-slots-info">{{ $holeHere->slot_count }} slot{{ $holeHere->slot_count > 1 ? ' bloccati' : ' bloccato' }}</div>
+                            </div>
+                        </div>
+                    @endif
+                @else
+                    @php $slotTask = $tplDayTaskGroups->get($slot, collect())->first(); @endphp
+                    @if ($slotTask)
+                        <div class="task-item" id="mtask-{{ $slotTask->id }}" onclick="toggleTask({{ $slotTask->id }}, this, true)">
+                            <div class="task-cb {{ $slotTask->is_done ? 'done' : '' }}" id="mcb-{{ $slotTask->id }}"></div>
+                            <div class="task-text {{ $slotTask->is_done ? 'done' : '' }}" id="mtxt-{{ $slotTask->id }}">{{ $slotTask->text }}</div>
+                            @if ($slotTask->original_week_id !== null)
+                                @php $originKey = $slotTask->original_week_id.'_'.$slotTask->original_day_index; @endphp
+                                <span class="task-origin">da {{ $dayNames[$originKey] ?? '?' }}</span>
+                            @endif
+                            <span class="task-tag tag-{{ $slotTask->tag }}">{{ $tagLabels[$slotTask->tag] ?? $slotTask->tag }}</span>
+                        </div>
+                    @else
+                        <div class="slot-empty">
+                            <span class="slot-empty-num">{{ $slot - 2 }}</span>
+                            <span class="slot-empty-label">Slot libero</span>
+                        </div>
+                    @endif
+                @endif
+            @endfor
 
             {{-- Overflow nel modal --}}
             @if ($tplDayTaskGroups->has(99) && $tplDayTaskGroups->get(99)->isNotEmpty())
@@ -980,6 +1166,10 @@
                         <div class="task-item" id="mtask-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this, true)">
                             <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="mcb-{{ $task->id }}"></div>
                             <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="mtxt-{{ $task->id }}">{{ $task->text }}</div>
+                            @if ($task->original_week_id !== null)
+                                @php $originKey = $task->original_week_id.'_'.$task->original_day_index; @endphp
+                                <span class="task-origin">da {{ $dayNames[$originKey] ?? '?' }}</span>
+                            @endif
                             <span class="task-tag tag-{{ $task->tag }}">{{ $tagLabels[$task->tag] ?? $task->tag }}</span>
                         </div>
                     @endforeach
@@ -1006,17 +1196,26 @@
                        onkeydown="if(event.key==='Enter')saveHole()">
             </div>
             <div class="hole-modal-field">
-                <label>Orario (opzionale)</label>
-                <input type="text" id="hole-time-input"
-                       placeholder="es. 09:00–12:00">
+                <label>Slot iniziale (quale task viene bloccata per prima)</label>
+                <select id="hole-slot-start-select" onchange="onHoleSelectChange()">
+                    <option value="-1">Solo segnaposto visivo (nessuna task spostata)</option>
+                    <option value="0">Mattina — slot 1</option>
+                    <option value="1">Mattina — slot 2</option>
+                    <option value="2">Mattina — slot 3</option>
+                    <option value="3">Pomeriggio — slot 1</option>
+                    <option value="4">Pomeriggio — slot 2</option>
+                    <option value="5">Pomeriggio — slot 3</option>
+                </select>
             </div>
-            <div class="hole-modal-field">
-                <label>Fine buco (i blocchi coperti si spostano a domani)</label>
-                <select id="hole-insert-select" onchange="onHoleSelectChange(this)"></select>
+            <div class="hole-modal-field" id="hole-count-field" style="display:none">
+                <label>Quanti slot copre il buco?</label>
+                <select id="hole-slot-count-select" onchange="onHoleSelectChange()">
+                    <option value="1">1 slot</option>
+                    <option value="2">2 slot</option>
+                    <option value="3">3 slot</option>
+                </select>
             </div>
-            <div class="hole-duration-preview" id="hole-duration-preview">
-                Seleziona fino a quale blocco arriva il buco.
-            </div>
+            <div class="hole-duration-preview" id="hole-duration-preview" style="display:none"></div>
         </div>
         <div class="hole-modal-footer">
             <button class="hole-btn-cancel" onclick="closeHoleModal()">Annulla</button>
@@ -1281,55 +1480,42 @@ function gotoWeekFromModal() {
 }
 
 /* ── Buchi agenda ────────────────────────────────────────────────────────────── */
-let _holeDayKey      = null;
-let _holeBlockLabels = [];
-let _holeBlockTimes  = [];
+let _holeDayKey = null;
 
 function openHoleModal(dayKey, dayCard) {
-    _holeDayKey      = dayKey;
-    _holeBlockLabels = JSON.parse(dayCard.dataset.blocks || '[]');
-    _holeBlockTimes  = JSON.parse(dayCard.dataset.blockTimes || '[]');
-
-    const sel = document.getElementById('hole-insert-select');
-    sel.innerHTML = '<option value="-1">Solo segnaposto visivo (nessuna task spostata)</option>';
-    _holeBlockLabels.forEach((label, i) => {
-        const opt = document.createElement('option');
-        opt.value = i;
-        opt.textContent = 'Copre fino a: ' + label;
-        sel.appendChild(opt);
-    });
-
-    document.getElementById('hole-label-input').value  = '';
-    document.getElementById('hole-time-input').value   = '';
-    document.getElementById('hole-duration-preview').textContent = 'Seleziona fino a quale blocco arriva il buco.';
+    _holeDayKey = dayKey;
+    document.getElementById('hole-label-input').value = '';
+    document.getElementById('hole-slot-start-select').value = '-1';
+    document.getElementById('hole-slot-count-select').value = '1';
+    document.getElementById('hole-count-field').style.display = 'none';
+    document.getElementById('hole-duration-preview').style.display = 'none';
     document.getElementById('hole-modal-overlay').classList.add('open');
     setTimeout(() => document.getElementById('hole-label-input').focus(), 60);
 }
 
-function onHoleSelectChange(sel) {
-    const v       = parseInt(sel.value);
+function onHoleSelectChange() {
+    const start   = parseInt(document.getElementById('hole-slot-start-select').value);
     const preview = document.getElementById('hole-duration-preview');
-    const timeInp = document.getElementById('hole-time-input');
+    const countField = document.getElementById('hole-count-field');
 
-    if (v === -1 || _holeBlockTimes.length === 0) {
-        preview.textContent = 'Solo segnaposto visivo — nessuna task verrà spostata.';
+    if (start === -1) {
+        countField.style.display = 'none';
+        preview.style.display = 'none';
         return;
     }
 
-    // Estrai start del primo blocco e end del blocco selezionato
-    const sep     = /[–\-]/;
-    const from    = _holeBlockTimes[0].split(sep)[0].trim();
-    const toRaw   = _holeBlockTimes[v];
-    const to      = toRaw.split(sep).pop().trim();
-    const nBlocks = v + 1;
+    countField.style.display = 'flex';
 
-    const timeRange = from + '–' + to;
-    preview.textContent = `Il buco coprirà ${timeRange} (${nBlocks} blocc${nBlocks===1?'o':'hi'}) — le task si sposteranno al giorno successivo.`;
+    const count    = parseInt(document.getElementById('hole-slot-count-select').value);
+    const slotEnd  = Math.min(start + count - 1, 5);
+    const covered  = slotEnd - start + 1;
 
-    // Auto-compila l'orario se l'utente non l'ha già inserito manualmente
-    if (!timeInp.value.trim()) {
-        timeInp.value = timeRange;
-    }
+    const slotName = (s) => s < 3 ? `Mattina slot ${s+1}` : `Pomeriggio slot ${s-2}`;
+    const from = slotName(start);
+    const to   = covered > 1 ? ` → ${slotName(slotEnd)}` : '';
+
+    preview.style.display = 'block';
+    preview.textContent = `Il buco coprirà: ${from}${to} (${covered} slot) — le task si sposteranno al giorno successivo.`;
 }
 
 function closeHoleModal() {
@@ -1338,22 +1524,19 @@ function closeHoleModal() {
 }
 
 function saveHole() {
-    const label = document.getElementById('hole-label-input').value.trim();
-    if (!label) {
-        document.getElementById('hole-label-input').focus();
-        return;
-    }
-    const timeLabel   = document.getElementById('hole-time-input').value.trim() || null;
-    const insertAfter = parseInt(document.getElementById('hole-insert-select').value);
+    const label      = document.getElementById('hole-label-input').value.trim();
+    if (!label) { document.getElementById('hole-label-input').focus(); return; }
+
+    const slotStart  = parseInt(document.getElementById('hole-slot-start-select').value);
+    const slotCount  = slotStart >= 0 ? parseInt(document.getElementById('hole-slot-count-select').value) : 1;
 
     const btn = document.getElementById('hole-save-btn');
-    btn.disabled    = true;
-    btn.textContent = 'Salvataggio…';
+    btn.disabled = true; btn.textContent = 'Salvataggio…';
 
     fetch(HOLE_STORE_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body:    JSON.stringify({ day_key: _holeDayKey, label, time_label: timeLabel, insert_after: insertAfter }),
+        body:    JSON.stringify({ day_key: _holeDayKey, label, time_label: null, slot_start: slotStart, slot_count: slotCount }),
     })
     .then(r => r.json())
     .then(data => {
@@ -1363,35 +1546,6 @@ function saveHole() {
     })
     .catch(err => alert('Errore: ' + err.message))
     .finally(() => { btn.disabled = false; btn.textContent = 'Crea buco'; });
-}
-
-function _buildHoleHtml(id, label, timeLabel, withDelete) {
-    const timePart   = timeLabel ? `<div class="hole-time">${timeLabel}</div>` : '';
-    const deletePart = withDelete
-        ? `<button class="hole-delete-btn" onclick="deleteHole(${id})" title="Rimuovi buco">✕</button>`
-        : '';
-    return `<div class="hole-block" id="${withDelete ? 'hole' : 'mhole'}-${id}">` +
-           `<div class="hole-icon">🚫</div>` +
-           `<div class="hole-info"><div class="hole-label">${label}</div>${timePart}</div>` +
-           `${deletePart}</div>`;
-}
-
-function _injectIn(container, id, label, timeLabel, insertAfter, withDelete) {
-    if (!container) return;
-    const html   = _buildHoleHtml(id, label, timeLabel, withDelete);
-    const blocks = container.querySelectorAll('.time-block');
-    if (insertAfter === -1 || blocks.length === 0) {
-        container.insertAdjacentHTML('afterbegin', html);
-    } else {
-        const target = blocks[Math.min(insertAfter, blocks.length - 1)];
-        target.insertAdjacentHTML('afterend', html);
-    }
-}
-
-function _injectHoleInDom(dayKey, id, label, timeLabel, insertAfter) {
-    const [wid, di] = dayKey.split('_');
-    _injectIn(document.getElementById('body-day-' + wid + '-' + di), id, label, timeLabel, insertAfter, true);
-    _injectIn(document.getElementById('modal-tpl-' + wid + '-' + di), id, label, timeLabel, insertAfter, false);
 }
 
 function deleteHole(id) {
@@ -1408,6 +1562,33 @@ function deleteHole(id) {
         });
     })
     .catch(() => alert('Errore nella rimozione del buco.'));
+}
+
+/* ── Lock task ───────────────────────────────────────────────────────────────── */
+const LOCK_BASE = "{{ url('todolist/lock') }}/";
+
+function toggleLock(taskId, btn) {
+    fetch(LOCK_BASE + taskId, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': CSRF, 'Content-Type': 'application/json' },
+    })
+    .then(r => r.json())
+    .then(data => {
+        const locked = data.locked;
+        const taskEl = document.getElementById('task-' + taskId);
+        if (locked) {
+            btn.classList.add('is-locked');
+            taskEl?.classList.add('task-locked');
+            btn.title = 'Sblocca task';
+            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>';
+        } else {
+            btn.classList.remove('is-locked');
+            taskEl?.classList.remove('task-locked');
+            btn.title = 'Blocca task (non slitterà)';
+            btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1C9.24 1 7 3.24 7 6v1H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V6c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v1H9V6c0-1.66 1.34-3 3-3zm0 9c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/></svg>';
+        }
+    })
+    .catch(err => console.error('Lock error:', err));
 }
 
 /* Chiudi modali con ESC */

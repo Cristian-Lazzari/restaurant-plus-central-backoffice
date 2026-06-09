@@ -34,6 +34,7 @@ Route::middleware('backoffice.auth')->group(function () {
     Route::post('todolist/hole', [TodolistController::class, 'storeHole'])->name('todolist.hole.store');
     Route::delete('todolist/hole/{id}', [TodolistController::class, 'destroyHole'])->name('todolist.hole.destroy');
     Route::post('todolist/reseed', [TodolistController::class, 'reseedTasks'])->name('todolist.reseed');
+    Route::post('todolist/lock/{id}', [TodolistController::class, 'toggleLock'])->name('todolist.lock');
 
     // ── Pipeline CRM ────────────────────────────────────────────────────────
     Route::get('pipeline', [PipelineController::class, 'index'])->name('pipeline.index');
