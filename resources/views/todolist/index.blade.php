@@ -154,7 +154,7 @@
     {{-- ─── SIDEBAR SETTIMANE ─── --}}
     <div class="tl-sidebar" id="tl-sidebar">
         @php
-            $months = [1 => 'Mese 1', 2 => 'Mese 2', 3 => 'Mese 3'];
+            $months = [6 => 'Giugno', 7 => 'Luglio', 8 => 'Agosto'];
         @endphp
         @foreach ($months as $m => $mLabel)
             <div class="month-group">

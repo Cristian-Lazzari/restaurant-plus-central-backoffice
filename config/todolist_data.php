@@ -9,16 +9,16 @@
  */
 
 return [
-    // ═══ MESE 1 ═══
+    // ═══ GIUGNO ═══
     [
-        'id' => 'w1', 'month' => 1, 'label' => 'Settimana 1', 'dates' => 'Giu 9–13',
+        'id' => 'w1', 'month' => 6, 'label' => 'Settimana 1', 'dates' => 'Giu 8–13',
         'color' => '#f87171',
         'subtitle' => 'Prima i clienti attuali — retention, poi acquisizione',
         'focus' => '🛡 Retention Clienti + Fondamenta',
         'goals' => ['Clienti a rischio contattati e aggiornati sul CRM', 'Zona Pub e clienti sicuri consolidati', 'Landing aggiornata con dati reali'],
         'days' => [
             [
-                'name' => 'Mar 9', 'theme' => 'PRIORITÀ: Retention — clienti a rischio', 'hours' => '8h',
+                'name' => 'Lun 8', 'theme' => 'PRIORITÀ: Retention — clienti a rischio', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–10:00', 'label' => 'Mattina — Mappa situazione clienti', 'tasks' => [
                         ['text' => 'Fai un elenco completo dei 10 clienti attuali con stato: SICURI (Locanda del Duca, Classico Maglie, Il Tuo Lounge Restaurant, I Capricci di Leo, Zona Pub) e A RISCHIO (tutti gli altri). Segna nella pipeline chi manca.', 'tag' => 'ops'],
@@ -43,7 +43,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 10', 'theme' => 'Chiamate clienti a rischio + landing page', 'hours' => '8h',
+                'name' => 'Mar 9', 'theme' => 'Chiamate clienti a rischio + landing page', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Chiamate clienti a rischio', 'tasks' => [
                         ['text' => 'Chiama uno per uno i clienti a rischio che non hanno risposto al WhatsApp di ieri. Obiettivo della chiamata: non vendere, ma aggiornare.', 'tag' => 'sales'],
@@ -64,7 +64,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 11', 'theme' => 'Demo CRM ai clienti a rischio + testimonianza video', 'hours' => '8h',
+                'name' => 'Mer 10', 'theme' => 'Demo CRM ai clienti a rischio + testimonianza video', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–10:30', 'label' => 'Mattina — Demo CRM live per clienti a rischio', 'tasks' => [
                         ['text' => 'Conduci le call di aggiornamento CRM con i clienti a rischio che le hanno accettate ieri. Mostra in diretta: gestione clienti abituali, invio promozioni mirate, statistiche prenotazioni.', 'tag' => 'sales'],
@@ -84,7 +84,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 12', 'theme' => 'Follow-up retention + primo outreach SMM warm', 'hours' => '8h',
+                'name' => 'Gio 11', 'theme' => 'Follow-up retention + primo outreach SMM warm', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–10:00', 'label' => 'Mattina — Follow-up retention', 'tasks' => [
                         ['text' => 'Chiama o manda WhatsApp di follow-up ai clienti a rischio ancora silenti. Ultimo tentativo caldo prima di trattarli come urgenza critica.', 'tag' => 'sales'],
@@ -109,7 +109,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 13', 'theme' => 'Follow-up + setup pipeline vendite', 'hours' => '8h',
+                'name' => 'Ven 12', 'theme' => 'Follow-up + setup pipeline vendite', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–10:00', 'label' => 'Mattina — Revisione risposte', 'tasks' => [
                         ['text' => 'Controlla tutti i canali (Instagram DM, LinkedIn, email) e rispondi a chi ha risposto. Se qualcuno vuole saperne di più: proponi una call di 20 minuti.', 'tag' => 'sales'],
@@ -130,7 +130,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 14 (riposo)', 'theme' => 'Lancio ads + outreach intensivo SMM', 'hours' => '8h',
+                'name' => 'Sab 13', 'theme' => 'Lancio ads + outreach intensivo SMM', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Lancio Meta Ads', 'tasks' => [
                         ['text' => 'Carica le creative in Meta Ads Manager. Lancia la campagna di test €200 (Creative A vs Creative B, 2 audience diverse).', 'tag' => 'ads'],
@@ -152,16 +152,16 @@ return [
         ],
     ],
 
-    // ═══ SETTIMANA 2 ═══
+    // ═══ GIUGNO — SETTIMANA 2 ═══
     [
-        'id' => 'w2', 'month' => 1, 'label' => 'Settimana 2', 'dates' => 'Giu 16–20',
+        'id' => 'w2', 'month' => 6, 'label' => 'Settimana 2', 'dates' => 'Giu 15–20',
         'color' => '#f87171',
         'subtitle' => 'Prime call, prime demo, ottimizzazione outreach',
         'focus' => '📞 Prime Demo & Conversazioni',
         'goals' => ['5+ call/demo con SMM o lead diretti', 'Testimonianza video registrata', 'Ads: primi dati di costo per lead'],
         'days' => [
             [
-                'name' => 'Mar 16', 'theme' => 'Prime call SMM + analisi ads', 'hours' => '8h',
+                'name' => 'Lun 15', 'theme' => 'Prime call SMM + analisi ads', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–09:30', 'label' => 'Apertura giornata', 'tasks' => [
                         ['text' => 'Controlla pipeline: chi ha risposto nel weekend? Rispondi a tutti entro le 09:30. Aggiorna stati nella pipeline.', 'tag' => 'ops'],
@@ -181,7 +181,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 17', 'theme' => 'Outreach cold + ottimizzazione script', 'hours' => '8h',
+                'name' => 'Mar 16', 'theme' => 'Outreach cold + ottimizzazione script', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–09:30', 'label' => 'Pipeline review', 'tasks' => [
                         ['text' => 'Aggiorna pipeline. Controlla Meta Ads: CTR delle due creative, CPL stimato. Quale sta performando meglio?', 'tag' => 'ops'],
@@ -201,7 +201,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 18', 'theme' => 'Testimonianza video + ottimizzazione landing', 'hours' => '8h',
+                'name' => 'Mer 17', 'theme' => 'Testimonianza video + ottimizzazione landing', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Testimonianza', 'tasks' => [
                         ['text' => 'Registra la testimonianza video (20–60 secondi) con Classico Maglie o Locanda del Duca. Se in presenza non è possibile: guida il titolare via WhatsApp su come registrarla da solo.', 'tag' => 'content'],
@@ -217,7 +217,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 19', 'theme' => 'Analisi ads + call/demo intensive', 'hours' => '8h',
+                'name' => 'Gio 18', 'theme' => 'Analisi ads + call/demo intensive', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–10:30', 'label' => 'Mattina — Analisi Meta Ads', 'tasks' => [
                         ['text' => 'Analisi completa campagna test dopo 7 giorni: CPL, CTR, frequenza, quali audience performano. Prendi decisione: quale creative scalare?', 'tag' => 'ads'],
@@ -235,7 +235,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 20', 'theme' => 'Chiusura prima partnership SMM', 'hours' => '8h',
+                'name' => 'Ven 19', 'theme' => 'Chiusura prima partnership SMM', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Chiusura accordi', 'tasks' => [
                         ['text' => 'Follow-up telefonico agli SMM più caldi. Obiettivo: chiudere il primo accordo formale questa settimana.', 'tag' => 'smm'],
@@ -255,7 +255,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 21 (riposo)', 'theme' => 'Scale ads + outreach + contenuto', 'hours' => '8h',
+                'name' => 'Sab 20', 'theme' => 'Scale ads + outreach + contenuto', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Scale ads', 'tasks' => [
                         ['text' => 'Scala la creative vincente: porta il budget da €200 test a €550 campagna principale. Mantieni la stessa audience che ha performato meglio.', 'tag' => 'ads'],
@@ -273,16 +273,16 @@ return [
         ],
     ],
 
-    // ═══ SETTIMANA 3 ═══
+    // ═══ GIUGNO — SETTIMANA 3 ═══
     [
-        'id' => 'w3', 'month' => 1, 'label' => 'Settimana 3', 'dates' => 'Giu 23–27',
+        'id' => 'w3', 'month' => 6, 'label' => 'Settimana 3', 'dates' => 'Giu 22–27',
         'color' => '#f87171',
         'subtitle' => 'Primo nuovo cliente + sistema di vendita che gira',
         'focus' => '🎯 Primo Cliente Nuovo',
         'goals' => ['Almeno 1 nuovo cliente pagante', '2+ partnership SMM attive', 'Pipeline con 20+ lead attivi'],
         'days' => [
             [
-                'name' => 'Mar 23', 'theme' => 'Follow-up aggressivo + call block', 'hours' => '8h',
+                'name' => 'Lun 22', 'theme' => 'Follow-up aggressivo + call block', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–09:30', 'label' => 'Apertura', 'tasks' => [
                         ['text' => 'Pipeline review: chi è pronto per chiudere? Identifica i 3 lead più caldi e mettili in cima alla lista del giorno.', 'tag' => 'ops'],
@@ -299,7 +299,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 24', 'theme' => 'Outreach SMM massiccio + analisi risposta', 'hours' => '8h',
+                'name' => 'Mar 23', 'theme' => 'Outreach SMM massiccio + analisi risposta', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–09:30', 'label' => 'Apertura', 'tasks' => [
                         ['text' => 'Pipeline review: chi ha risposto nelle ultime 24h? Aggiorna stati. Controlla Meta Ads: come sta andando la campagna dopo i primi giorni di settimana 3?', 'tag' => 'ops'],
@@ -319,7 +319,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 25', 'theme' => 'Call block + ottimizzazione creative ads', 'hours' => '8h',
+                'name' => 'Mer 24', 'theme' => 'Call block + ottimizzazione creative ads', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Call block dedicato', 'tasks' => [
                         ['text' => 'Mattina interamente dedicata a call. Obiettivo: 3 call oggi. Chiama i lead caldi che non hanno ancora risposto al messaggio — la voce converte molto meglio del testo.', 'tag' => 'sales'],
@@ -336,7 +336,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 26', 'theme' => 'Sales intensivo — chiudere il primo cliente', 'hours' => '8h',
+                'name' => 'Gio 25', 'theme' => 'Sales intensivo — chiudere il primo cliente', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–13:00', 'label' => 'Mattina — Sales block dedicato', 'tasks' => [
                         ['text' => 'Giornata quasi interamente dedicata alla vendita. Chiama tutti i lead caldi rimasti in pipeline da più di 3 giorni senza risposta.', 'tag' => 'sales'],
@@ -352,7 +352,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 27', 'theme' => 'Referral dai clienti attuali', 'hours' => '8h',
+                'name' => 'Ven 26', 'theme' => 'Referral dai clienti attuali', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Attivazione referral', 'tasks' => [
                         ['text' => 'Chiama (non email) tutti e 10 i tuoi clienti attuali. Chiedi: "Sei soddisfatto del servizio? Conosci altri ristoratori che potrebbero beneficiarne?" Sii diretto.', 'tag' => 'sales'],
@@ -365,7 +365,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 28 (riposo)', 'theme' => 'Scale ads + outreach + preparazione settimana 4', 'hours' => '4h',
+                'name' => 'Sab 27', 'theme' => 'Scale ads + outreach + preparazione settimana 4', 'hours' => '4h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Scale ads e contenuto', 'tasks' => [
                         ['text' => 'Se la Creative C lanciata giovedì mostra già dati positivi: aumenta il budget del 20%. Se no: pausa la creative peggiore e ridistribuisci il budget.', 'tag' => 'ads'],
@@ -380,16 +380,16 @@ return [
         ],
     ],
 
-    // ═══ MESE 2 ═══
+    // ═══ GIUGNO — SETTIMANA 4 ═══
     [
-        'id' => 'w4', 'month' => 2, 'label' => 'Settimana 4', 'dates' => 'Giu 30–Lug 4',
+        'id' => 'w4', 'month' => 6, 'label' => 'Settimana 4', 'dates' => 'Giu 29–Lug 4',
         'color' => '#fbbf24',
         'subtitle' => 'Accelerazione — sistema che gira, scala ciò che funziona',
         'focus' => '⚡ Scalare Ciò che Funziona',
         'goals' => ['3+ nuovi clienti questa settimana', '3+ SMM partner attivi', 'Sistema outreach semi-automatizzato'],
         'days' => [
             [
-                'name' => 'Mar 30', 'theme' => 'Lancio mese 2 — scala il canale vincente', 'hours' => '8h',
+                'name' => 'Lun 29', 'theme' => 'Lancio mese 2 — scala il canale vincente', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–10:00', 'label' => 'Apertura mese 2', 'tasks' => [
                         ['text' => 'Identifica il canale che ha portato più clienti nel mese 1 (SMM? Ads? Referral?) — oggi inizi a scalarlo sistematicamente.', 'tag' => 'ops'],
@@ -406,7 +406,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 1', 'theme' => 'Outreach massiccio + call block', 'hours' => '8h',
+                'name' => 'Mar 30', 'theme' => 'Outreach massiccio + call block', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–09:30', 'label' => 'Apertura', 'tasks' => [
                         ['text' => 'Pipeline review: chi ha risposto nel weekend? Aggiorna stati. Controlla Meta Ads: nuovi lead ricevuti?', 'tag' => 'ops'],
@@ -422,7 +422,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 2', 'theme' => 'Demo intensive + contenuto', 'hours' => '8h',
+                'name' => 'Mer 1', 'theme' => 'Demo intensive + contenuto', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–13:00', 'label' => 'Mattina — Demo block', 'tasks' => [
                         ['text' => 'Conduci le demo fissate. Mattina è il momento migliore per le demo — i ristoratori sono più disponibili prima del servizio pranzo.', 'tag' => 'sales'],
@@ -438,7 +438,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 3', 'theme' => 'Chiusura settimanale + pipeline review', 'hours' => '8h',
+                'name' => 'Gio 2', 'theme' => 'Chiusura settimanale + pipeline review', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–13:00', 'label' => 'Mattina — Sales chiusura', 'tasks' => [
                         ['text' => 'Chiama tutti i lead caldi rimasti aperti da lunedì. Fine settimana = ultima chance prima del weekend di fargli prendere una decisione.', 'tag' => 'sales'],
@@ -454,7 +454,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 4', 'theme' => 'Batch lavoro + sistema', 'hours' => '8h',
+                'name' => 'Ven 3', 'theme' => 'Batch lavoro + sistema', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Sistema', 'tasks' => [
                         ['text' => 'Documentazione: scrivi un "playbook di vendita" per te stesso. Cosa dici nelle prime 5 domande? Come gestisci le 3 obiezioni più comuni?', 'tag' => 'ops'],
@@ -467,7 +467,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 5 (riposo)', 'theme' => 'Batch contenuto + outreach weekend', 'hours' => '4h',
+                'name' => 'Sab 4', 'theme' => 'Batch contenuto + outreach weekend', 'hours' => '4h',
                 'blocks' => [
                     ['time' => '10:00–12:00', 'label' => 'Mattina — Contenuto batch', 'tasks' => [
                         ['text' => 'Programma altri 5 post per la settimana 5 su Instagram e LinkedIn. Temi: testimonianze clienti, numeri aggiornati, confronto commissioni, come funziona il sistema WA.', 'tag' => 'content'],
@@ -481,16 +481,16 @@ return [
         ],
     ],
 
-    // ═══ MESE 2 — SETTIMANA 5 ═══
+    // ═══ LUGLIO ═══
     [
-        'id' => 'w5', 'month' => 2, 'label' => 'Settimana 5', 'dates' => 'Lug 7–11',
+        'id' => 'w5', 'month' => 7, 'label' => 'Settimana 5', 'dates' => 'Lug 6–11',
         'color' => '#fbbf24',
         'subtitle' => 'Sistematizzare l\'acquisizione — meno sforzo, più risultati',
         'focus' => '🔧 Sistemi & Automazione',
         'goals' => ['15+ clienti totali', '5+ SMM partner attivi', 'Funnel email automatizzato attivo'],
         'days' => [
             [
-                'name' => 'Mar 7', 'theme' => 'Full sales day', 'hours' => '8h',
+                'name' => 'Lun 6', 'theme' => 'Full sales day', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–13:00', 'label' => 'Mattina — Sales block', 'tasks' => [
                         ['text' => 'Intera mattina dedicata a call e follow-up. Obiettivo: 5 call oggi. Usa timer 20 minuti per call, poi 5 min note, poi prossima.', 'tag' => 'sales'],
@@ -503,7 +503,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 8', 'theme' => 'Automazione funnel email', 'hours' => '8h',
+                'name' => 'Mar 7', 'theme' => 'Automazione funnel email', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–13:00', 'label' => 'Mattina — Setup automazione', 'tasks' => [
                         ['text' => 'Configura Mailchimp o Brevo (gratis fino a 2.000 contatti): crea la lista lead, importa i contatti ricevuti dagli ads.', 'tag' => 'ops'],
@@ -516,7 +516,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 9', 'theme' => 'Call block + attivazione SMM partner', 'hours' => '8h',
+                'name' => 'Mer 8', 'theme' => 'Call block + attivazione SMM partner', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–13:00', 'label' => 'Mattina — Call block 5 call', 'tasks' => [
                         ['text' => 'Obiettivo: 5 call oggi. Usa timer 20 minuti per call. Priorizza i lead che hanno già visto la landing o partecipato a una demo in settimana.', 'tag' => 'sales'],
@@ -530,7 +530,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 10', 'theme' => 'Analisi funnel email + chiusura aggressiva', 'hours' => '8h',
+                'name' => 'Gio 9', 'theme' => 'Analisi funnel email + chiusura aggressiva', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Analisi funnel', 'tasks' => [
                         ['text' => 'Analisi sequenza email automatica: open rate, click rate, conversione a call. Quale email funziona meglio? Quale viene ignorata? Ottimizza il soggetto e il CTA delle email con performance bassa.', 'tag' => 'ops'],
@@ -544,7 +544,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 11', 'theme' => 'Review mese 2 intermedia', 'hours' => '8h',
+                'name' => 'Ven 10', 'theme' => 'Review mese 2 intermedia', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Review numeri', 'tasks' => [
                         ['text' => 'Conta: clienti totali, nuovi questa settimana, SMM partner attivi, lead totali in pipeline, CPL ads, CAC reale, ARR totale. Sei su track per 25–30 clienti a fine mese 2?', 'tag' => 'ops'],
@@ -556,7 +556,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 12 (riposo)', 'theme' => 'Ottimizzazione ads + contenuto settimana 6', 'hours' => '4h',
+                'name' => 'Sab 11', 'theme' => 'Ottimizzazione ads + contenuto settimana 6', 'hours' => '4h',
                 'blocks' => [
                     ['time' => '10:00–12:00', 'label' => 'Mattina — Ads', 'tasks' => [
                         ['text' => 'Ottimizza campagne Meta Ads sulla base dei dati della settimana: aumenta budget audience vincente del 20–30%, pausa l\'audience peggiore, valuta se testare una nuova fascia d\'età o geo.', 'tag' => 'ads'],
@@ -569,16 +569,16 @@ return [
         ],
     ],
 
-    // ═══ MESE 2 — SETTIMANA 6 ═══
+    // ═══ LUGLIO — SETTIMANA 6 ═══
     [
-        'id' => 'w6', 'month' => 2, 'label' => 'Settimana 6', 'dates' => 'Lug 14–18',
+        'id' => 'w6', 'month' => 7, 'label' => 'Settimana 6', 'dates' => 'Lug 13–18',
         'color' => '#fbbf24',
         'subtitle' => 'Velocità e volume — chiudi il mese 2 forte',
         'focus' => '🚀 Volume & Velocità',
         'goals' => ['20+ clienti totali', 'Almeno 5 clienti nuovi questa settimana', '1 partnership istituzionale confermata'],
         'days' => [
             [
-                'name' => 'Mar 14', 'theme' => 'Sales day totale', 'hours' => '8h',
+                'name' => 'Lun 13', 'theme' => 'Sales day totale', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–18:00', 'label' => 'Giornata intera — Solo vendita', 'tasks' => [
                         ['text' => 'Oggi niente outreach, niente contenuto, niente ops. Solo call e demo. Obiettivo: 6 call oggi.', 'tag' => 'sales'],
@@ -589,7 +589,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 15', 'theme' => 'Outreach + call + contenuto', 'hours' => '8h',
+                'name' => 'Mar 14', 'theme' => 'Outreach + call + contenuto', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–09:30', 'label' => 'Apertura', 'tasks' => [
                         ['text' => 'Pipeline review. Controlla Meta Ads: nuovi lead dal weekend? Rispondi a tutti i messaggi ricevuti.', 'tag' => 'ops'],
@@ -608,7 +608,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 16', 'theme' => 'Analisi ads + sales intensive', 'hours' => '8h',
+                'name' => 'Mer 15', 'theme' => 'Analisi ads + sales intensive', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Analisi campagne', 'tasks' => [
                         ['text' => 'Analisi completa delle campagne Meta Ads del mese 2: CPL per audience, CPL per creative, CPL per placement (feed vs stories vs reels). Scrivi il numero accanto a ogni variante.', 'tag' => 'ads'],
@@ -621,7 +621,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 17', 'theme' => 'Chiusura aggressiva fine mese 2', 'hours' => '8h',
+                'name' => 'Gio 16', 'theme' => 'Chiusura aggressiva fine mese 2', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–18:00', 'label' => 'Giornata — Sales & Urgency', 'tasks' => [
                         ['text' => 'Fine mese si avvicina: usa scarsità reale. "Sto chiudendo il mese e voglio portare ancora X clienti entro il 31 luglio — per chi attiva entro questa settimana, aggiungo 2 mesi gratis."', 'tag' => 'sales'],
@@ -631,7 +631,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 18', 'theme' => 'Review + preparazione mese 3', 'hours' => '8h',
+                'name' => 'Ven 17', 'theme' => 'Review + preparazione mese 3', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Review mese 2', 'tasks' => [
                         ['text' => 'Conta tutto: clienti totali, nuovi nel mese 2, SMM partner attivi, lead totali generati, CPL, CAC, ARR totale. Sei a 20+?', 'tag' => 'ops'],
@@ -643,7 +643,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 19 (riposo)', 'theme' => 'Review mese 2 + batch contenuto mese 3', 'hours' => '4h',
+                'name' => 'Sab 18', 'theme' => 'Review mese 2 + batch contenuto mese 3', 'hours' => '4h',
                 'blocks' => [
                     ['time' => '10:00–12:00', 'label' => 'Mattina — Review mese 2', 'tasks' => [
                         ['text' => 'Conta tutto prima di entrare nel mese 3: clienti totali, nuovi nel mese 2, SMM partner attivi, ARR aggiunto, CPL medio, CAC medio. Sei a 20+?', 'tag' => 'ops'],
@@ -657,16 +657,16 @@ return [
         ],
     ],
 
-    // ═══ MESE 3 ═══
+    // ═══ LUGLIO — SETTIMANA 7 ═══
     [
-        'id' => 'w7', 'month' => 3, 'label' => 'Settimana 7', 'dates' => 'Lug 21–25',
+        'id' => 'w7', 'month' => 7, 'label' => 'Settimana 7', 'dates' => 'Lug 20–25',
         'color' => '#34d399',
         'subtitle' => 'Mese 3 — sistema maturo, nuovi canali, primissimo team',
         'focus' => '🌱 Nuovi Canali & Team',
         'goals' => ['25+ clienti totali', 'Primo collaboratore identificato', 'Nuovo canale testato (webinar/evento)'],
         'days' => [
             [
-                'name' => 'Mar 21', 'theme' => 'Lancio mese 3 — nuovo canale', 'hours' => '8h',
+                'name' => 'Lun 20', 'theme' => 'Lancio mese 3 — nuovo canale', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Nuovo canale: Webinar', 'tasks' => [
                         ['text' => 'Pianifica il primo webinar gratuito per ristoratori: "Come eliminare le commissioni di JustEat e TheFork — quello che nessuno ti dice." Data: fine mese 3.', 'tag' => 'content'],
@@ -680,7 +680,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 22', 'theme' => 'Ricerca primo collaboratore', 'hours' => '8h',
+                'name' => 'Mar 21', 'theme' => 'Ricerca primo collaboratore', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Collaboratore commerciale', 'tasks' => [
                         ['text' => 'Scrivi la job description per il primo collaboratore: "Commerciale a percentuale per startup SaaS ristorazione. No fisso, 15–20% su ogni cliente chiuso. Lavoro da remoto."', 'tag' => 'ops'],
@@ -693,7 +693,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 23', 'theme' => 'Colloqui collaboratore + routine vendita', 'hours' => '8h',
+                'name' => 'Mer 22', 'theme' => 'Colloqui collaboratore + routine vendita', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Colloqui commerciali', 'tasks' => [
                         ['text' => 'Conduci i colloqui telefonici con i candidati commerciali che hanno risposto all\'annuncio. Domande chiave: hanno esperienza in vendita? Capiscono il SaaS? Sono motivati dalla percentuale?', 'tag' => 'ops'],
@@ -705,7 +705,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 24', 'theme' => 'Scelta collaboratore + onboarding iniziale', 'hours' => '8h',
+                'name' => 'Gio 23', 'theme' => 'Scelta collaboratore + onboarding iniziale', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Decisione e accordo', 'tasks' => [
                         ['text' => 'Scegli il candidato migliore e contattalo: "Sei selezionato. Vuoi iniziare la prossima settimana?" Sii diretto — i buoni candidati apprezzano la velocità.', 'tag' => 'ops'],
@@ -719,7 +719,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 25', 'theme' => 'Formazione collaboratore + review settimana 7', 'hours' => '8h',
+                'name' => 'Ven 24', 'theme' => 'Formazione collaboratore + review settimana 7', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Sessione formazione', 'tasks' => [
                         ['text' => 'Sessione di formazione con il nuovo collaboratore (video call o in presenza): mostragli la demo completa, il playbook, come usare la pipeline, come gestire le obiezioni più comuni.', 'tag' => 'ops'],
@@ -734,7 +734,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 26 (riposo)', 'theme' => 'Promozione webinar + outreach partner', 'hours' => '4h',
+                'name' => 'Sab 25', 'theme' => 'Promozione webinar + outreach partner', 'hours' => '4h',
                 'blocks' => [
                     ['time' => '10:00–12:00', 'label' => 'Mattina — Push webinar', 'tasks' => [
                         ['text' => 'Lancia campagna ads specifica per il webinar: obiettivo iscrizioni, audience ristoratori. Budget €50–100 dedicato. Anche un post organico spinto sui social.', 'tag' => 'ads'],
@@ -748,16 +748,16 @@ return [
         ],
     ],
 
-    // ═══ MESE 3 — SETTIMANA 8 ═══
+    // ═══ LUGLIO — SETTIMANA 8 ═══
     [
-        'id' => 'w8', 'month' => 3, 'label' => 'Settimana 8', 'dates' => 'Lug 28–Ago 1',
+        'id' => 'w8', 'month' => 7, 'label' => 'Settimana 8', 'dates' => 'Lug 27–Ago 1',
         'color' => '#34d399',
         'subtitle' => 'Webinar + primo collaboratore attivo',
         'focus' => '🎤 Webinar & Primo Team',
         'goals' => ['30+ clienti totali', 'Primo collaboratore avviato', 'Webinar: 50+ iscritti'],
         'days' => [
             [
-                'name' => 'Mar 28', 'theme' => 'Promozione webinar intensa + routine vendita', 'hours' => '8h',
+                'name' => 'Lun 27', 'theme' => 'Promozione webinar intensa + routine vendita', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Push promozione webinar', 'tasks' => [
                         ['text' => 'Invia email alla lista lead completa: "Ti aspettiamo al webinar gratuito giovedì — imparerai come eliminare le commissioni di JustEat e TheFork." Includi data, ora, link di iscrizione.', 'tag' => 'content'],
@@ -770,7 +770,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 29', 'theme' => 'Preparazione finale webinar + call block', 'hours' => '8h',
+                'name' => 'Mar 28', 'theme' => 'Preparazione finale webinar + call block', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Prep webinar', 'tasks' => [
                         ['text' => 'Ripassa le slide del webinar. Test tecnologico completo: Zoom/Meet, audio, video, screen sharing, chat, sondaggi. Non lasciare niente al caso — i problemi tecnici distruggono la credibilità.', 'tag' => 'ops'],
@@ -784,7 +784,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 30', 'theme' => 'Webinar day', 'hours' => '8h',
+                'name' => 'Mer 29', 'theme' => 'Webinar day', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–17:00', 'label' => 'Preparazione e webinar', 'tasks' => [
                         ['text' => 'Mattina: ripassa le slide, prepara le risposte alle domande più probabili, testa nuovamente la tecnologia.', 'tag' => 'ops'],
@@ -797,7 +797,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 31', 'theme' => 'Post-webinar: chiudi i lead caldi', 'hours' => '8h',
+                'name' => 'Gio 30', 'theme' => 'Post-webinar: chiudi i lead caldi', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–18:00', 'label' => 'Giornata intera — Post-webinar sales', 'tasks' => [
                         ['text' => 'Chiama (non email!) ogni persona che ha partecipato al webinar e non si è ancora iscritta. Sono i lead più caldi che hai mai avuto.', 'tag' => 'sales'],
@@ -806,7 +806,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 1', 'theme' => 'Onboarding nuovi clienti webinar + pipeline', 'hours' => '8h',
+                'name' => 'Ven 31', 'theme' => 'Onboarding nuovi clienti webinar + pipeline', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Onboarding', 'tasks' => [
                         ['text' => 'Onboarding call con i nuovi clienti acquisiti dal webinar: presentati, mostra la piattaforma, imposta i primi automessaggi WA. Falli sentire seguiti — il churn avviene nei primi 30 giorni.', 'tag' => 'ops'],
@@ -822,7 +822,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 2 (riposo)', 'theme' => 'Scala ads post-webinar + contenuto', 'hours' => '4h',
+                'name' => 'Sab 1', 'theme' => 'Scala ads post-webinar + contenuto', 'hours' => '4h',
                 'blocks' => [
                     ['time' => '10:00–12:00', 'label' => 'Mattina — Ads webinar recording', 'tasks' => [
                         ['text' => 'Lancia una nuova campagna ads con il recording del webinar come "lead magnet": chi guarda il video gratuito → segue la sequenza email → call. Questo è il funnel più potente che hai ora.', 'tag' => 'ads'],
@@ -836,16 +836,16 @@ return [
         ],
     ],
 
-    // ═══ MESE 3 — SETTIMANA 9 ═══
+    // ═══ AGOSTO ═══
     [
-        'id' => 'w9', 'month' => 3, 'label' => 'Settimana 9', 'dates' => 'Ago 4–8',
+        'id' => 'w9', 'month' => 8, 'label' => 'Settimana 9', 'dates' => 'Ago 3–8',
         'color' => '#34d399',
         'subtitle' => 'Consolidamento finale — chiudi il trimestre forte',
         'focus' => '🏁 Chiusura Trimestre',
         'goals' => ['35+ clienti totali', 'Collaboratore autonomo su call', 'ARR: €17k+'],
         'days' => [
             [
-                'name' => 'Mar 4', 'theme' => 'Collaboratore autonomo', 'hours' => '8h',
+                'name' => 'Lun 3', 'theme' => 'Collaboratore autonomo', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Delega', 'tasks' => [
                         ['text' => 'Da oggi il collaboratore gestisce autonomamente il suo blocco di call (con supervisione). Tu focalizzi il 70% del tuo tempo sulla chiusura dei lead più grandi e complessi.', 'tag' => 'ops'],
@@ -858,7 +858,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Mer 5', 'theme' => 'Supervisione collaboratore + nuovi lead', 'hours' => '8h',
+                'name' => 'Mar 4', 'theme' => 'Supervisione collaboratore + nuovi lead', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–10:00', 'label' => 'Mattina — Check-in collaboratore', 'tasks' => [
                         ['text' => 'Check-in 15 min mattina con il collaboratore: priorità del giorno, lead caldi su cui lavorare, eventuali blocchi. Lui gestisce autonomamente le sue call — tu supervisioni solo su richiesta.', 'tag' => 'ops'],
@@ -872,7 +872,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Gio 6', 'theme' => 'Upsell clienti esistenti + chiusura lead aperti', 'hours' => '8h',
+                'name' => 'Mer 5', 'theme' => 'Upsell clienti esistenti + chiusura lead aperti', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Upsell', 'tasks' => [
                         ['text' => 'Identifica i clienti sul pacchetto Base o Intermedio con più prenotazioni mensili — sono i candidati ideali per l\'upgrade al pacchetto Top con CRM.', 'tag' => 'sales'],
@@ -885,7 +885,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Ven 7', 'theme' => 'Upsell clienti esistenti', 'hours' => '8h',
+                'name' => 'Gio 6', 'theme' => 'Upsell clienti esistenti', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Upsell', 'tasks' => [
                         ['text' => 'Identifica i clienti sul pacchetto Base o Intermedio che potrebbero beneficiare del Top (CRM). Guarda chi ha più prenotazioni — sono i candidati ideali.', 'tag' => 'sales'],
@@ -897,7 +897,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Sab 8', 'theme' => 'Review pre-finale trimestre', 'hours' => '8h',
+                'name' => 'Ven 7', 'theme' => 'Review pre-finale trimestre', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–11:00', 'label' => 'Mattina — Review', 'tasks' => [
                         ['text' => 'Conta tutto: clienti totali (target 35+), ARR (target €17k+), CAC per canale, SMM partner attivi, webinar completati, collaboratore attivo.', 'tag' => 'ops'],
@@ -909,7 +909,7 @@ return [
                 ],
             ],
             [
-                'name' => 'Dom 9 (riposo)', 'theme' => 'CHIUSURA TRIMESTRE', 'hours' => '8h',
+                'name' => 'Sab 8', 'theme' => 'CHIUSURA TRIMESTRE', 'hours' => '8h',
                 'blocks' => [
                     ['time' => '09:00–12:00', 'label' => 'Mattina — Review finale', 'tasks' => [
                         ['text' => 'Review completa 90 giorni: clienti (target 35–40), ARR aggiunto (target €15k+), SMM partner (target 5+), CAC medio, canale #1, canale #2, primo collaboratore attivo.', 'tag' => 'ops'],
