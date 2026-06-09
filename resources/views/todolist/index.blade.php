@@ -36,6 +36,14 @@
             ];
         }
     }
+
+    // Mappa dayKey → nome giorno (usata per mostrare l'origine nei blocchi overflow)
+    $dayNames = [];
+    foreach ($weeks as $week) {
+        foreach ($week['days'] as $di => $day) {
+            $dayNames[$week['id'].'_'.$di] = $day['name'];
+        }
+    }
 @endphp
 
 <style>
@@ -584,6 +592,27 @@
     padding-top: 0;
 }
 .time-block-overflow .time-label::after { background: #fcd34d; }
+.task-origin {
+    display: inline-block;
+    font-size: 10px;
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 3px;
+    padding: 1px 5px;
+    margin-left: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.hole-duration-preview {
+    font-size: 12px;
+    color: #92400e;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 6px;
+    padding: 7px 10px;
+    min-height: 28px;
+}
 </style>
 
 {{-- ─── TOGGLE ─────────────────────────────────────────────────────────────── --}}
@@ -688,10 +717,12 @@
                             $allDone       = $dayTotal > 0 && $dayTotal === $dayDone;
                             $dayPanelId    = "day-{$week['id']}-{$di}";
                             $blockLabels   = array_values(array_map(fn($b) => $b['time'].' — '.$b['label'], $day['blocks']));
+                            $blockTimes    = array_values(array_map(fn($b) => $b['time'], $day['blocks']));
                         @endphp
                         <div class="day-card" id="card-{{ $dayPanelId }}"
                              data-day-key="{{ $dayKey }}"
-                             data-blocks="{{ json_encode($blockLabels) }}">
+                             data-blocks="{{ json_encode($blockLabels) }}"
+                             data-block-times="{{ json_encode($blockTimes) }}">
                             <div class="day-header" onclick="toggleDay('{{ $dayPanelId }}')">
                                 <div class="day-name">{{ $day['name'] }}</div>
                                 <div class="day-theme">{{ $day['theme'] }}</div>
@@ -743,14 +774,18 @@
                                     @endforeach
                                 @endforeach
 
-                                {{-- Overflow: task spostate da un buco --}}
+                                {{-- Overflow: task slittate dal giorno precedente --}}
                                 @if ($dayTaskGroups->has(99) && $dayTaskGroups->get(99)->isNotEmpty())
                                     <div class="time-block time-block-overflow">
-                                        <div class="time-label">Attività recuperate dall'imprevisto</div>
+                                        <div class="time-label">⏩ Task slittate da un imprevisto</div>
                                         @foreach ($dayTaskGroups->get(99) as $task)
                                             <div class="task-item" id="task-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this)">
                                                 <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="cb-{{ $task->id }}"></div>
                                                 <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="txt-{{ $task->id }}">{{ $task->text }}</div>
+                                                @if ($task->original_week_id !== null)
+                                                    @php $originKey = $task->original_week_id.'_'.$task->original_day_index; @endphp
+                                                    <span class="task-origin">da {{ $dayNames[$originKey] ?? '?' }}</span>
+                                                @endif
                                                 <span class="task-tag tag-{{ $task->tag }}">{{ $tagLabels[$task->tag] ?? $task->tag }}</span>
                                             </div>
                                         @endforeach
@@ -976,11 +1011,11 @@
                        placeholder="es. 09:00–12:00">
             </div>
             <div class="hole-modal-field">
-                <label>Posizione nell'agenda</label>
-                <select id="hole-insert-select"></select>
+                <label>Fine buco (i blocchi coperti si spostano a domani)</label>
+                <select id="hole-insert-select" onchange="onHoleSelectChange(this)"></select>
             </div>
-            <div class="hole-modal-note">
-                Le task non vengono cancellate — il buco è un segnaposto visivo che ricorda l'imprevisto. Le task rimangono visibili e vanno recuperate nel resto della giornata o in quella successiva.
+            <div class="hole-duration-preview" id="hole-duration-preview">
+                Seleziona fino a quale blocco arriva il buco.
             </div>
         </div>
         <div class="hole-modal-footer">
@@ -1246,26 +1281,55 @@ function gotoWeekFromModal() {
 }
 
 /* ── Buchi agenda ────────────────────────────────────────────────────────────── */
-let _holeDayKey    = null;
+let _holeDayKey      = null;
 let _holeBlockLabels = [];
+let _holeBlockTimes  = [];
 
 function openHoleModal(dayKey, dayCard) {
-    _holeDayKey       = dayKey;
-    _holeBlockLabels  = JSON.parse(dayCard.dataset.blocks || '[]');
+    _holeDayKey      = dayKey;
+    _holeBlockLabels = JSON.parse(dayCard.dataset.blocks || '[]');
+    _holeBlockTimes  = JSON.parse(dayCard.dataset.blockTimes || '[]');
 
     const sel = document.getElementById('hole-insert-select');
-    sel.innerHTML = '<option value="-1">⬆ Inizio giornata (prima di tutto)</option>';
+    sel.innerHTML = '<option value="-1">Solo segnaposto visivo (nessuna task spostata)</option>';
     _holeBlockLabels.forEach((label, i) => {
         const opt = document.createElement('option');
         opt.value = i;
-        opt.textContent = 'Dopo: ' + label;
+        opt.textContent = 'Copre fino a: ' + label;
         sel.appendChild(opt);
     });
 
-    document.getElementById('hole-label-input').value = '';
-    document.getElementById('hole-time-input').value  = '';
+    document.getElementById('hole-label-input').value  = '';
+    document.getElementById('hole-time-input').value   = '';
+    document.getElementById('hole-duration-preview').textContent = 'Seleziona fino a quale blocco arriva il buco.';
     document.getElementById('hole-modal-overlay').classList.add('open');
     setTimeout(() => document.getElementById('hole-label-input').focus(), 60);
+}
+
+function onHoleSelectChange(sel) {
+    const v       = parseInt(sel.value);
+    const preview = document.getElementById('hole-duration-preview');
+    const timeInp = document.getElementById('hole-time-input');
+
+    if (v === -1 || _holeBlockTimes.length === 0) {
+        preview.textContent = 'Solo segnaposto visivo — nessuna task verrà spostata.';
+        return;
+    }
+
+    // Estrai start del primo blocco e end del blocco selezionato
+    const sep     = /[–\-]/;
+    const from    = _holeBlockTimes[0].split(sep)[0].trim();
+    const toRaw   = _holeBlockTimes[v];
+    const to      = toRaw.split(sep).pop().trim();
+    const nBlocks = v + 1;
+
+    const timeRange = from + '–' + to;
+    preview.textContent = `Il buco coprirà ${timeRange} (${nBlocks} blocc${nBlocks===1?'o':'hi'}) — le task si sposteranno al giorno successivo.`;
+
+    // Auto-compila l'orario se l'utente non l'ha già inserito manualmente
+    if (!timeInp.value.trim()) {
+        timeInp.value = timeRange;
+    }
 }
 
 function closeHoleModal() {

@@ -52,7 +52,6 @@ class TodolistController extends Controller
 
         $hole = CentralTodolistHole::create($validated);
 
-        // Sposta le task dei blocchi sovrapposti in overflow (block_index=99)
         if ($validated['insert_after'] >= 0) {
             [$weekId, $dayIndex] = explode('_', $validated['day_key']);
             $dayIndex = (int) $dayIndex;
@@ -61,20 +60,53 @@ class TodolistController extends Controller
                 ->where('day_index', $dayIndex)
                 ->where('block_index', '<=', (int) $validated['insert_after'])
                 ->where('block_index', '!=', 99)
+                ->orderBy('block_index')
+                ->orderBy('sort_order')
                 ->get();
 
-            foreach ($tasksToMove as $task) {
-                if ($task->original_week_id === null) {
-                    $task->original_week_id     = $task->week_id;
-                    $task->original_day_index   = $task->day_index;
-                    $task->original_block_index = $task->block_index;
+            if ($tasksToMove->isNotEmpty()) {
+                $next    = $this->findNextDay($weekId, $dayIndex);
+                $maxSort = (int) (TodolistTask::where('week_id', $next['week_id'])
+                    ->where('day_index', $next['day_index'])
+                    ->where('block_index', 99)
+                    ->max('sort_order') ?? -1);
+
+                foreach ($tasksToMove as $task) {
+                    if ($task->original_week_id === null) {
+                        $task->original_week_id     = $task->week_id;
+                        $task->original_day_index   = $task->day_index;
+                        $task->original_block_index = $task->block_index;
+                    }
+                    $task->week_id     = $next['week_id'];
+                    $task->day_index   = $next['day_index'];
+                    $task->block_index = 99;
+                    $task->sort_order  = ++$maxSort;
+                    $task->save();
                 }
-                $task->block_index = 99;
-                $task->save();
             }
         }
 
         return response()->json(['id' => $hole->id]);
+    }
+
+    private function findNextDay(string $weekId, int $dayIndex): array
+    {
+        $weeks = config('todolist_data');
+
+        foreach ($weeks as $wi => $week) {
+            if ($week['id'] !== $weekId) continue;
+
+            if ($dayIndex + 1 < count($week['days'])) {
+                return ['week_id' => $weekId, 'day_index' => $dayIndex + 1];
+            }
+            if (isset($weeks[$wi + 1])) {
+                return ['week_id' => $weeks[$wi + 1]['id'], 'day_index' => 0];
+            }
+            // ultima giornata dell'ultimo giorno: resta sulla stessa
+            return ['week_id' => $weekId, 'day_index' => $dayIndex];
+        }
+
+        return ['week_id' => $weekId, 'day_index' => $dayIndex];
     }
 
     public function destroyHole(int $id)
