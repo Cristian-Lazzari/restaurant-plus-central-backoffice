@@ -801,8 +801,8 @@
         {{-- ─── Topbar (mobile only) ─── --}}
         <div class="topbar" role="banner">
             <a class="topbar-brand" href="{{ route('dashboard') }}">
-                @if($logoHorizSrc)
-                    <img src="{{ $logoHorizSrc }}" alt="Future Plus" style="height:24px;width:auto;display:block;object-fit:contain;">
+                @if($faviconSrc)
+                    <img src="{{ $faviconSrc }}" alt="Future Plus" style="height:24px;width:auto;display:block;object-fit:contain;">
                 @else
                     <span style="color:#fff;font-weight:700;font-size:14px;">FUTURE+</span>
                 @endif

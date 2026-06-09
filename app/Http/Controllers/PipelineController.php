@@ -148,11 +148,16 @@ class PipelineController extends Controller
         $leads = Site::all();
         $smm   = PipelineSmm::all();
 
+        static $packVal = [1 => 399, 2 => 999, 3 => 1199, 5 => 1199];
+        $computeArr = fn ($site) => $site->pack
+            ? max(0, ($packVal[$site->pack] ?? 0) - ($site->tipo_sconto === 'ricorrente' ? (int)($site->sconto ?? 0) : 0))
+            : 0;
+
         $totali  = $leads->count();
         $attivi  = $leads->whereNotIn('stato', ['chiuso', 'perso'])->count();
         $chiusi  = $leads->where('stato', 'chiuso');
         $chiusiCount = $chiusi->count();
-        $arr     = $chiusi->sum('valore');
+        $arr     = $chiusi->sum($computeArr);
         $persi   = $leads->where('stato', 'perso')->count();
         $conv    = $totali ? round($chiusiCount / $totali * 100) : 0;
 
@@ -181,10 +186,10 @@ class PipelineController extends Controller
             $items = $leads->where('stato', $stato);
             $pipelineValore[$stato] = [
                 'count'  => $items->count(),
-                'valore' => $items->sum('valore'),
+                'valore' => $items->sum($computeArr),
             ];
         }
-        $pipelineTotale = $leads->whereNotIn('stato', ['chiuso', 'perso'])->sum('valore');
+        $pipelineTotale = $leads->whereNotIn('stato', ['chiuso', 'perso'])->sum($computeArr);
 
         return response()->json(compact(
             'totali', 'attivi', 'chiusiCount', 'arr', 'persi',
@@ -282,7 +287,8 @@ class PipelineController extends Controller
             'stato'         => 'nullable|in:nuovo,contattato,interessato,demo,proposta,followup,chiuso,perso',
             'priorita'      => 'nullable|in:alta,media,bassa',
             'pacchetto'     => 'nullable|in:base,inter,top',
-            'valore'        => 'nullable|integer|min:0|max:9999',
+            'sconto'        => 'nullable|integer|min:0|max:9999',
+            'tipo_sconto'   => 'nullable|in:ricorrente,primo_pagamento',
             'data_contatto' => 'nullable|date',
             'followup_date' => 'nullable|date',
             'nextstep'      => 'nullable|string|max:500',
@@ -317,26 +323,42 @@ class PipelineController extends Controller
         static $packStr = [1 => 'base', 2 => 'inter', 3 => 'top', 5 => 'top'];
         static $packVal = [1 => 399, 2 => 999, 3 => 1199, 5 => 1199];
 
+        $base   = $s->pack ? ($packVal[$s->pack] ?? null) : null;
+        $sconto = (int) ($s->sconto ?? 0);
+
+        // ARR ricorrente: valore base meno sconto se lo sconto si rinnova ogni anno
+        $arr = $base !== null
+            ? max(0, $base - ($s->tipo_sconto === 'ricorrente' ? $sconto : 0))
+            : null;
+
+        // Valore effettivo del primo anno (con qualsiasi tipo di sconto)
+        $arr_primo_anno = ($base !== null && $sconto > 0 && $s->tipo_sconto === 'primo_pagamento')
+            ? max(0, $base - $sconto)
+            : null;
+
         return [
-            'id'            => $s->id,
-            'nome'          => $s->name,
-            'ristorante'    => $s->name,
-            'citta'         => $s->citta,
-            'telefono'      => $s->telefono,
-            'email'         => $s->email,
-            'fonte'         => $s->fonte,
-            'smm_ref'       => $s->smm_ref,
-            'stato'         => $s->stato,
-            'priorita'      => $s->priorita,
-            'pacchetto'     => $s->pack ? ($packStr[$s->pack] ?? null) : null,
-            'valore'        => $s->valore ?? ($s->pack ? ($packVal[$s->pack] ?? null) : null),
-            'data_contatto' => $s->data_contatto?->format('Y-m-d'),
-            'followup_date' => $s->followup_date?->format('Y-m-d'),
-            'nextstep'      => $s->nextstep,
-            'note'          => $s->notes,
-            'tag'           => $s->tag,
-            'has_dashboard' => ! $s->is_prospect,
-            'overdue'       => $s->isOverdue(),
+            'id'             => $s->id,
+            'nome'           => $s->name,
+            'ristorante'     => $s->name,
+            'citta'          => $s->citta,
+            'telefono'       => $s->telefono,
+            'email'          => $s->email,
+            'fonte'          => $s->fonte,
+            'smm_ref'        => $s->smm_ref,
+            'stato'          => $s->stato,
+            'priorita'       => $s->priorita,
+            'pacchetto'      => $s->pack ? ($packStr[$s->pack] ?? null) : null,
+            'arr'            => $arr,
+            'arr_primo_anno' => $arr_primo_anno,
+            'sconto'         => $s->sconto,
+            'tipo_sconto'    => $s->tipo_sconto,
+            'data_contatto'  => $s->data_contatto?->format('Y-m-d'),
+            'followup_date'  => $s->followup_date?->format('Y-m-d'),
+            'nextstep'       => $s->nextstep,
+            'note'           => $s->notes,
+            'tag'            => $s->tag,
+            'has_dashboard'  => ! $s->is_prospect,
+            'overdue'        => $s->isOverdue(),
         ];
     }
 
@@ -374,7 +396,8 @@ class PipelineController extends Controller
             'stato'         => $data['stato'] ?? null,
             'priorita'      => $data['priorita'] ?? null,
             'pack'          => $this->pacchettoPack($data['pacchetto'] ?? null),
-            'valore'        => $data['valore'] ?? null,
+            'sconto'        => $data['sconto'] ?? null,
+            'tipo_sconto'   => $data['tipo_sconto'] ?? null,
             'data_contatto' => $data['data_contatto'] ?? null,
             'followup_date' => $data['followup_date'] ?? null,
             'nextstep'      => $data['nextstep'] ?? null,

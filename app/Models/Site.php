@@ -34,6 +34,8 @@ class Site extends Model
         'stato',
         'priorita',
         'valore',
+        'sconto',
+        'tipo_sconto',
         'data_contatto',
         'followup_date',
         'nextstep',
@@ -58,6 +60,7 @@ class Site extends Model
         'data_contatto' => 'date',
         'followup_date' => 'date',
         'valore' => 'integer',
+        'sconto' => 'integer',
     ];
 
     // ─── Scopes ──────────────────────────────────────────────────────────────────

@@ -221,7 +221,7 @@
                     <th onclick="sortLeads('stato')" style="cursor:pointer">Stato ↕</th>
                     <th>Fonte</th>
                     <th>Pacchetto</th>
-                    <th onclick="sortLeads('valore')" style="cursor:pointer">Valore ↕</th>
+                    <th onclick="sortLeads('valore')" style="cursor:pointer">ARR ↕</th>
                     <th>Prossimo step</th>
                     <th onclick="sortLeads('data_contatto')" style="cursor:pointer">Contatto ↕</th>
                     <th>Follow-up</th>
@@ -338,7 +338,14 @@
                         <option value="top">Boost Up — €1.199/anno</option>
                     </select>
                 </div>
-                <div class="field"><label class="f-label">Valore stimato (€/anno)</label><input type="number" id="f-valore" placeholder="399" min="0"></div>
+                <div class="field"><label class="f-label">Sconto (€/anno)</label><input type="number" id="f-sconto" placeholder="Es. 100" min="0" max="9999"></div>
+                <div class="field"><label class="f-label">Tipo sconto</label>
+                    <select id="f-tipo-sconto">
+                        <option value="">Nessuno sconto</option>
+                        <option value="ricorrente">Ricorrente (ogni anno)</option>
+                        <option value="primo_pagamento">Solo primo pagamento</option>
+                    </select>
+                </div>
                 <div class="field"><label class="f-label">Data primo contatto</label><input type="date" id="f-data-contatto"></div>
                 <div class="field"><label class="f-label">Data follow-up</label><input type="date" id="f-followup"></div>
                 <div class="field form-full2"><label class="f-label">Prossimo step</label><input type="text" id="f-nextstep" placeholder="Es. Chiamare giovedì per chiudere..."></div>
@@ -506,7 +513,10 @@ async function renderLeadsLocal() {
             <td><span class="s-badge ${statusClass[l.stato] || (l.has_dashboard ? 's-chiuso' : 's-nuovo')}">${statusLabel[l.stato] || (l.has_dashboard ? 'Connesso' : 'Nuovo')}</span></td>
             <td><span class="src-badge ${sourceClass[l.fonte] || ''}">${sourceLabel[l.fonte] || l.fonte || '—'}</span></td>
             <td>${l.pacchetto ? `<span class="pack-badge ${packClass[l.pacchetto]}">${packLabel[l.pacchetto]}</span>` : '—'}</td>
-            <td style="font-weight:700;color:var(--brand)">${fmtEur(l.valore)}</td>
+            <td style="font-weight:700;color:var(--brand)">
+                ${l.arr !== null ? fmtEur(l.arr) : '—'}
+                ${l.arr_primo_anno !== null ? `<div style="font-size:10px;color:var(--muted);font-weight:400">1° anno: ${fmtEur(l.arr_primo_anno)}</div>` : ''}
+            </td>
             <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted)" title="${l.nextstep || ''}">${l.nextstep || '—'}</td>
             <td style="font-size:12px;color:var(--muted)">${fmtDate(l.data_contatto)}</td>
             <td class="${l.overdue ? 'overdue-date' : ''}" style="font-size:12px">${l.followup_date ? fmtDate(l.followup_date) + (l.overdue ? ' ⚠' : '') : '—'}</td>
@@ -548,7 +558,8 @@ function editLead(id) {
     document.getElementById('f-stato').value         = l.stato || 'nuovo';
     document.getElementById('f-priorita').value      = l.priorita || 'bassa';
     document.getElementById('f-pacchetto').value     = l.pacchetto || '';
-    document.getElementById('f-valore').value        = l.valore || '';
+    document.getElementById('f-sconto').value        = l.sconto || '';
+    document.getElementById('f-tipo-sconto').value   = l.tipo_sconto || '';
     document.getElementById('f-data-contatto').value = l.data_contatto || '';
     document.getElementById('f-followup').value      = l.followup_date || '';
     document.getElementById('f-nextstep').value      = l.nextstep || '';
@@ -559,22 +570,23 @@ function editLead(id) {
 function closeLeadModal() { document.getElementById('lead-modal').classList.add('hidden'); }
 
 function clearLeadForm() {
-    ['f-nome','f-ristorante','f-citta','f-telefono','f-email','f-smm-ref','f-valore','f-data-contatto','f-followup','f-nextstep','f-note'].forEach(id => {
+    ['f-nome','f-ristorante','f-citta','f-telefono','f-email','f-smm-ref','f-sconto','f-data-contatto','f-followup','f-nextstep','f-note'].forEach(id => {
         document.getElementById(id).value = '';
     });
-    document.getElementById('f-fonte').value    = 'diretto';
-    document.getElementById('f-stato').value    = 'nuovo';
-    document.getElementById('f-priorita').value = 'bassa';
-    document.getElementById('f-pacchetto').value = '';
+    document.getElementById('f-fonte').value      = 'diretto';
+    document.getElementById('f-stato').value      = 'nuovo';
+    document.getElementById('f-priorita').value   = 'bassa';
+    document.getElementById('f-pacchetto').value  = '';
+    document.getElementById('f-tipo-sconto').value = '';
 }
 
 async function saveLead() {
     const nome = document.getElementById('f-nome').value.trim();
     if (!nome) { alert('Inserisci il nome del contatto'); return; }
 
-    const pack = document.getElementById('f-pacchetto').value;
-    const packValues = { base: 399, inter: 999, top: 1200 };
-    const valore = document.getElementById('f-valore').value || (pack ? packValues[pack] : '');
+    const pack       = document.getElementById('f-pacchetto').value;
+    const scontoRaw  = document.getElementById('f-sconto').value;
+    const tipoSconto = document.getElementById('f-tipo-sconto').value;
 
     const payload = {
         nome,
@@ -587,7 +599,8 @@ async function saveLead() {
         stato:         document.getElementById('f-stato').value,
         priorita:      document.getElementById('f-priorita').value,
         pacchetto:     pack,
-        valore:        valore || null,
+        sconto:        scontoRaw ? parseInt(scontoRaw, 10) : null,
+        tipo_sconto:   tipoSconto || null,
         data_contatto: document.getElementById('f-data-contatto').value || null,
         followup_date: document.getElementById('f-followup').value || null,
         nextstep:      document.getElementById('f-nextstep').value.trim(),
