@@ -284,7 +284,7 @@ class PipelineController extends Controller
             'email'         => 'nullable|email|max:150',
             'fonte'         => 'nullable|in:smm,ads,referral,organico,webinar,diretto',
             'smm_ref'       => 'nullable|string|max:200',
-            'stato'         => 'nullable|in:nuovo,contattato,interessato,demo,proposta,followup,chiuso,perso',
+            'stato'         => 'nullable|in:nuovo,contattato,interessato,demo,proposta,followup,chiuso,perso,rinnovo_rischio',
             'priorita'      => 'nullable|in:alta,media,bassa',
             'pacchetto'     => 'nullable|in:base,inter,top',
             'sconto'        => 'nullable|integer|min:0|max:9999',

@@ -42,7 +42,8 @@
 .s-proposta   { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
 .s-chiuso     { background: var(--green-soft); color: #15803d; border: 2px solid var(--green-border); }
 .s-perso      { background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
-.s-followup   { background: #fdf2ff; color: #a21caf; border: 1px solid #f0abfc; }
+.s-followup        { background: #fdf2ff; color: #a21caf; border: 1px solid #f0abfc; }
+.s-rinnovo_rischio { background: #fff7ed; color: #9a3412; border: 2px solid #fb923c; }
 
 /* Source badge */
 .src-badge { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
@@ -191,6 +192,7 @@
             <option value="proposta">Proposta inviata</option>
             <option value="followup">Follow-up</option>
             <option value="chiuso">Chiuso ✓</option>
+            <option value="rinnovo_rischio">Rinnovo a rischio ⚠</option>
             <option value="perso">Perso</option>
         </select>
         <select class="pipe-select" id="filter-fonte" onchange="renderLeads()">
@@ -320,6 +322,7 @@
                         <option value="proposta">Proposta inviata</option>
                         <option value="followup">Follow-up</option>
                         <option value="chiuso">Chiuso ✓</option>
+                        <option value="rinnovo_rischio">Rinnovo a rischio ⚠</option>
                         <option value="perso">Perso</option>
                     </select>
                 </div>
@@ -434,8 +437,8 @@ function fmtDate(d) {
 }
 function fmtEur(v) { return v ? `€${Number(v).toLocaleString('it')}` : '—'; }
 
-const statusLabel = { nuovo:'Nuovo', contattato:'Contattato', interessato:'Interessato', demo:'Demo fissata', proposta:'Proposta inviata', followup:'Follow-up', chiuso:'Chiuso ✓', perso:'Perso' };
-const statusClass = { nuovo:'s-nuovo', contattato:'s-contattato', interessato:'s-interessato', demo:'s-demo', proposta:'s-proposta', followup:'s-followup', chiuso:'s-chiuso', perso:'s-perso' };
+const statusLabel = { nuovo:'Nuovo', contattato:'Contattato', interessato:'Interessato', demo:'Demo fissata', proposta:'Proposta inviata', followup:'Follow-up', chiuso:'Chiuso ✓', rinnovo_rischio:'Rinnovo a rischio ⚠', perso:'Perso' };
+const statusClass = { nuovo:'s-nuovo', contattato:'s-contattato', interessato:'s-interessato', demo:'s-demo', proposta:'s-proposta', followup:'s-followup', chiuso:'s-chiuso', rinnovo_rischio:'s-rinnovo_rischio', perso:'s-perso' };
 const sourceLabel = { smm:'SMM', ads:'Meta Ads', referral:'Referral', organico:'Organico', webinar:'Webinar', diretto:'Diretto' };
 const sourceClass = { smm:'src-smm', ads:'src-ads', referral:'src-referral', organico:'src-organico', webinar:'src-webinar', diretto:'src-diretto' };
 const packLabel   = { base:'Essential €399', inter:'Work On €999', top:'Boost Up €1.199' };
@@ -775,9 +778,10 @@ const FUNNEL_STAGES = [
     {key:'interessato', label:'Interessati',color:'#027a48'},
     {key:'demo',        label:'Demo',       color:'#7e22ce'},
     {key:'proposta',    label:'Proposta',   color:'#c2410c'},
-    {key:'followup',    label:'Follow-up',  color:'#a21caf'},
-    {key:'chiuso',      label:'Chiusi ✓',   color:'#15803d'},
-    {key:'perso',       label:'Persi',      color:'#b42318'},
+    {key:'followup',        label:'Follow-up',         color:'#a21caf'},
+    {key:'chiuso',          label:'Chiusi ✓',          color:'#15803d'},
+    {key:'rinnovo_rischio', label:'Rinnovo a rischio', color:'#9a3412'},
+    {key:'perso',           label:'Persi',             color:'#b42318'},
 ];
 
 function renderFunnel() {
