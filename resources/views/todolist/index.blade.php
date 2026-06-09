@@ -434,6 +434,137 @@
     .cal-modal-panel { width: 100%; max-width: none; border-radius: var(--radius) var(--radius) 0 0; position: fixed; bottom: 0; right: 0; left: 0; max-height: 80vh; }
     .cal-modal-overlay { align-items: flex-end; padding: 0; }
 }
+
+/* ─── BUCHI AGENDA ──────────────────────────────────────────────────────────── */
+.hole-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0;
+    padding: 10px 14px;
+    background: repeating-linear-gradient(
+        -45deg,
+        #fef3c7 0px, #fef3c7 8px,
+        #fde68a 8px, #fde68a 16px
+    );
+    border: 2px dashed #d97706;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+.hole-icon { font-size: 18px; flex-shrink: 0; }
+.hole-info { flex: 1; min-width: 0; }
+.hole-label { font-weight: 600; font-size: 14px; color: #92400e; }
+.hole-time { font-size: 12px; color: #b45309; margin-top: 2px; }
+.hole-delete-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1.5px solid #d97706;
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    font-size: 11px; line-height: 1;
+    color: #d97706;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+.hole-delete-btn:hover { background: #d97706; color: white; }
+
+.add-hole-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    line-height: 1.5;
+}
+.add-hole-btn:hover { border-color: #d97706; color: #d97706; background: rgba(254,243,199,0.4); }
+
+/* ─── MODALE CREA BUCO ──────────────────────────────────────────────────────── */
+.hole-modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 1100;
+    align-items: center; justify-content: center;
+}
+.hole-modal-overlay.open { display: flex; }
+.hole-modal-panel {
+    background: var(--surface);
+    border-radius: 12px;
+    width: 440px;
+    max-width: 95vw;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    display: flex; flex-direction: column;
+}
+.hole-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    font-weight: 600; font-size: 15px;
+    gap: 12px;
+}
+.hole-modal-header button {
+    background: none; border: none; font-size: 20px;
+    cursor: pointer; color: var(--muted);
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; flex-shrink: 0;
+    transition: background 0.15s;
+}
+.hole-modal-header button:hover { background: var(--hover); }
+.hole-modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+.hole-modal-field { display: flex; flex-direction: column; gap: 5px; }
+.hole-modal-field label {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em;
+}
+.hole-modal-field input,
+.hole-modal-field select {
+    padding: 9px 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+}
+.hole-modal-field input:focus,
+.hole-modal-field select:focus { border-color: #d97706; box-shadow: 0 0 0 2px rgba(217,119,6,0.12); }
+.hole-modal-note {
+    font-size: 12px; color: var(--muted);
+    background: var(--hover);
+    border-radius: 7px; padding: 10px 13px;
+    line-height: 1.6;
+    border-left: 3px solid #d97706;
+}
+.hole-modal-footer {
+    display: flex; gap: 8px; justify-content: flex-end;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border-soft);
+}
+.hole-btn-cancel {
+    padding: 8px 18px; border-radius: 7px;
+    border: 1px solid var(--border-soft);
+    background: none; color: var(--text);
+    font-size: 14px; cursor: pointer;
+    transition: background 0.15s;
+}
+.hole-btn-cancel:hover { background: var(--hover); }
+.hole-btn-save {
+    padding: 8px 18px; border-radius: 7px;
+    border: none;
+    background: #d97706; color: white;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s;
+}
+.hole-btn-save:hover:not(:disabled) { background: #b45309; }
+.hole-btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
 
 {{-- ─── TOGGLE ─────────────────────────────────────────────────────────────── --}}
@@ -545,17 +676,40 @@
                             }
                             $allDone    = ($dayTotal > 0 && $dayTotal === $dayDone);
                             $dayPanelId = "day-{$week['id']}-{$di}";
+                            $dayKey     = "{$week['id']}_{$di}";
+                            $dayHoles   = isset($holes) ? ($holes->get($dayKey) ?? collect()) : collect();
+                            $blockLabels = array_values(array_map(fn($b) => $b['time'].' — '.$b['label'], $day['blocks']));
                         @endphp
-                        <div class="day-card" id="card-{{ $dayPanelId }}">
+                        <div class="day-card" id="card-{{ $dayPanelId }}"
+                             data-day-key="{{ $dayKey }}"
+                             data-blocks="{{ json_encode($blockLabels) }}">
                             <div class="day-header" onclick="toggleDay('{{ $dayPanelId }}')">
                                 <div class="day-name">{{ $day['name'] }}</div>
                                 <div class="day-theme">{{ $day['theme'] }}</div>
                                 <div class="day-hours">{{ $day['hours'] }}</div>
+                                <button class="add-hole-btn"
+                                        onclick="event.stopPropagation(); openHoleModal('{{ $dayKey }}', this.closest('.day-card'))"
+                                        title="Crea buco nell'agenda">
+                                    🕳
+                                </button>
                                 <div class="day-check" id="check-{{ $dayPanelId }}">
                                     @if ($allDone) ✅ @else ▼ @endif
                                 </div>
                             </div>
                             <div class="day-body" id="body-{{ $dayPanelId }}">
+
+                                {{-- Buchi all'inizio della giornata (insert_after = -1) --}}
+                                @foreach ($dayHoles->where('insert_after', -1) as $hole)
+                                    <div class="hole-block" id="hole-{{ $hole->id }}">
+                                        <div class="hole-icon">🚫</div>
+                                        <div class="hole-info">
+                                            <div class="hole-label">{{ $hole->label }}</div>
+                                            @if ($hole->time_label)<div class="hole-time">{{ $hole->time_label }}</div>@endif
+                                        </div>
+                                        <button class="hole-delete-btn" onclick="deleteHole({{ $hole->id }})" title="Rimuovi buco">✕</button>
+                                    </div>
+                                @endforeach
+
                                 @foreach ($day['blocks'] as $bi => $block)
                                     <div class="time-block">
                                         <div class="time-label">{{ $block['time'] }} — {{ $block['label'] }}</div>
@@ -577,7 +731,19 @@
                                             </div>
                                         @endforeach
                                     </div>
+                                    {{-- Buchi dopo questo blocco --}}
+                                    @foreach ($dayHoles->where('insert_after', $bi) as $hole)
+                                        <div class="hole-block" id="hole-{{ $hole->id }}">
+                                            <div class="hole-icon">🚫</div>
+                                            <div class="hole-info">
+                                                <div class="hole-label">{{ $hole->label }}</div>
+                                                @if ($hole->time_label)<div class="hole-time">{{ $hole->time_label }}</div>@endif
+                                            </div>
+                                            <button class="hole-delete-btn" onclick="deleteHole({{ $hole->id }})" title="Rimuovi buco">✕</button>
+                                        </div>
+                                    @endforeach
                                 @endforeach
+
                             </div>
                         </div>
                     @endforeach
@@ -719,7 +885,22 @@
 <div id="modal-tpl-holder" style="display:none">
 @foreach ($weeks as $wi => $week)
     @foreach ($week['days'] as $di => $day)
+        @php
+            $tplDayKey   = "{$week['id']}_{$di}";
+            $tplDayHoles = isset($holes) ? ($holes->get($tplDayKey) ?? collect()) : collect();
+        @endphp
         <div id="modal-tpl-{{ $week['id'] }}-{{ $di }}" style="display:none">
+            {{-- Buchi all'inizio --}}
+            @foreach ($tplDayHoles->where('insert_after', -1) as $hole)
+                <div class="hole-block" id="mhole-{{ $hole->id }}" style="margin:6px 0">
+                    <div class="hole-icon">🚫</div>
+                    <div class="hole-info">
+                        <div class="hole-label">{{ $hole->label }}</div>
+                        @if ($hole->time_label)<div class="hole-time">{{ $hole->time_label }}</div>@endif
+                    </div>
+                </div>
+            @endforeach
+
             @foreach ($day['blocks'] as $bi => $block)
                 <div class="time-block" style="padding-top:14px">
                     <div class="time-label">{{ $block['time'] }} — {{ $block['label'] }}</div>
@@ -741,16 +922,63 @@
                         </div>
                     @endforeach
                 </div>
+                {{-- Buchi dopo questo blocco --}}
+                @foreach ($tplDayHoles->where('insert_after', $bi) as $hole)
+                    <div class="hole-block" id="mhole-{{ $hole->id }}" style="margin:6px 0">
+                        <div class="hole-icon">🚫</div>
+                        <div class="hole-info">
+                            <div class="hole-label">{{ $hole->label }}</div>
+                            @if ($hole->time_label)<div class="hole-time">{{ $hole->time_label }}</div>@endif
+                        </div>
+                    </div>
+                @endforeach
             @endforeach
         </div>
     @endforeach
 @endforeach
 </div>{{-- /modal-tpl-holder --}}
 
+{{-- ─── MODALE CREA BUCO ──────────────────────────────────────────────────────── --}}
+<div class="hole-modal-overlay" id="hole-modal-overlay" onclick="if(event.target===this)closeHoleModal()">
+    <div class="hole-modal-panel">
+        <div class="hole-modal-header">
+            <span>🕳 Crea Buco in Agenda</span>
+            <button onclick="closeHoleModal()" title="Chiudi">×</button>
+        </div>
+        <div class="hole-modal-body">
+            <div class="hole-modal-field">
+                <label>Descrizione imprevisto *</label>
+                <input type="text" id="hole-label-input"
+                       placeholder="es. Visita medica, Appuntamento cliente…"
+                       maxlength="200"
+                       onkeydown="if(event.key==='Enter')saveHole()">
+            </div>
+            <div class="hole-modal-field">
+                <label>Orario (opzionale)</label>
+                <input type="text" id="hole-time-input"
+                       placeholder="es. 09:00–12:00">
+            </div>
+            <div class="hole-modal-field">
+                <label>Posizione nell'agenda</label>
+                <select id="hole-insert-select"></select>
+            </div>
+            <div class="hole-modal-note">
+                Le task non vengono cancellate — il buco è un segnaposto visivo che ricorda l'imprevisto. Le task rimangono visibili e vanno recuperate nel resto della giornata o in quella successiva.
+            </div>
+        </div>
+        <div class="hole-modal-footer">
+            <button class="hole-btn-cancel" onclick="closeHoleModal()">Annulla</button>
+            <button class="hole-btn-save" id="hole-save-btn" onclick="saveHole()">Crea buco</button>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
-const TOGGLE_URL = "{{ route('todolist.toggle') }}";
-const CSRF       = "{{ csrf_token() }}";
+const TOGGLE_URL     = "{{ route('todolist.toggle') }}";
+const HOLE_STORE_URL = "{{ route('todolist.hole.store') }}";
+const HOLE_DEL_BASE  = "{{ url('todolist/hole') }}/";
+const CSRF           = "{{ csrf_token() }}";
 
 /* ── Stato task ─────────────────────────────────────────────────────────────── */
 const taskState = {};
@@ -998,8 +1226,111 @@ function gotoWeekFromModal() {
     }, 100);
 }
 
-/* Chiudi modale con ESC */
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDayModal(); });
+/* ── Buchi agenda ────────────────────────────────────────────────────────────── */
+let _holeDayKey    = null;
+let _holeBlockLabels = [];
+
+function openHoleModal(dayKey, dayCard) {
+    _holeDayKey       = dayKey;
+    _holeBlockLabels  = JSON.parse(dayCard.dataset.blocks || '[]');
+
+    const sel = document.getElementById('hole-insert-select');
+    sel.innerHTML = '<option value="-1">⬆ Inizio giornata (prima di tutto)</option>';
+    _holeBlockLabels.forEach((label, i) => {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = 'Dopo: ' + label;
+        sel.appendChild(opt);
+    });
+
+    document.getElementById('hole-label-input').value = '';
+    document.getElementById('hole-time-input').value  = '';
+    document.getElementById('hole-modal-overlay').classList.add('open');
+    setTimeout(() => document.getElementById('hole-label-input').focus(), 60);
+}
+
+function closeHoleModal() {
+    document.getElementById('hole-modal-overlay').classList.remove('open');
+    _holeDayKey = null;
+}
+
+function saveHole() {
+    const label = document.getElementById('hole-label-input').value.trim();
+    if (!label) {
+        document.getElementById('hole-label-input').focus();
+        return;
+    }
+    const timeLabel   = document.getElementById('hole-time-input').value.trim() || null;
+    const insertAfter = parseInt(document.getElementById('hole-insert-select').value);
+
+    const btn = document.getElementById('hole-save-btn');
+    btn.disabled    = true;
+    btn.textContent = 'Salvataggio…';
+
+    fetch(HOLE_STORE_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body:    JSON.stringify({ day_key: _holeDayKey, label, time_label: timeLabel, insert_after: insertAfter }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) throw new Error(data.error);
+        _injectHoleInDom(_holeDayKey, data.id, label, timeLabel, insertAfter);
+        closeHoleModal();
+    })
+    .catch(err => alert('Errore: ' + err.message))
+    .finally(() => { btn.disabled = false; btn.textContent = 'Crea buco'; });
+}
+
+function _buildHoleHtml(id, label, timeLabel, withDelete) {
+    const timePart   = timeLabel ? `<div class="hole-time">${timeLabel}</div>` : '';
+    const deletePart = withDelete
+        ? `<button class="hole-delete-btn" onclick="deleteHole(${id})" title="Rimuovi buco">✕</button>`
+        : '';
+    return `<div class="hole-block" id="${withDelete ? 'hole' : 'mhole'}-${id}">` +
+           `<div class="hole-icon">🚫</div>` +
+           `<div class="hole-info"><div class="hole-label">${label}</div>${timePart}</div>` +
+           `${deletePart}</div>`;
+}
+
+function _injectIn(container, id, label, timeLabel, insertAfter, withDelete) {
+    if (!container) return;
+    const html   = _buildHoleHtml(id, label, timeLabel, withDelete);
+    const blocks = container.querySelectorAll('.time-block');
+    if (insertAfter === -1 || blocks.length === 0) {
+        container.insertAdjacentHTML('afterbegin', html);
+    } else {
+        const target = blocks[Math.min(insertAfter, blocks.length - 1)];
+        target.insertAdjacentHTML('afterend', html);
+    }
+}
+
+function _injectHoleInDom(dayKey, id, label, timeLabel, insertAfter) {
+    const [wid, di] = dayKey.split('_');
+    _injectIn(document.getElementById('body-day-' + wid + '-' + di), id, label, timeLabel, insertAfter, true);
+    _injectIn(document.getElementById('modal-tpl-' + wid + '-' + di), id, label, timeLabel, insertAfter, false);
+}
+
+function deleteHole(id) {
+    if (!confirm('Rimuovere questo buco dall\'agenda?')) return;
+    fetch(HOLE_DEL_BASE + id, {
+        method:  'DELETE',
+        headers: { 'X-CSRF-TOKEN': CSRF },
+    })
+    .then(r => r.json())
+    .then(() => {
+        ['hole-', 'mhole-'].forEach(prefix => {
+            const el = document.getElementById(prefix + id);
+            if (el) el.remove();
+        });
+    })
+    .catch(() => alert('Errore nella rimozione del buco.'));
+}
+
+/* Chiudi modali con ESC */
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeDayModal(); closeHoleModal(); }
+});
 
 /* ── Ripristino vista salvata ───────────────────────────────────────────────── */
 (function() {

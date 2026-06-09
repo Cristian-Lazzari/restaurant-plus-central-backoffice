@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CentralTodolistCompletion;
+use App\Models\CentralTodolistHole;
 use Illuminate\Http\Request;
 
 class TodolistController extends Controller
@@ -11,10 +12,8 @@ class TodolistController extends Controller
     {
         $weeks = config('todolist_data');
 
-        // Carica tutti i task completati dal DB in un Set per lookup O(1)
         $completedKeys = CentralTodolistCompletion::pluck('task_key')->flip()->toArray();
 
-        // Calcola statistiche globali
         $totalTasks = 0;
         $doneTasks  = 0;
         foreach ($weeks as $week) {
@@ -31,7 +30,9 @@ class TodolistController extends Controller
             }
         }
 
-        return view('todolist.index', compact('weeks', 'completedKeys', 'totalTasks', 'doneTasks'));
+        $holes = CentralTodolistHole::all()->groupBy('day_key');
+
+        return view('todolist.index', compact('weeks', 'completedKeys', 'totalTasks', 'doneTasks', 'holes'));
     }
 
     public function toggle(Request $request)
@@ -53,6 +54,27 @@ class TodolistController extends Controller
         }
 
         return response()->json(['done' => $done]);
+    }
+
+    public function storeHole(Request $request)
+    {
+        $validated = $request->validate([
+            'day_key'      => ['required', 'regex:/^w\d+_\d+$/', 'max:20'],
+            'label'        => ['required', 'string', 'max:200'],
+            'time_label'   => ['nullable', 'string', 'max:40'],
+            'insert_after' => ['required', 'integer', 'min:-1'],
+        ]);
+
+        $hole = CentralTodolistHole::create($validated);
+
+        return response()->json(['id' => $hole->id]);
+    }
+
+    public function destroyHole(int $id)
+    {
+        CentralTodolistHole::findOrFail($id)->delete();
+
+        return response()->json(['ok' => true]);
     }
 
     public function reset()
