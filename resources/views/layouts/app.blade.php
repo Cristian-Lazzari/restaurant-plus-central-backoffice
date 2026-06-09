@@ -420,6 +420,7 @@
         input[type="text"],
         input[type="url"],
         input[type="password"],
+        input[type="email"],
         input[type="date"],
         input[type="number"],
         textarea,
