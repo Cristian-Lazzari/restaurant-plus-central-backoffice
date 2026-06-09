@@ -189,12 +189,20 @@ class PipelineController extends Controller
                 'valore' => $items->sum($computeArr),
             ];
         }
-        $pipelineTotale = $leads->whereNotIn('stato', ['chiuso', 'perso'])->sum($computeArr);
+        // Totale coerente con le righe mostrate: solo le 3 fasi di trattativa
+        $pipelineTotale = $leads->whereIn('stato', ['interessato', 'demo', 'proposta'])->sum($computeArr);
+
+        // Clienti a rischio rinnovo
+        $rinnovoItems   = $leads->where('stato', 'rinnovo_rischio');
+        $rinnovoRischio = [
+            'count' => $rinnovoItems->count(),
+            'arr'   => $rinnovoItems->sum($computeArr),
+        ];
 
         return response()->json(compact(
             'totali', 'attivi', 'chiusiCount', 'arr', 'persi',
             'conv', 'cac', 'smmPartner', 'smmClienti', 'smmFee',
-            'byFonte', 'pipelineValore', 'pipelineTotale'
+            'byFonte', 'pipelineValore', 'pipelineTotale', 'rinnovoRischio'
         ));
     }
 

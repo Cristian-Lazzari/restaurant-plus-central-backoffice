@@ -837,6 +837,16 @@ async function renderKPI() {
         </div>`;
     }).join('');
 
+    const rr = d.rinnovoRischio || {count:0, arr:0};
+    const rinnovoHtml = rr.count > 0 ? `
+        <div style="margin-top:14px;padding:10px 12px;background:#fff7ed;border:2px solid #fb923c;border-radius:8px">
+            <div style="font-size:11px;font-weight:760;color:#9a3412;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">⚠ Clienti a rischio rinnovo</div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+                <span style="font-size:13px;color:#9a3412">Clienti a rischio (${rr.count})</span>
+                <span style="font-size:13px;color:#9a3412;font-weight:700">${rr.arr ? '€' + Number(rr.arr).toLocaleString('it') : '€0'} ARR a rischio</span>
+            </div>
+        </div>` : '';
+
     document.getElementById('kpi-content').innerHTML = `
         <div class="kpi-grid">
             <div class="kpi-card"><div class="kpi-val">${d.totali}</div><div class="kpi-lbl">Lead totali</div></div>
@@ -857,9 +867,10 @@ async function renderKPI() {
                 <div style="font-size:12px;font-weight:760;color:var(--brand);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em">Valore pipeline attiva</div>
                 ${pipelineHtml}
                 <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0 0">
-                    <span style="font-size:13px;color:var(--muted);font-weight:700">Totale pipeline</span>
+                    <span style="font-size:13px;color:var(--muted);font-weight:700">Totale trattative</span>
                     <span style="font-size:15px;color:var(--green);font-weight:900">€${Number(d.pipelineTotale || 0).toLocaleString('it')}</span>
                 </div>
+                ${rinnovoHtml}
             </div>
         </div>`;
 }
