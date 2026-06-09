@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CentralTodolistCompletion;
 use App\Models\CentralTodolistHole;
+use App\Models\TodolistTask;
 use Illuminate\Http\Request;
 
 class TodolistController extends Controller
@@ -12,48 +12,33 @@ class TodolistController extends Controller
     {
         $weeks = config('todolist_data');
 
-        $completedKeys = CentralTodolistCompletion::pluck('task_key')->flip()->toArray();
+        $allTasks = TodolistTask::orderBy('block_index')->orderBy('sort_order')->get();
 
-        $totalTasks = 0;
-        $doneTasks  = 0;
-        foreach ($weeks as $week) {
-            foreach ($week['days'] as $di => $day) {
-                foreach ($day['blocks'] as $bi => $block) {
-                    foreach ($block['tasks'] as $ti => $task) {
-                        $totalTasks++;
-                        $key = "{$week['id']}_{$di}_{$bi}_{$ti}";
-                        if (isset($completedKeys[$key])) {
-                            $doneTasks++;
-                        }
-                    }
-                }
-            }
-        }
+        $tasks = $allTasks
+            ->groupBy(fn($t) => $t->week_id . '_' . $t->day_index)
+            ->map(fn($g) => $g->groupBy('block_index'));
 
         $holes = CentralTodolistHole::all()->groupBy('day_key');
 
-        return view('todolist.index', compact('weeks', 'completedKeys', 'totalTasks', 'doneTasks', 'holes'));
+        $totalTasks = $allTasks->count();
+        $doneTasks  = $allTasks->where('is_done', true)->count();
+
+        return view('todolist.index', compact('weeks', 'tasks', 'holes', 'totalTasks', 'doneTasks'));
     }
 
     public function toggle(Request $request)
     {
-        $key = $request->input('task_key');
+        $id = $request->input('task_id');
 
-        if (! $key || ! preg_match('/^w\d+_\d+_\d+_\d+$/', $key)) {
-            return response()->json(['error' => 'Chiave non valida'], 422);
+        if (! $id || ! is_numeric($id) || (int) $id <= 0) {
+            return response()->json(['error' => 'ID non valido'], 422);
         }
 
-        $existing = CentralTodolistCompletion::where('task_key', $key)->first();
+        $task          = TodolistTask::findOrFail((int) $id);
+        $task->is_done = ! $task->is_done;
+        $task->save();
 
-        if ($existing) {
-            $existing->delete();
-            $done = false;
-        } else {
-            CentralTodolistCompletion::create(['task_key' => $key]);
-            $done = true;
-        }
-
-        return response()->json(['done' => $done]);
+        return response()->json(['done' => $task->is_done]);
     }
 
     public function storeHole(Request $request)
@@ -67,6 +52,28 @@ class TodolistController extends Controller
 
         $hole = CentralTodolistHole::create($validated);
 
+        // Sposta le task dei blocchi sovrapposti in overflow (block_index=99)
+        if ($validated['insert_after'] >= 0) {
+            [$weekId, $dayIndex] = explode('_', $validated['day_key']);
+            $dayIndex = (int) $dayIndex;
+
+            $tasksToMove = TodolistTask::where('week_id', $weekId)
+                ->where('day_index', $dayIndex)
+                ->where('block_index', '<=', (int) $validated['insert_after'])
+                ->where('block_index', '!=', 99)
+                ->get();
+
+            foreach ($tasksToMove as $task) {
+                if ($task->original_week_id === null) {
+                    $task->original_week_id     = $task->week_id;
+                    $task->original_day_index   = $task->day_index;
+                    $task->original_block_index = $task->block_index;
+                }
+                $task->block_index = 99;
+                $task->save();
+            }
+        }
+
         return response()->json(['id' => $hole->id]);
     }
 
@@ -79,8 +86,50 @@ class TodolistController extends Controller
 
     public function reset()
     {
-        CentralTodolistCompletion::truncate();
+        TodolistTask::query()->update(['is_done' => false]);
 
         return redirect()->route('todolist.index')->with('success', 'Tutti i progressi sono stati azzerati.');
+    }
+
+    public function reseedTasks()
+    {
+        TodolistTask::truncate();
+
+        $weeks  = config('todolist_data');
+        $buffer = [];
+
+        foreach ($weeks as $week) {
+            foreach ($week['days'] as $di => $day) {
+                foreach ($day['blocks'] as $bi => $block) {
+                    foreach ($block['tasks'] as $ti => $task) {
+                        $buffer[] = [
+                            'week_id'              => $week['id'],
+                            'day_index'            => $di,
+                            'block_index'          => $bi,
+                            'sort_order'           => $ti,
+                            'text'                 => $task['text'],
+                            'tag'                  => $task['tag'] ?? 'ops',
+                            'is_done'              => false,
+                            'original_week_id'     => null,
+                            'original_day_index'   => null,
+                            'original_block_index' => null,
+                            'created_at'           => now(),
+                            'updated_at'           => now(),
+                        ];
+
+                        if (count($buffer) >= 100) {
+                            TodolistTask::insert($buffer);
+                            $buffer = [];
+                        }
+                    }
+                }
+            }
+        }
+
+        if (! empty($buffer)) {
+            TodolistTask::insert($buffer);
+        }
+
+        return redirect()->route('todolist.index')->with('success', 'Task ripristinate alle posizioni originali.');
     }
 }

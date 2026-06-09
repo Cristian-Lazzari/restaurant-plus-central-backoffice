@@ -3,14 +3,14 @@
 @section('content')
 
 @php
-    /* ── Mappa data → giorno piano ── */
-    $monthAbbr  = ['Giu' => 6, 'Lug' => 7, 'Ago' => 8];
-    $calData    = [];   // 'Y-m-d' => ['week', 'wi', 'di', 'day', 'total', 'done', 'pct']
+    $monthAbbr = ['Giu' => 6, 'Lug' => 7, 'Ago' => 8];
+    $calData   = [];
+    $tagLabels = ['sales'=>'Sales','content'=>'Contenuto','ops'=>'Operativo','ads'=>'Ads','smm'=>'SMM'];
 
     foreach ($weeks as $wi => $week) {
         preg_match('/^([A-Za-z]+)\s+(\d+)/u', $week['dates'], $m);
-        $sm = $monthAbbr[$m[1]] ?? 6;
-        $sd = (int)$m[2];
+        $sm   = $monthAbbr[$m[1]] ?? 6;
+        $sd   = (int)$m[2];
         $base = new DateTime("2026-{$sm}-{$sd}");
 
         foreach ($week['days'] as $di => $day) {
@@ -18,21 +18,21 @@
             $dt->modify("+{$di} days");
             $key = $dt->format('Y-m-d');
 
-            $tot = 0; $dn = 0;
-            foreach ($day['blocks'] as $bi => $block) {
-                foreach ($block['tasks'] as $ti => $task) {
-                    $tot++;
-                    if (isset($completedKeys["{$week['id']}_{$di}_{$bi}_{$ti}"])) $dn++;
-                }
-            }
+            $dayKey        = "{$week['id']}_{$di}";
+            $dayTaskGroups = $tasks->get($dayKey, collect());
+            $allDayTasks   = $dayTaskGroups->flatten();
+            $tot = $allDayTasks->count();
+            $dn  = $allDayTasks->where('is_done', true)->count();
+
             $calData[$key] = [
-                'week'  => $week,
-                'wi'    => $wi,
-                'di'    => $di,
-                'day'   => $day,
-                'total' => $tot,
-                'done'  => $dn,
-                'pct'   => $tot ? round($dn / $tot * 100) : 0,
+                'week'     => $week,
+                'wi'       => $wi,
+                'di'       => $di,
+                'day'      => $day,
+                'total'    => $tot,
+                'done'     => $dn,
+                'pct'      => $tot ? round($dn / $tot * 100) : 0,
+                'task_ids' => $allDayTasks->pluck('id')->toArray(),
             ];
         }
     }
@@ -565,6 +565,25 @@
 }
 .hole-btn-save:hover:not(:disabled) { background: #b45309; }
 .hole-btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── BLOCCO OVERFLOW (task spostate da un buco) ────────────────────────────── */
+.time-block-overflow {
+    margin-bottom: 12px;
+    border: 2px dashed #f59e0b;
+    border-radius: 8px;
+    padding: 10px 14px;
+    background: repeating-linear-gradient(
+        -45deg,
+        #fffbeb 0px, #fffbeb 10px,
+        #fef3c7 10px, #fef3c7 20px
+    );
+}
+.time-block-overflow .time-label {
+    color: #92400e;
+    border-top: none;
+    padding-top: 0;
+}
+.time-block-overflow .time-label::after { background: #fcd34d; }
 </style>
 
 {{-- ─── TOGGLE ─────────────────────────────────────────────────────────────── --}}
@@ -577,11 +596,16 @@
         <button class="vt-btn" id="btn-view-cal" onclick="setView('cal')">
             <span class="vt-icon">⊞</span> Calendario
         </button>
-        <div style="margin-left:auto">
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
             <form method="POST" action="{{ route('todolist.reset') }}"
                   onsubmit="return confirm('Sei sicuro di voler azzerare tutti i progressi?')">
                 @csrf
                 <button type="submit" class="btn-reset">↺ Azzera progressi</button>
+            </form>
+            <form method="POST" action="{{ route('todolist.reseed') }}"
+                  onsubmit="return confirm('Ripristina tutte le task alle posizioni originali? I progressi verranno persi.')">
+                @csrf
+                <button type="submit" class="btn-reset" style="background:#dc2626;color:#fff;border-color:#dc2626">↺ Ripristina task originali</button>
             </form>
         </div>
     </div>
@@ -596,16 +620,10 @@
                     @foreach ($weeks as $wi => $week)
                         @if ($week['month'] !== $m) @continue @endif
                         @php
-                            $wTotal = 0; $wDone = 0;
-                            foreach ($week['days'] as $di => $day) {
-                                foreach ($day['blocks'] as $bi => $block) {
-                                    foreach ($block['tasks'] as $ti => $task) {
-                                        $wTotal++;
-                                        if (isset($completedKeys["{$week['id']}_{$di}_{$bi}_{$ti}"])) $wDone++;
-                                    }
-                                }
-                            }
-                            $pct = $wTotal ? round($wDone / $wTotal * 100) : 0;
+                            $wAllTasks = $tasks->filter(fn($_, $key) => str_starts_with($key, $week['id'].'_'))->flatten();
+                            $wTotal    = $wAllTasks->count();
+                            $wDone     = $wAllTasks->where('is_done', true)->count();
+                            $pct       = $wTotal ? round($wDone / $wTotal * 100) : 0;
                         @endphp
                         <button
                             class="week-btn {{ $wi === 0 ? 'active' : '' }}"
@@ -645,16 +663,10 @@
                     </div>
 
                     @php
-                        $wTotal = 0; $wDone = 0;
-                        foreach ($week['days'] as $di => $day) {
-                            foreach ($day['blocks'] as $bi => $block) {
-                                foreach ($block['tasks'] as $ti => $task) {
-                                    $wTotal++;
-                                    if (isset($completedKeys["{$week['id']}_{$di}_{$bi}_{$ti}"])) $wDone++;
-                                }
-                            }
-                        }
-                        $wpct = $wTotal ? round($wDone / $wTotal * 100) : 0;
+                        $wAllTasks = $tasks->filter(fn($_, $key) => str_starts_with($key, $week['id'].'_'))->flatten();
+                        $wTotal    = $wAllTasks->count();
+                        $wDone     = $wAllTasks->where('is_done', true)->count();
+                        $wpct      = $wTotal ? round($wDone / $wTotal * 100) : 0;
                     @endphp
 
                     <div class="overall-progress">
@@ -667,18 +679,15 @@
 
                     @foreach ($week['days'] as $di => $day)
                         @php
-                            $dayTotal = 0; $dayDone = 0;
-                            foreach ($day['blocks'] as $bi => $block) {
-                                foreach ($block['tasks'] as $ti => $task) {
-                                    $dayTotal++;
-                                    if (isset($completedKeys["{$week['id']}_{$di}_{$bi}_{$ti}"])) $dayDone++;
-                                }
-                            }
-                            $allDone    = ($dayTotal > 0 && $dayTotal === $dayDone);
-                            $dayPanelId = "day-{$week['id']}-{$di}";
-                            $dayKey     = "{$week['id']}_{$di}";
-                            $dayHoles   = isset($holes) ? ($holes->get($dayKey) ?? collect()) : collect();
-                            $blockLabels = array_values(array_map(fn($b) => $b['time'].' — '.$b['label'], $day['blocks']));
+                            $dayKey        = "{$week['id']}_{$di}";
+                            $dayTaskGroups = $tasks->get($dayKey, collect());
+                            $dayHoles      = isset($holes) ? ($holes->get($dayKey) ?? collect()) : collect();
+                            $allDayTasks   = $dayTaskGroups->flatten();
+                            $dayTotal      = $allDayTasks->count();
+                            $dayDone       = $allDayTasks->where('is_done', true)->count();
+                            $allDone       = $dayTotal > 0 && $dayTotal === $dayDone;
+                            $dayPanelId    = "day-{$week['id']}-{$di}";
+                            $blockLabels   = array_values(array_map(fn($b) => $b['time'].' — '.$b['label'], $day['blocks']));
                         @endphp
                         <div class="day-card" id="card-{{ $dayPanelId }}"
                              data-day-key="{{ $dayKey }}"
@@ -713,21 +722,11 @@
                                 @foreach ($day['blocks'] as $bi => $block)
                                     <div class="time-block">
                                         <div class="time-label">{{ $block['time'] }} — {{ $block['label'] }}</div>
-                                        @foreach ($block['tasks'] as $ti => $task)
-                                            @php
-                                                $tKey = "{$week['id']}_{$di}_{$bi}_{$ti}";
-                                                $done = isset($completedKeys[$tKey]);
-                                            @endphp
-                                            <div
-                                                class="task-item"
-                                                id="task-{{ $tKey }}"
-                                                onclick="toggleTask('{{ $tKey }}', this)"
-                                            >
-                                                <div class="task-cb {{ $done ? 'done' : '' }}" id="cb-{{ $tKey }}"></div>
-                                                <div class="task-text {{ $done ? 'done' : '' }}" id="txt-{{ $tKey }}">{{ $task['text'] }}</div>
-                                                <span class="task-tag tag-{{ $task['tag'] }}">
-                                                    {{ ['sales'=>'Sales','content'=>'Contenuto','ops'=>'Operativo','ads'=>'Ads','smm'=>'SMM'][$task['tag']] ?? $task['tag'] }}
-                                                </span>
+                                        @foreach ($dayTaskGroups->get($bi, collect()) as $task)
+                                            <div class="task-item" id="task-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this)">
+                                                <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="cb-{{ $task->id }}"></div>
+                                                <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="txt-{{ $task->id }}">{{ $task->text }}</div>
+                                                <span class="task-tag tag-{{ $task->tag }}">{{ $tagLabels[$task->tag] ?? $task->tag }}</span>
                                             </div>
                                         @endforeach
                                     </div>
@@ -743,6 +742,20 @@
                                         </div>
                                     @endforeach
                                 @endforeach
+
+                                {{-- Overflow: task spostate da un buco --}}
+                                @if ($dayTaskGroups->has(99) && $dayTaskGroups->get(99)->isNotEmpty())
+                                    <div class="time-block time-block-overflow">
+                                        <div class="time-label">Attività recuperate dall'imprevisto</div>
+                                        @foreach ($dayTaskGroups->get(99) as $task)
+                                            <div class="task-item" id="task-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this)">
+                                                <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="cb-{{ $task->id }}"></div>
+                                                <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="txt-{{ $task->id }}">{{ $task->text }}</div>
+                                                <span class="task-tag tag-{{ $task->tag }}">{{ $tagLabels[$task->tag] ?? $task->tag }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
 
                             </div>
                         </div>
@@ -760,8 +773,7 @@
                 7 => ['name' => 'Luglio',  'year' => 2026, 'days' => 31],
                 8 => ['name' => 'Agosto',  'year' => 2026, 'days' => 31],
             ];
-            $tagLabels = ['sales'=>'Sales','content'=>'Contenuto','ops'=>'Operativo','ads'=>'Ads','smm'=>'SMM'];
-            $today     = date('Y-m-d');
+            $today = date('Y-m-d');
         @endphp
 
         @foreach ($calMonths as $mNum => $mInfo)
@@ -886,8 +898,9 @@
 @foreach ($weeks as $wi => $week)
     @foreach ($week['days'] as $di => $day)
         @php
-            $tplDayKey   = "{$week['id']}_{$di}";
-            $tplDayHoles = isset($holes) ? ($holes->get($tplDayKey) ?? collect()) : collect();
+            $tplDayKey        = "{$week['id']}_{$di}";
+            $tplDayHoles      = isset($holes) ? ($holes->get($tplDayKey) ?? collect()) : collect();
+            $tplDayTaskGroups = $tasks->get($tplDayKey, collect());
         @endphp
         <div id="modal-tpl-{{ $week['id'] }}-{{ $di }}" style="display:none">
             {{-- Buchi all'inizio --}}
@@ -904,21 +917,11 @@
             @foreach ($day['blocks'] as $bi => $block)
                 <div class="time-block" style="padding-top:14px">
                     <div class="time-label">{{ $block['time'] }} — {{ $block['label'] }}</div>
-                    @foreach ($block['tasks'] as $ti => $task)
-                        @php
-                            $tKey = "{$week['id']}_{$di}_{$bi}_{$ti}";
-                            $done = isset($completedKeys[$tKey]);
-                        @endphp
-                        <div
-                            class="task-item"
-                            id="mtask-{{ $tKey }}"
-                            onclick="toggleTask('{{ $tKey }}', this, true)"
-                        >
-                            <div class="task-cb {{ $done ? 'done' : '' }}" id="mcb-{{ $tKey }}"></div>
-                            <div class="task-text {{ $done ? 'done' : '' }}" id="mtxt-{{ $tKey }}">{{ $task['text'] }}</div>
-                            <span class="task-tag tag-{{ $task['tag'] }}">
-                                {{ $tagLabels[$task['tag']] ?? $task['tag'] }}
-                            </span>
+                    @foreach ($tplDayTaskGroups->get($bi, collect()) as $task)
+                        <div class="task-item" id="mtask-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this, true)">
+                            <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="mcb-{{ $task->id }}"></div>
+                            <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="mtxt-{{ $task->id }}">{{ $task->text }}</div>
+                            <span class="task-tag tag-{{ $task->tag }}">{{ $tagLabels[$task->tag] ?? $task->tag }}</span>
                         </div>
                     @endforeach
                 </div>
@@ -933,6 +936,20 @@
                     </div>
                 @endforeach
             @endforeach
+
+            {{-- Overflow nel modal --}}
+            @if ($tplDayTaskGroups->has(99) && $tplDayTaskGroups->get(99)->isNotEmpty())
+                <div class="time-block time-block-overflow" style="padding-top:14px">
+                    <div class="time-label">Attività recuperate dall'imprevisto</div>
+                    @foreach ($tplDayTaskGroups->get(99) as $task)
+                        <div class="task-item" id="mtask-{{ $task->id }}" onclick="toggleTask({{ $task->id }}, this, true)">
+                            <div class="task-cb {{ $task->is_done ? 'done' : '' }}" id="mcb-{{ $task->id }}"></div>
+                            <div class="task-text {{ $task->is_done ? 'done' : '' }}" id="mtxt-{{ $task->id }}">{{ $task->text }}</div>
+                            <span class="task-tag tag-{{ $task->tag }}">{{ $tagLabels[$task->tag] ?? $task->tag }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
         </div>
     @endforeach
 @endforeach
@@ -984,11 +1001,12 @@ const CSRF           = "{{ csrf_token() }}";
 const taskState = {};
 @foreach ($weeks as $week)
     @foreach ($week['days'] as $di => $day)
-        @foreach ($day['blocks'] as $bi => $block)
-            @foreach ($block['tasks'] as $ti => $task)
-                @php $tKey = "{$week['id']}_{$di}_{$bi}_{$ti}"; @endphp
-                taskState['{{ $tKey }}'] = {{ isset($completedKeys[$tKey]) ? 'true' : 'false' }};
-            @endforeach
+        @php
+            $jsDayKey        = "{$week['id']}_{$di}";
+            $jsDayTaskGroups = $tasks->get($jsDayKey, collect());
+        @endphp
+        @foreach ($jsDayTaskGroups->flatten() as $task)
+            taskState[{{ $task->id }}] = {{ $task->is_done ? 'true' : 'false' }};
         @endforeach
     @endforeach
 @endforeach
@@ -997,10 +1015,12 @@ const weekKeys = {
 @foreach ($weeks as $week)
     '{{ $week['id'] }}': [
     @foreach ($week['days'] as $di => $day)
-        @foreach ($day['blocks'] as $bi => $block)
-            @foreach ($block['tasks'] as $ti => $task)
-                '{{ $week['id'] }}_{{ $di }}_{{ $bi }}_{{ $ti }}',
-            @endforeach
+        @php
+            $jsDayKey        = "{$week['id']}_{$di}";
+            $jsDayTaskGroups = $tasks->get($jsDayKey, collect());
+        @endphp
+        @foreach ($jsDayTaskGroups->flatten() as $task)
+            {{ $task->id }},
         @endforeach
     @endforeach
     ],
@@ -1020,46 +1040,45 @@ const calDayMap = {
         color:  '{{ $info['week']['color'] }}',
         wLabel: '{{ $info['week']['label'] }}',
         wDates: '{{ $info['week']['dates'] }}',
-        keys:   [
-            @foreach ($info['day']['blocks'] as $bi => $block)
-                @foreach ($block['tasks'] as $ti => $task)
-                    '{{ $info['week']['id'] }}_{{ $info['di'] }}_{{ $bi }}_{{ $ti }}',
-                @endforeach
-            @endforeach
-        ],
+        keys:   [{{ implode(',', $info['task_ids']) }}],
     },
 @endforeach
 };
 
 /* ── Toggle task (funziona sia in lista che in modal) ───────────────────────── */
-function toggleTask(key, el, fromModal) {
-    const cb  = document.getElementById('cb-' + key);
-    const txt = document.getElementById('txt-' + key);
-    const mcb  = document.getElementById('mcb-' + key);
-    const mtxt = document.getElementById('mtxt-' + key);
+function toggleTask(taskId, el, fromModal) {
+    const cb   = document.getElementById('cb-'   + taskId);
+    const txt  = document.getElementById('txt-'  + taskId);
+    const mcb  = document.getElementById('mcb-'  + taskId);
+    const mtxt = document.getElementById('mtxt-' + taskId);
 
-    const wasDone = taskState[key];
+    const wasDone = taskState[taskId];
     const nowDone = !wasDone;
-    taskState[key] = nowDone;
+    taskState[taskId] = nowDone;
 
-    [cb, mcb].forEach(e  => e  && e.classList.toggle('done', nowDone));
-    [txt, mtxt].forEach(e => e  && e.classList.toggle('done', nowDone));
+    [cb, mcb].forEach(e  => e && e.classList.toggle('done', nowDone));
+    [txt, mtxt].forEach(e => e && e.classList.toggle('done', nowDone));
 
-    const weekId = key.split('_')[0];
-    updateProgress(weekId);
-    updateCalendarCell(weekId, key);
+    const weekEntry = Object.entries(weekKeys).find(([, ids]) => ids.includes(taskId));
+    const weekId    = weekEntry ? weekEntry[0] : null;
+    if (weekId) {
+        updateProgress(weekId);
+        updateCalendarCell(weekId, taskId);
+    }
     if (fromModal) updateModalProgress();
 
     fetch(TOGGLE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body: JSON.stringify({ task_key: key }),
+        body: JSON.stringify({ task_id: taskId }),
     }).catch(() => {
-        taskState[key] = wasDone;
-        [cb, mcb].forEach(e  => e  && e.classList.toggle('done', wasDone));
-        [txt, mtxt].forEach(e => e  && e.classList.toggle('done', wasDone));
-        updateProgress(weekId);
-        updateCalendarCell(weekId, key);
+        taskState[taskId] = wasDone;
+        [cb, mcb].forEach(e  => e && e.classList.toggle('done', wasDone));
+        [txt, mtxt].forEach(e => e && e.classList.toggle('done', wasDone));
+        if (weekId) {
+            updateProgress(weekId);
+            updateCalendarCell(weekId, taskId);
+        }
         if (fromModal) updateModalProgress();
     });
 }
@@ -1275,8 +1294,8 @@ function saveHole() {
     .then(r => r.json())
     .then(data => {
         if (data.error) throw new Error(data.error);
-        _injectHoleInDom(_holeDayKey, data.id, label, timeLabel, insertAfter);
         closeHoleModal();
+        window.location.reload();
     })
     .catch(err => alert('Errore: ' + err.message))
     .finally(() => { btn.disabled = false; btn.textContent = 'Crea buco'; });
