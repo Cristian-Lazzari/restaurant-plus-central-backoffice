@@ -215,7 +215,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>P</th>
+                    <th></th>
                     <th onclick="sortLeads('nome')" style="cursor:pointer">Nome / Ristorante ↕</th>
                     <th>Città</th>
                     <th onclick="sortLeads('stato')" style="cursor:pointer">Stato ↕</th>
@@ -225,7 +225,6 @@
                     <th>Prossimo step</th>
                     <th onclick="sortLeads('data_contatto')" style="cursor:pointer">Contatto ↕</th>
                     <th>Follow-up</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody id="leads-tbody"></tbody>
@@ -511,7 +510,6 @@ async function renderLeadsLocal() {
             <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--muted)" title="${l.nextstep || ''}">${l.nextstep || '—'}</td>
             <td style="font-size:12px;color:var(--muted)">${fmtDate(l.data_contatto)}</td>
             <td class="${l.overdue ? 'overdue-date' : ''}" style="font-size:12px">${l.followup_date ? fmtDate(l.followup_date) + (l.overdue ? ' ⚠' : '') : '—'}</td>
-            <td><button class="btn" style="padding:3px 9px;font-size:11px" onclick="event.stopPropagation();editLead(${l.id})">✏</button></td>
         </tr>`).join('');
 }
 
