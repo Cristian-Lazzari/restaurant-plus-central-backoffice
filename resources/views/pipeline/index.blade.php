@@ -473,7 +473,7 @@ async function loadLeads() {
 }
 
 function renderLeads() {
-    loadLeads();
+    renderLeadsLocal();
 }
 
 async function renderLeadsLocal() {
@@ -504,7 +504,7 @@ async function renderLeadsLocal() {
                 <div style="font-size:11px;color:var(--muted)">${l.ristorante || ''}</div>
             </td>
             <td>${l.citta || '—'}</td>
-            <td><span class="s-badge ${statusClass[l.stato] || ''}">${statusLabel[l.stato] || l.stato}</span></td>
+            <td><span class="s-badge ${statusClass[l.stato] || (l.has_dashboard ? 's-chiuso' : 's-nuovo')}">${statusLabel[l.stato] || (l.has_dashboard ? 'Connesso' : 'Nuovo')}</span></td>
             <td><span class="src-badge ${sourceClass[l.fonte] || ''}">${sourceLabel[l.fonte] || l.fonte || '—'}</span></td>
             <td>${l.pacchetto ? `<span class="pack-badge ${packClass[l.pacchetto]}">${packLabel[l.pacchetto]}</span>` : '—'}</td>
             <td style="font-weight:700;color:var(--brand)">${fmtEur(l.valore)}</td>
