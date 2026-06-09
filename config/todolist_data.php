@@ -49,6 +49,8 @@ return [
                         ['text' => 'Chiama uno per uno i clienti a rischio che non hanno risposto al WhatsApp di ieri. Obiettivo della chiamata: non vendere, ma aggiornare.', 'tag' => 'sales'],
                         ['text' => 'Durante la chiamata: ascolta se c\'è insoddisfazione latente. Se emergono problemi (non usano la piattaforma, hanno difficoltà tecniche, non vedono valore) — prendine nota e proponi una sessione di supporto gratuita.', 'tag' => 'sales'],
                         ['text' => 'Dopo ogni chiamata: aggiorna pipeline con esito (soddisfatto / a rischio confermato / ha chiesto supporto / ha disdetto). Questa è informazione oro.', 'tag' => 'ops'],
+                        ['text' => 'PRIORITÀ ALTA — Kojo Sushi (rinnovo_rischio, Inter €999): è il cliente a rischio più prezioso — non contattato dall\'estate 2024. Chiama con tono personale e caldo: "Ciao, sono Cristian — ho novità importanti sulla piattaforma già incluse nel tuo pacchetto, ci tenevo ad aggiornarti di persona." Proponi 20 minuti di aggiornamento live. Se non risponde: WhatsApp e poi richiama nel pomeriggio.', 'tag' => 'sales'],
+                        ['text' => 'Elephant & Castle (Monte San Vito, rinnovo_rischio, base): chiama o manda WhatsApp per fissare un appuntamento di persona. Script: "Ciao, volevo aggiornarti sui risultati ottenuti finora e mostrarti alcune possibilità nuove già incluse nel tuo pacchetto — quando possiamo vederci 30 minuti questa settimana?"', 'tag' => 'sales'],
                     ]],
                     ['time' => '11:00–13:00', 'label' => 'Tarda mattina — Sessioni supporto clienti', 'tasks' => [
                         ['text' => 'Per i clienti che hanno mostrato interesse all\'aggiornamento CRM: fissa una call di 20 minuti per mostrargli le nuove funzioni in diretta. Questo aumenta drasticamente il loro engagement e la probabilità di rinnovo.', 'tag' => 'sales'],
@@ -60,6 +62,7 @@ return [
                     ]],
                     ['time' => '17:00–18:00', 'label' => 'Fine giornata', 'tasks' => [
                         ['text' => 'Aggiorna pipeline retention: quanti clienti a rischio contattati? Quanti hanno risposto positivamente? Quanti richiedono follow-up? Quanti sono ancora irraggiungibili?', 'tag' => 'ops'],
+                        ['text' => 'Kresceria — demo confermata gio 11/06 ore 18:00: racccogli dati ora (sito, social, menù, presenza online). Nota critica: la demo deve mostrare "una strategia marketing da seguire + controllo settimanale durante la prova" — questo è il loro interesse principale. Prepara una bozza del piano da sviluppare domani.', 'tag' => 'sales'],
                     ]],
                 ],
             ],
@@ -70,6 +73,8 @@ return [
                         ['text' => 'Conduci le call di aggiornamento CRM con i clienti a rischio che le hanno accettate ieri. Mostra in diretta: gestione clienti abituali, invio promozioni mirate, statistiche prenotazioni.', 'tag' => 'sales'],
                         ['text' => 'Al termine di ogni call: chiedi esplicitamente "Sei soddisfatto? C\'è qualcosa che non funziona come vorresti?" — le risposte ti danno il polso reale della situazione.', 'tag' => 'sales'],
                         ['text' => 'Chiama Classico Maglie per fissare la video-testimonianza: 60 secondi, risparmio e coperti gestiti. Offri un mese gratis come ringraziamento.', 'tag' => 'sales'],
+                        ['text' => 'Le Vele (rinnovo_rischio, Top €1.199): chiama per fissare un appuntamento di persona o call. Obiettivo: mostrare i risultati ottenuti e le possibilità future — stesso approccio usato ieri con Elephant & Castle.', 'tag' => 'sales'],
+                        ['text' => 'Ecce 35 (rinnovo_rischio, fonte SMM): DATO CONCRETO da usare nella chiamata — hanno risparmiato 800€ usando il servizio in modo passivo (spendendo 400€), mentre i loro vicini che lo usano attivamente risparmiano 6-7k€/anno spendendo 1.200€. Chiama o organizza incontro con Anita: mostra questo confronto cifre alla mano — è il tuo argomento più forte per farli capire il valore reale.', 'tag' => 'sales'],
                     ]],
                     ['time' => '10:30–13:00', 'label' => 'Tarda mattina — Offerta ingresso', 'tasks' => [
                         ['text' => 'Decidi l\'offerta di ingresso definitiva. Opzione consigliata: "Setup gratuito (valore €150) + primo mese incluso" — abbassa la barriera senza svalutare il prodotto.', 'tag' => 'ops'],
@@ -81,6 +86,10 @@ return [
                         ['text' => 'Scrivi il copy per la Creative B (immagine statica): numero grande "€22.497 risparmiati dai nostri clienti" + logo FP + CTA.', 'tag' => 'ads'],
                         ['text' => 'Registra o fai registrare il video 20 secondi per la creative A (anche con telefono, montaggio semplice, sottotitoli in italiano).', 'tag' => 'ads'],
                     ]],
+                    ['time' => '15:00–18:00', 'label' => 'Fine pomeriggio — Preparazione Demo Kresceria (domani gio ore 18:00)', 'tasks' => [
+                        ['text' => 'Finalizza la strategia marketing personalizzata per Kresceria: piano settimanale dei contenuti, obiettivi mensili, come funziona il controllo settimanale. Il cliente si aspetta una "strategia da seguire" — questo è il cuore della demo.', 'tag' => 'content'],
+                        ['text' => 'Crea il documento visivo (PDF o slide Canva) da presentare domani: calendario editoriale 30 giorni, piano campagne WhatsApp, KPI settimanali da monitorare insieme. Lo invierai via WhatsApp subito dopo la demo come follow-up tangibile.', 'tag' => 'content'],
+                    ]],
                 ],
             ],
             [
@@ -89,6 +98,7 @@ return [
                     ['time' => '09:00–10:00', 'label' => 'Mattina — Follow-up retention', 'tasks' => [
                         ['text' => 'Chiama o manda WhatsApp di follow-up ai clienti a rischio ancora silenti. Ultimo tentativo caldo prima di trattarli come urgenza critica.', 'tag' => 'sales'],
                         ['text' => 'Per chi ha già fatto la call di aggiornamento CRM: manda un messaggio di ringraziamento con 1-2 tip su come sfruttare subito le nuove funzioni. Mantieni il contatto caldo.', 'tag' => 'sales'],
+                        ['text' => 'Le Vele (rinnovo_rischio): se non hai ancora fissato un appuntamento — oggi è l\'ultimo momento utile prima della fine settimana. Chiama direttamente, non rimandare.', 'tag' => 'sales'],
                     ]],
                     ['time' => '10:00–12:00', 'label' => 'Tarda mattina — Primo outreach SMM warm', 'tasks' => [
                         ['text' => 'Invia i primi 5 DM Instagram agli SMM identificati dai profili dei tuoi clienti attuali (quelli "warm"). Usa lo script warm preparato.', 'tag' => 'smm'],
@@ -106,18 +116,26 @@ return [
                     ['time' => '17:00–18:00', 'label' => 'Fine giornata', 'tasks' => [
                         ['text' => 'Controlla risposte ai DM inviati. Rispondi entro 2 ore sempre — la velocità di risposta è cruciale nelle prime conversazioni.', 'tag' => 'sales'],
                     ]],
+                    ['time' => '18:00–19:30', 'label' => 'Sera — DEMO KRESCERIA (ore 18:00)', 'tasks' => [
+                        ['text' => 'Preparazione pre-demo (dalle 17:30): rileggi il PDF/documento strategia preparato ieri. Apri la piattaforma, prepara la condivisione schermo, verifica la connessione. Tieni il documento PDF aperto e pronto da inviare.', 'tag' => 'sales'],
+                        ['text' => 'CONDUCI LA DEMO. Struttura: 5min ascolto ("Come gestisci ora il marketing del tuo ristorante?") → 15min strategia marketing personalizzata (mostra il documento che hai preparato) → 10min piattaforma live (CRM, prenotazioni, WhatsApp automazioni) → 5min piano controllo settimanale → 5min offerta Top €1.199. Non superare i 40 minuti.', 'tag' => 'sales'],
+                        ['text' => 'Post-demo — entro 30 minuti: invia WhatsApp con PDF strategia allegato. Messaggio: "Ecco la strategia che ti ho mostrato stasera. Quando sei pronto per partire, scrivimi — ti seguo personalmente ogni settimana come concordato." Imposta follow-up per domani mattina.', 'tag' => 'sales'],
+                    ]],
                 ],
             ],
             [
                 'name' => 'Ven 12', 'theme' => 'Follow-up + setup pipeline vendite', 'hours' => '8h',
                 'blocks' => [
-                    ['time' => '09:00–10:00', 'label' => 'Mattina — Revisione risposte', 'tasks' => [
+                    ['time' => '09:00–10:00', 'label' => 'Mattina — Revisione risposte + Follow-up Retention', 'tasks' => [
                         ['text' => 'Controlla tutti i canali (Instagram DM, LinkedIn, email) e rispondi a chi ha risposto. Se qualcuno vuole saperne di più: proponi una call di 20 minuti.', 'tag' => 'sales'],
+                        ['text' => 'Verifica stato retention settimana: Kojo Sushi, Elephant & Castle, Le Vele, Ecce 35 — chi ha risposto? Chi no? Per chi non ha risposto dopo 2 tentativi: secondo follow-up con tono diverso ("Ciao, ti scrivo perché ho un dato concreto sul risparmio che potrebbe interessarti") o tentativo su un canale alternativo.', 'tag' => 'sales'],
+                        ['text' => 'Tuna Lounge Restaurant (chiuso, follow-up da fare): chiama o organizza incontro dal vivo. Aggiornalo sulle novità della piattaforma — è un cliente acquisito che può diventare referral attivo se lo mantieni coinvolto.', 'tag' => 'sales'],
                     ]],
                     ['time' => '10:00–13:00', 'label' => 'Tarda mattina — Pipeline vendite', 'tasks' => [
                         ['text' => 'Crea il foglio "Sales Pipeline": colonne Lead | Fonte | Data primo contatto | Stato | Note | Prossimo step.', 'tag' => 'ops'],
                         ['text' => 'Imposta un reminder giornaliero fisso alle 09:00 per controllare la pipeline e aggiornare gli stati.', 'tag' => 'ops'],
                         ['text' => 'Scrivi il deck demo: 8 slide per presentare FP in 20 minuti. Struttura: problema → soluzione → demo live → numeri reali → offerta → prossimo step.', 'tag' => 'content'],
+                        ['text' => 'Aggiorna pipeline con stato retention finale della settimana: Kojo Sushi, Elephant & Castle, Le Vele, Ecce 35, Tuna Lounge — segna "salvato / in bilico / perso" per ognuno. Kresceria: com\'è andata la demo? È pronto a procedere con Top €1.199?', 'tag' => 'ops'],
                     ]],
                     ['time' => '14:00–17:00', 'label' => 'Pomeriggio — Creative ads (finalizzazione)', 'tasks' => [
                         ['text' => 'Finalizza il video 20s per Meta Ads: sottotitoli, logo, CTA finale "Scopri di più" o "Prenota una demo".', 'tag' => 'ads'],
@@ -146,6 +164,7 @@ return [
                     ]],
                     ['time' => '17:00–18:00', 'label' => 'Fine settimana 1', 'tasks' => [
                         ['text' => 'Aggiorna pipeline. Conta: SMM contattati, risposte ricevute, call fissate. Prepara mentalmente le priorità per lunedì.', 'tag' => 'ops'],
+                        ['text' => 'Review retention settimana 1 (o mai più): Kojo Sushi, Elephant & Castle, Le Vele, Ecce 35, Tuna Lounge — stato finale per ognuno. Kresceria — impressioni post-demo, prossimo passo. Quanti su 5 clienti a rischio hai salvato questa settimana?', 'tag' => 'ops'],
                     ]],
                 ],
             ],
