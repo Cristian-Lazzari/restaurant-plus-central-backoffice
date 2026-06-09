@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\PrivateAuthController;
 use App\Http\Controllers\BackofficeSettingsController;
-use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SiteController;
@@ -28,8 +27,6 @@ Route::middleware('backoffice.auth')->group(function () {
     Route::get('sync-errors', fn() => redirect()->route('backoffice-settings.edit', ['tab' => 'errori']))->name('sync-errors.index');
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('sites/{site}/snapshots', [SnapshotController::class, 'index'])->name('sites.snapshots');
-    Route::get('marketing', [MarketingController::class, 'index'])->name('marketing.index');
-
     // ── Todolist (Piano 90 Giorni) ──────────────────────────────────────────
     Route::get('todolist', [TodolistController::class, 'index'])->name('todolist.index');
     Route::post('todolist/toggle', [TodolistController::class, 'toggle'])->name('todolist.toggle');

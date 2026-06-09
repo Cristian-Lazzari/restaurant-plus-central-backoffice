@@ -195,9 +195,10 @@
 .tag-smm     { background: var(--red-soft); color: var(--red); border: 1px solid var(--red-border); }
 
 .btn-reset {
-    font-size: 11px; padding: 4px 10px; border-radius: var(--radius-sm);
+    font-size: 11px; padding: 5px 10px; border-radius: var(--radius-sm);
     background: none; border: 1px solid var(--red-border); color: var(--red);
-    cursor: pointer; font-family: inherit; font-weight: 600; margin-top: 4px;
+    cursor: pointer; font-family: inherit; font-weight: 600;
+    white-space: nowrap;
 }
 .btn-reset:hover { background: var(--red-soft); }
 
@@ -382,13 +383,54 @@
     .cal-mini-pct { display: none; }
 }
 @media (max-width: 768px) {
-    .tl-container { height: auto; }
-    #view-list { flex-direction: column; max-height: calc(100vh - 165px); }
-    .tl-sidebar { width: 100%; max-height: 180px; border-right: none; border-bottom: 1px solid var(--border-soft); display: flex; overflow-x: auto; padding: 10px; gap: 6px; }
-    .month-group { display: flex; gap: 4px; flex-shrink: 0; flex-direction: row; align-items: center; }
+    /* Corregge margini per il padding mobile del layout (16px/14px/36px) */
+    .tl-container {
+        height: auto;
+        margin: -16px -14px -36px;
+    }
+
+    /* Vista lista: sidebar orizzontale sopra, main sotto */
+    #view-list { flex-direction: column; }
+
+    /* Sidebar come strip orizzontale scrollabile */
+    .tl-sidebar {
+        width: 100%;
+        height: auto;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid var(--border-soft);
+        display: flex;
+        flex-wrap: nowrap;          /* nessun a-capo */
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 8px 10px;
+        gap: 6px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;      /* nasconde scrollbar su Firefox */
+    }
+    .tl-sidebar::-webkit-scrollbar { display: none; }
+
+    /* Gruppi mese: riga unica */
+    .month-group {
+        display: flex; gap: 4px;
+        flex-shrink: 0; flex-direction: row; align-items: center;
+    }
     .month-label { display: none; }
-    .tl-main { padding: 16px; }
-    #view-cal { padding: 16px; }
+
+    /* Bottoni settimana: larghezza automatica, no wrap interno */
+    .week-btn {
+        width: auto;
+        flex-shrink: 0;
+        max-width: 110px;
+        padding: 6px 8px;
+    }
+    /* Nasconde la riga date (Giu 8–13) per compattezza */
+    .week-btn .week-dates-sub { display: none; }
+    .week-progress { display: none; }
+
+    .tl-main { padding: 14px; overflow-y: auto; flex: 1; }
+    #view-cal { padding: 14px; }
+    .view-toggle-bar { padding: 8px 12px; flex-wrap: nowrap; }
     .cal-modal-panel { width: 100%; max-width: none; border-radius: var(--radius) var(--radius) 0 0; position: fixed; bottom: 0; right: 0; left: 0; max-height: 80vh; }
     .cal-modal-overlay { align-items: flex-end; padding: 0; }
 }
@@ -404,6 +446,13 @@
         <button class="vt-btn" id="btn-view-cal" onclick="setView('cal')">
             <span class="vt-icon">⊞</span> Calendario
         </button>
+        <div style="margin-left:auto">
+            <form method="POST" action="{{ route('todolist.reset') }}"
+                  onsubmit="return confirm('Sei sicuro di voler azzerare tutti i progressi?')">
+                @csrf
+                <button type="submit" class="btn-reset">↺ Azzera progressi</button>
+            </form>
+        </div>
     </div>
 
     {{-- ─── VISTA LISTA ─────────────────────────────────────────────────────── --}}
@@ -435,7 +484,7 @@
                             <div class="week-dot" style="background:{{ $week['color'] }}"></div>
                             <div>
                                 <div>{{ $week['label'] }}</div>
-                                <div style="font-size:11px;color:var(--muted)">{{ $week['dates'] }}</div>
+                                <div class="week-dates-sub" style="font-size:11px;color:var(--muted)">{{ $week['dates'] }}</div>
                             </div>
                             <div class="week-progress" id="pct-{{ $week['id'] }}">{{ $pct }}%</div>
                         </button>
@@ -443,13 +492,6 @@
                 </div>
             @endforeach
 
-            <div style="margin-top:auto;padding-top:12px;border-top:1px solid var(--border-soft)">
-                <form method="POST" action="{{ route('todolist.reset') }}"
-                      onsubmit="return confirm('Sei sicuro di voler azzerare tutti i progressi?')">
-                    @csrf
-                    <button type="submit" class="btn-reset">↺ Azzera progressi</button>
-                </form>
-            </div>
         </div>
 
         <div class="tl-main" id="tl-main">
