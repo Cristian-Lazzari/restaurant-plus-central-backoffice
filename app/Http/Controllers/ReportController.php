@@ -104,7 +104,9 @@ class ReportController extends Controller
                 DB::raw(DB::getDriverName() === 'sqlite'
                     ? "strftime('%Y-%m', rs.fetched_at) as month"
                     : "DATE_FORMAT(rs.fetched_at, '%Y-%m') as month"),
+                'rs.orders_current_month',
                 'rs.orders_last_30_days',
+                'rs.reservations_current_month',
                 'rs.reservations_last_30_days',
                 'rs.orders_revenue',
                 'rs.revenue_unit',
@@ -170,9 +172,9 @@ class ReportController extends Controller
             }
 
             $monthlyData[$s->month][$s->site_id] = [
-                'orders'       => (int) ($s->orders_last_30_days    ?? 0),
-                'reservations' => (int) ($s->reservations_last_30_days ?? 0),
-                'covers'       => (int) ($s->reservations_covers     ?? 0),
+                'orders'       => (int) ($s->orders_current_month       ?? $s->orders_last_30_days       ?? 0),
+                'reservations' => (int) ($s->reservations_current_month ?? $s->reservations_last_30_days ?? 0),
+                'covers'       => (int) ($s->reservations_covers        ?? 0),
                 'revenue'      => $revenue,
             ];
         }

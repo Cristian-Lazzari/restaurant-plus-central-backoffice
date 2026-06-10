@@ -31,6 +31,8 @@ class ReportSnapshot extends Model
         'reservations_last_7_days',
         'orders_last_30_days',
         'reservations_last_30_days',
+        'orders_current_month',
+        'reservations_current_month',
         'fetched_at',
     ];
 
@@ -52,6 +54,8 @@ class ReportSnapshot extends Model
         'reservations_last_7_days' => 'integer',
         'orders_last_30_days' => 'integer',
         'reservations_last_30_days' => 'integer',
+        'orders_current_month' => 'integer',
+        'reservations_current_month' => 'integer',
         'fetched_at' => 'datetime',
     ];
 

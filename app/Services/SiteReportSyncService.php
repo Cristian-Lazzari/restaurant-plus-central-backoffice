@@ -190,6 +190,8 @@ class SiteReportSyncService
             'reservations_last_7_days'  => $this->nullableInteger(Arr::get($payload, 'periods.last_7_days.reservations_total')),
             'orders_last_30_days'       => $this->nullableInteger(Arr::get($payload, 'periods.last_30_days.orders_total')),
             'reservations_last_30_days' => $this->nullableInteger(Arr::get($payload, 'periods.last_30_days.reservations_total')),
+            'orders_current_month'       => $this->nullableInteger(Arr::get($payload, 'periods.current_month.orders_total')),
+            'reservations_current_month' => $this->nullableInteger(Arr::get($payload, 'periods.current_month.reservations_total')),
             'fetched_at' => now(),
         ]);
     }
