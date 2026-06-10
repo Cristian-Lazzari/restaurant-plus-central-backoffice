@@ -779,7 +779,7 @@
                                 <button class="add-hole-btn"
                                         onclick="event.stopPropagation(); openHoleModal('{{ $dayKey }}', this.closest('.day-card'))"
                                         title="Crea buco nell'agenda">
-                                    🕳
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
                                 </button>
                                 <div class="day-check" id="check-{{ $dayPanelId }}">
                                     @if ($allDone) ✅ @else ▼ @endif
@@ -1184,7 +1184,7 @@
 <div class="hole-modal-overlay" id="hole-modal-overlay" onclick="if(event.target===this)closeHoleModal()">
     <div class="hole-modal-panel">
         <div class="hole-modal-header">
-            <span>🕳 Crea Buco in Agenda</span>
+            <span>Crea Buco in Agenda</span>
             <button onclick="closeHoleModal()" title="Chiudi">×</button>
         </div>
         <div class="hole-modal-body">
