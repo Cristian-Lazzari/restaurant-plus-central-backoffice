@@ -459,7 +459,7 @@
     border-radius: 8px;
     flex-shrink: 0;
 }
-.hole-icon { font-size: 18px; flex-shrink: 0; }
+.hole-icon { display:flex; align-items:center; justify-content:center; flex-shrink:0; color:#92400e; }
 .hole-info { flex: 1; min-width: 0; }
 .hole-label { font-weight: 600; font-size: 14px; color: #92400e; }
 .hole-time { font-size: 12px; color: #b45309; margin-top: 2px; }
@@ -790,7 +790,7 @@
                                 {{-- Buco visivo (slot_start=-1) prima di tutto --}}
                                 @foreach ($dayHoles->where('insert_after', -1) as $hole)
                                     <div class="hole-block" id="hole-{{ $hole->id }}">
-                                        <div class="hole-icon">🚫</div>
+                                        <div class="hole-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
                                         <div class="hole-info">
                                             <div class="hole-label">{{ $hole->label }}</div>
                                             @if ($hole->time_label)<div class="hole-time">{{ $hole->time_label }}</div>@endif
@@ -818,7 +818,7 @@
                                         @if (!in_array($holeHere->id, $renderedHoleIds))
                                             @php $renderedHoleIds[] = $holeHere->id; @endphp
                                             <div class="hole-block" id="hole-{{ $holeHere->id }}">
-                                                <div class="hole-icon">🚫</div>
+                                                <div class="hole-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
                                                 <div class="hole-info">
                                                     <div class="hole-label">{{ $holeHere->label }}</div>
                                                     @if ($holeHere->time_label)<div class="hole-time">{{ $holeHere->time_label }}</div>@endif
@@ -862,7 +862,7 @@
                                         @if (!in_array($holeHere->id, $renderedHoleIds))
                                             @php $renderedHoleIds[] = $holeHere->id; @endphp
                                             <div class="hole-block" id="hole-{{ $holeHere->id }}">
-                                                <div class="hole-icon">🚫</div>
+                                                <div class="hole-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
                                                 <div class="hole-info">
                                                     <div class="hole-label">{{ $holeHere->label }}</div>
                                                     @if ($holeHere->time_label)<div class="hole-time">{{ $holeHere->time_label }}</div>@endif
@@ -1067,7 +1067,7 @@
             {{-- Buco visivo (slot_start=-1) prima di tutto --}}
             @foreach ($tplDayHoles->where('insert_after', -1) as $hole)
                 <div class="hole-block" id="mhole-{{ $hole->id }}" style="margin:6px 0">
-                    <div class="hole-icon">🚫</div>
+                    <div class="hole-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
                     <div class="hole-info">
                         <div class="hole-label">{{ $hole->label }}</div>
                         @if ($hole->time_label)<div class="hole-time">{{ $hole->time_label }}</div>@endif
@@ -1093,7 +1093,7 @@
                     @if (!in_array($holeHere->id, $tplRenderedHoleIds))
                         @php $tplRenderedHoleIds[] = $holeHere->id; @endphp
                         <div class="hole-block" id="mhole-{{ $holeHere->id }}" style="margin:6px 0">
-                            <div class="hole-icon">🚫</div>
+                            <div class="hole-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
                             <div class="hole-info">
                                 <div class="hole-label">{{ $holeHere->label }}</div>
                                 @if ($holeHere->time_label)<div class="hole-time">{{ $holeHere->time_label }}</div>@endif
@@ -1129,7 +1129,7 @@
                     @if (!in_array($holeHere->id, $tplRenderedHoleIds))
                         @php $tplRenderedHoleIds[] = $holeHere->id; @endphp
                         <div class="hole-block" id="mhole-{{ $holeHere->id }}" style="margin:6px 0">
-                            <div class="hole-icon">🚫</div>
+                            <div class="hole-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
                             <div class="hole-info">
                                 <div class="hole-label">{{ $holeHere->label }}</div>
                                 @if ($holeHere->time_label)<div class="hole-time">{{ $holeHere->time_label }}</div>@endif
