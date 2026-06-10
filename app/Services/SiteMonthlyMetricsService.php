@@ -230,21 +230,13 @@ class SiteMonthlyMetricsService
         $month = $this->singleMonthForSnapshot($snapshot);
 
         if ($month !== null) {
-            // Prova prima la disaggregazione giornaliera: evita di leggere orders_total
-            // che in V2 è sempre il totale storico (periods.all_time), indipendente dal from/to.
-            $dailyRows = $this->monthlyRowsFromDaily($payload);
-            if (count($dailyRows) > 0) {
-                return $dailyRows;
-            }
-
-            // Fallback: usa le colonne del snapshot (corretto solo per V1 dove orders_total
-            // riflette il periodo richiesto; in V2 questo ramo è raggiunto solo se non ci
-            // sono dati giornalieri nel payload).
             $row = $this->baseMonthlyRow($month);
-            $row['orders'] = $this->integerValue(Arr::get($payload, 'orders.total'));
-            $row['revenue'] = $this->nullableFloat(Arr::get($payload, 'orders.revenue_confirmed') ?? Arr::get($payload, 'orders.revenue'));
-            $row['reservations'] = $this->integerValue(Arr::get($payload, 'reservations.total'));
-            $row['covers'] = $this->integerValue(Arr::get($payload, 'reservations.total_covers'));
+            $row['orders'] = (int) ($snapshot->orders_total ?? $this->integerValue(Arr::get($payload, 'orders.total')));
+            $row['revenue'] = $snapshot->orders_revenue !== null
+                ? (float) $snapshot->orders_revenue
+                : $this->nullableFloat(Arr::get($payload, 'orders.revenue_confirmed') ?? Arr::get($payload, 'orders.revenue'));
+            $row['reservations'] = (int) ($snapshot->reservations_total ?? $this->integerValue(Arr::get($payload, 'reservations.total')));
+            $row['covers'] = (int) ($snapshot->reservations_covers ?? $this->integerValue(Arr::get($payload, 'reservations.total_covers')));
 
             return [$month => $this->withSavings($row)];
         }
