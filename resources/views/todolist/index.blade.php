@@ -666,6 +666,20 @@
 .lock-btn.is-locked { color: #d97706; }
 .task-locked { background: rgba(254,243,199,0.4) !important; }
 .task-locked .task-text { font-style: italic; }
+.del-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 3px 4px;
+    cursor: pointer;
+    color: var(--muted);
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    display: flex; align-items: center;
+}
+.task-item:hover .del-btn { opacity: 0.5; }
+.del-btn:hover { opacity: 1 !important; color: #ef4444; }
 </style>
 
 {{-- ─── TOGGLE ─────────────────────────────────────────────────────────────── --}}
@@ -830,7 +844,7 @@
                                     @else
                                         @php $slotTask = $dayTaskGroups->get($slot, collect())->first(); @endphp
                                         @if ($slotTask)
-                                            <div class="task-item{{ $slotTask->locked ? ' task-locked' : '' }}" id="task-{{ $slotTask->id }}" onclick="if(!event.target.closest('.lock-btn'))toggleTask({{ $slotTask->id }}, this)">
+                                            <div class="task-item{{ $slotTask->locked ? ' task-locked' : '' }}" id="task-{{ $slotTask->id }}" onclick="if(!event.target.closest('.lock-btn,.del-btn'))toggleTask({{ $slotTask->id }}, this)">
                                                 <div class="task-cb {{ $slotTask->is_done ? 'done' : '' }}" id="cb-{{ $slotTask->id }}"></div>
                                                 <div class="task-text {{ $slotTask->is_done ? 'done' : '' }}" id="txt-{{ $slotTask->id }}">{{ $slotTask->text }}</div>
                                                 @if ($slotTask->original_week_id !== null)
@@ -845,6 +859,11 @@
                                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1C9.24 1 7 3.24 7 6v1H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V6c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v1H9V6c0-1.66 1.34-3 3-3zm0 9c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/></svg>
                                                     @endif
                                                 </button>
+                                                @if (!$slotTask->locked)
+                                                    <button class="del-btn" onclick="deleteTask({{ $slotTask->id }})" title="Elimina task">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                                    </button>
+                                                @endif
                                             </div>
                                         @else
                                             <div class="slot-empty">
@@ -874,7 +893,7 @@
                                     @else
                                         @php $slotTask = $dayTaskGroups->get($slot, collect())->first(); @endphp
                                         @if ($slotTask)
-                                            <div class="task-item{{ $slotTask->locked ? ' task-locked' : '' }}" id="task-{{ $slotTask->id }}" onclick="if(!event.target.closest('.lock-btn'))toggleTask({{ $slotTask->id }}, this)">
+                                            <div class="task-item{{ $slotTask->locked ? ' task-locked' : '' }}" id="task-{{ $slotTask->id }}" onclick="if(!event.target.closest('.lock-btn,.del-btn'))toggleTask({{ $slotTask->id }}, this)">
                                                 <div class="task-cb {{ $slotTask->is_done ? 'done' : '' }}" id="cb-{{ $slotTask->id }}"></div>
                                                 <div class="task-text {{ $slotTask->is_done ? 'done' : '' }}" id="txt-{{ $slotTask->id }}">{{ $slotTask->text }}</div>
                                                 @if ($slotTask->original_week_id !== null)
@@ -889,6 +908,11 @@
                                                         <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1C9.24 1 7 3.24 7 6v1H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2h-1V6c0-2.76-2.24-5-5-5zm0 2c1.66 0 3 1.34 3 3v1H9V6c0-1.66 1.34-3 3-3zm0 9c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/></svg>
                                                     @endif
                                                 </button>
+                                                @if (!$slotTask->locked)
+                                                    <button class="del-btn" onclick="deleteTask({{ $slotTask->id }})" title="Elimina task">
+                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                                                    </button>
+                                                @endif
                                             </div>
                                         @else
                                             <div class="slot-empty">
@@ -1208,12 +1232,9 @@
                 </select>
             </div>
             <div class="hole-modal-field" id="hole-count-field" style="display:none">
-                <label>Quanti slot copre il buco?</label>
-                <select id="hole-slot-count-select" onchange="onHoleSelectChange()">
-                    <option value="1">1 slot</option>
-                    <option value="2">2 slot</option>
-                    <option value="3">3 slot</option>
-                </select>
+                <label>Quante task blocca? (1–60)</label>
+                <input type="number" id="hole-slot-count-input" min="1" max="60" value="1"
+                       oninput="onHoleSelectChange()" style="width:100px">
             </div>
             <div class="hole-duration-preview" id="hole-duration-preview" style="display:none"></div>
         </div>
@@ -1229,7 +1250,10 @@
 const TOGGLE_URL     = "{{ route('todolist.toggle') }}";
 const HOLE_STORE_URL = "{{ route('todolist.hole.store') }}";
 const HOLE_DEL_BASE  = "{{ url('todolist/hole') }}/";
+const LOCK_BASE      = "{{ url('todolist/lock') }}/";
+const TASK_DEL_BASE  = "{{ url('todolist/task') }}/";
 const CSRF           = "{{ csrf_token() }}";
+const ORDERED_DAYS   = @json($orderedDays);
 
 /* ── Stato task ─────────────────────────────────────────────────────────────── */
 const taskState = {};
@@ -1486,7 +1510,7 @@ function openHoleModal(dayKey, dayCard) {
     _holeDayKey = dayKey;
     document.getElementById('hole-label-input').value = '';
     document.getElementById('hole-slot-start-select').value = '-1';
-    document.getElementById('hole-slot-count-select').value = '1';
+    document.getElementById('hole-slot-count-input').value = '1';
     document.getElementById('hole-count-field').style.display = 'none';
     document.getElementById('hole-duration-preview').style.display = 'none';
     document.getElementById('hole-modal-overlay').classList.add('open');
@@ -1494,28 +1518,44 @@ function openHoleModal(dayKey, dayCard) {
 }
 
 function onHoleSelectChange() {
-    const start   = parseInt(document.getElementById('hole-slot-start-select').value);
-    const preview = document.getElementById('hole-duration-preview');
+    const start      = parseInt(document.getElementById('hole-slot-start-select').value);
+    const preview    = document.getElementById('hole-duration-preview');
     const countField = document.getElementById('hole-count-field');
 
     if (start === -1) {
         countField.style.display = 'none';
-        preview.style.display = 'none';
+        preview.style.display    = 'none';
         return;
     }
 
     countField.style.display = 'flex';
 
-    const count    = parseInt(document.getElementById('hole-slot-count-select').value);
-    const slotEnd  = Math.min(start + count - 1, 5);
-    const covered  = slotEnd - start + 1;
+    const total    = Math.max(1, Math.min(60, parseInt(document.getElementById('hole-slot-count-input').value) || 1));
+    const startIdx = ORDERED_DAYS.findIndex(d => d.key === _holeDayKey);
+    if (startIdx === -1) return;
 
-    const slotName = (s) => s < 3 ? `Mattina slot ${s+1}` : `Pomeriggio slot ${s-2}`;
-    const from = slotName(start);
-    const to   = covered > 1 ? ` → ${slotName(slotEnd)}` : '';
+    // Calcola giorni toccati
+    const affected = [];
+    let remaining  = total;
+    let di         = startIdx;
+    let curSlot    = start;
+
+    while (remaining > 0 && di < ORDERED_DAYS.length) {
+        const here = Math.min(remaining, 6 - curSlot);
+        affected.push({ name: ORDERED_DAYS[di].name, slotStart: curSlot, slotCount: here });
+        remaining -= here;
+        curSlot    = 0;
+        di++;
+    }
+
+    const slotName = s => s < 3 ? `M${s+1}` : `P${s-2}`;
+    const lines    = affected.map(a => {
+        const end = a.slotStart + a.slotCount - 1;
+        return `${a.name}: slot ${slotName(a.slotStart)}${a.slotCount > 1 ? '→' + slotName(end) : ''}`;
+    });
 
     preview.style.display = 'block';
-    preview.textContent = `Il buco coprirà: ${from}${to} (${covered} slot) — le task si sposteranno al giorno successivo.`;
+    preview.textContent   = `Coprirà ${total} slot su ${affected.length} giorni — ${lines.join(' · ')}`;
 }
 
 function closeHoleModal() {
@@ -1524,11 +1564,13 @@ function closeHoleModal() {
 }
 
 function saveHole() {
-    const label      = document.getElementById('hole-label-input').value.trim();
+    const label = document.getElementById('hole-label-input').value.trim();
     if (!label) { document.getElementById('hole-label-input').focus(); return; }
 
-    const slotStart  = parseInt(document.getElementById('hole-slot-start-select').value);
-    const slotCount  = slotStart >= 0 ? parseInt(document.getElementById('hole-slot-count-select').value) : 1;
+    const slotStart      = parseInt(document.getElementById('hole-slot-start-select').value);
+    const totalSlotCount = slotStart >= 0
+        ? Math.max(1, Math.min(60, parseInt(document.getElementById('hole-slot-count-input').value) || 1))
+        : 1;
 
     const btn = document.getElementById('hole-save-btn');
     btn.disabled = true; btn.textContent = 'Salvataggio…';
@@ -1536,7 +1578,7 @@ function saveHole() {
     fetch(HOLE_STORE_URL, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body:    JSON.stringify({ day_key: _holeDayKey, label, time_label: null, slot_start: slotStart, slot_count: slotCount }),
+        body:    JSON.stringify({ day_key: _holeDayKey, label, time_label: null, slot_start: slotStart, total_slot_count: totalSlotCount }),
     })
     .then(r => r.json())
     .then(data => {
@@ -1554,19 +1596,27 @@ function deleteHole(id) {
         method:  'DELETE',
         headers: { 'X-CSRF-TOKEN': CSRF },
     })
-    .then(r => r.json())
-    .then(() => {
-        ['hole-', 'mhole-'].forEach(prefix => {
-            const el = document.getElementById(prefix + id);
-            if (el) el.remove();
-        });
-    })
+    .then(() => window.location.reload())
     .catch(() => alert('Errore nella rimozione del buco.'));
 }
 
-/* ── Lock task ───────────────────────────────────────────────────────────────── */
-const LOCK_BASE = "{{ url('todolist/lock') }}/";
+/* ── Elimina task (non bloccata) ─────────────────────────────────────────────── */
+function deleteTask(taskId) {
+    if (!confirm('Eliminare questa task definitivamente?')) return;
+    fetch(TASK_DEL_BASE + taskId, {
+        method:  'DELETE',
+        headers: { 'X-CSRF-TOKEN': CSRF },
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) { alert(data.error); return; }
+        const el = document.getElementById('task-' + taskId);
+        if (el) el.remove();
+    })
+    .catch(() => alert('Errore nell\'eliminazione.'));
+}
 
+/* ── Lock task ───────────────────────────────────────────────────────────────── */
 function toggleLock(taskId, btn) {
     fetch(LOCK_BASE + taskId, {
         method: 'POST',
