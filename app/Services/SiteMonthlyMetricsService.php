@@ -230,6 +230,14 @@ class SiteMonthlyMetricsService
         $month = $this->singleMonthForSnapshot($snapshot);
 
         if ($month !== null) {
+            // I dati giornalieri aggregati sono il modo più preciso per un singolo mese:
+            // in V2 orders_total = periods.all_time (storico, indipendente da from/to),
+            // mentre il daily breakdown rifletterà esattamente il range richiesto.
+            $dailyRows = $this->monthlyRowsFromDaily($payload);
+            if (count($dailyRows) > 0) {
+                return $dailyRows;
+            }
+
             $row = $this->baseMonthlyRow($month);
             $row['orders'] = (int) ($snapshot->orders_total ?? $this->integerValue(Arr::get($payload, 'orders.total')));
             $row['revenue'] = $snapshot->orders_revenue !== null
