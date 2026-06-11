@@ -230,13 +230,40 @@ class SiteMonthlyMetricsService
         $month = $this->singleMonthForSnapshot($snapshot);
 
         if ($month !== null) {
-            $row = $this->baseMonthlyRow($month);
-            $row['orders'] = (int) ($snapshot->orders_total ?? $this->integerValue(Arr::get($payload, 'orders.total')));
-            $row['revenue'] = $snapshot->orders_revenue !== null
-                ? (float) $snapshot->orders_revenue
-                : $this->nullableFloat(Arr::get($payload, 'orders.revenue_confirmed') ?? Arr::get($payload, 'orders.revenue'));
-            $row['reservations'] = (int) ($snapshot->reservations_total ?? $this->integerValue(Arr::get($payload, 'reservations.total')));
-            $row['covers'] = (int) ($snapshot->reservations_covers ?? $this->integerValue(Arr::get($payload, 'reservations.total_covers')));
+            $row  = $this->baseMonthlyRow($month);
+            $isV2 = Arr::has($payload, 'periods.all_time');
+
+            if ($isV2) {
+                // In V2 periods.all_time è sempre storico, indipendente da from/to.
+                // orders.total / reservations.total alla radice sono period-specific.
+                // Per sync incrementali giornaliere (period = solo oggi) però riflettono
+                // un singolo giorno: se fetched_at è nello stesso mese del periodo usiamo
+                // periods.current_month, che rappresenta il mese accumulato fino a quel momento.
+                $fetchedMonth = $snapshot->fetched_at
+                    ? CarbonImmutable::instance($snapshot->fetched_at)->format('Y-m')
+                    : null;
+
+                if ($fetchedMonth === $month) {
+                    $row['orders']       = $this->integerValue(Arr::get($payload, 'periods.current_month.orders_total'));
+                    $row['revenue']      = $this->nullableFloat(Arr::get($payload, 'periods.current_month.orders_revenue'));
+                    $row['reservations'] = $this->integerValue(Arr::get($payload, 'periods.current_month.reservations_total'));
+                    $row['covers']       = $this->integerValue(Arr::get($payload, 'periods.current_month.reservations_covers'));
+                } else {
+                    // Snapshot storico: orders.total e reservations.total sono period-specific.
+                    $row['orders']       = $this->integerValue(Arr::get($payload, 'orders.total'));
+                    $row['revenue']      = $this->nullableFloat(Arr::get($payload, 'orders.revenue_confirmed') ?? Arr::get($payload, 'orders.revenue'));
+                    $row['reservations'] = $this->integerValue(Arr::get($payload, 'reservations.total'));
+                    $row['covers']       = $this->integerValue(Arr::get($payload, 'reservations.total_covers'));
+                }
+            } else {
+                // V1: orders_total / reservations_total nel DB riflettono il periodo richiesto.
+                $row['orders']       = (int) ($snapshot->orders_total ?? $this->integerValue(Arr::get($payload, 'orders.total')));
+                $row['revenue']      = $snapshot->orders_revenue !== null
+                    ? (float) $snapshot->orders_revenue
+                    : $this->nullableFloat(Arr::get($payload, 'orders.revenue_confirmed') ?? Arr::get($payload, 'orders.revenue'));
+                $row['reservations'] = (int) ($snapshot->reservations_total ?? $this->integerValue(Arr::get($payload, 'reservations.total')));
+                $row['covers']       = (int) ($snapshot->reservations_covers ?? $this->integerValue(Arr::get($payload, 'reservations.total_covers')));
+            }
 
             return [$month => $this->withSavings($row)];
         }
