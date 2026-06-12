@@ -219,6 +219,110 @@ class MarketingPlanController extends Controller
     }
 
     /**
+     * Crea un nuovo contenuto nel piano (AJAX).
+     */
+    public function storeItem(Request $request, Site $site)
+    {
+        $this->authorizeSite($site);
+
+        $plan = $site->marketingPlan;
+        abort_unless($plan, 404);
+
+        $data = $request->validate([
+            'type'        => ['required', Rule::in(MarketingItem::TYPES)],
+            'title'       => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'week'        => ['nullable', 'integer', 'min:1', 'max:' . ($plan->weeks ?? 52)],
+            'day_index'   => ['nullable', 'integer', 'min:0', 'max:6'],
+            'slot'        => ['nullable', Rule::in(MarketingItem::SLOTS)],
+            'payload'     => ['nullable', 'array'],
+            'payload.*'   => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $prefixes = [
+            'post' => 'P', 'storia' => 'S', 'video' => 'V',
+            'promo' => 'PR', 'campagna' => 'C', 'automazione' => 'A', 'modello' => 'M',
+        ];
+        $prefix = $prefixes[$data['type']];
+        $prefixLen = strlen($prefix) + 2;
+
+        $existingCodes = $plan->items()
+            ->where('type', $data['type'])
+            ->pluck('code')
+            ->toArray();
+
+        $max = 0;
+        foreach ($existingCodes as $c) {
+            if (preg_match('/(\d+)$/', $c, $m)) {
+                $max = max($max, (int) $m[1]);
+            }
+        }
+
+        if (isset($data['payload'])) {
+            $data['payload'] = array_filter(
+                $data['payload'],
+                fn ($v) => $v !== null && trim((string) $v) !== ''
+            ) ?: null;
+        }
+
+        $item = MarketingItem::create(array_merge($data, [
+            'marketing_plan_id' => $plan->id,
+            'code' => $prefix . '-' . ($max + 1),
+        ]));
+
+        $item->load('plan');
+
+        return response()->json([
+            'ok'        => true,
+            'item'      => $item->toArray(),
+            'scheduled' => $item->scheduledDate()?->format('d/m/Y'),
+        ]);
+    }
+
+    /**
+     * Modifica completa di un contenuto (titolo, tipo, payload, ecc.) — AJAX.
+     */
+    public function updateItemFull(Request $request, MarketingItem $item)
+    {
+        $this->authorizeItem($item);
+
+        $plan = $item->plan;
+
+        $data = $request->validate([
+            'type'        => ['required', Rule::in(MarketingItem::TYPES)],
+            'title'       => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'week'        => ['nullable', 'integer', 'min:1', 'max:' . ($plan->weeks ?? 52)],
+            'day_index'   => ['nullable', 'integer', 'min:0', 'max:6'],
+            'slot'        => ['nullable', Rule::in(MarketingItem::SLOTS)],
+            'payload'     => ['nullable', 'array'],
+            'payload.*'   => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if (isset($data['payload'])) {
+            $data['payload'] = array_filter(
+                $data['payload'],
+                fn ($v) => $v !== null && trim((string) $v) !== ''
+            ) ?: null;
+        }
+
+        $item->update($data);
+
+        return response()->json(['ok' => true, 'item' => $item->fresh()->toArray()]);
+    }
+
+    /**
+     * Elimina un contenuto dal piano (AJAX).
+     */
+    public function destroyItem(MarketingItem $item)
+    {
+        $this->authorizeItem($item);
+        $item->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
      * Sposta un contenuto nel calendario (drag & drop, AJAX).
      */
     public function moveItem(Request $request, MarketingItem $item)

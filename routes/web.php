@@ -59,8 +59,11 @@ Route::middleware('backoffice.auth')->group(function () {
     Route::post('sites/{site}/marketing/import', [MarketingPlanController::class, 'import'])->name('marketing.import');
     Route::delete('sites/{site}/marketing', [MarketingPlanController::class, 'destroy'])->name('marketing.destroy');
     Route::post('sites/{site}/marketing/meta', [MarketingPlanController::class, 'updateMeta'])->name('marketing.meta');
+    Route::post('sites/{site}/marketing/items', [MarketingPlanController::class, 'storeItem'])->name('marketing.items.store');
     Route::post('marketing/items/{item}/toggle', [MarketingPlanController::class, 'toggleItem'])->name('marketing.items.toggle');
     Route::post('marketing/items/{item}/move', [MarketingPlanController::class, 'moveItem'])->name('marketing.items.move');
+    Route::post('marketing/items/{item}/full', [MarketingPlanController::class, 'updateItemFull'])->name('marketing.items.updateFull');
+    Route::delete('marketing/items/{item}', [MarketingPlanController::class, 'destroyItem'])->name('marketing.items.destroy');
     Route::post('marketing/items/{item}', [MarketingPlanController::class, 'updateItem'])->name('marketing.items.update');
 
     // ── Utenti (solo CEO — gli account ristorante vengono reindirizzati dal middleware) ──

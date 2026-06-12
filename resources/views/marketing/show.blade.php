@@ -82,9 +82,31 @@
         @media (max-width: 768px) {
             .mk-card-body dl { grid-template-columns: 1fr; gap: 2px; }
             .mk-card-body dt { padding-top: 8px; }
-            /* I KPI restano grandi: già sopra i 16px, nessun rischio auto-zoom */
             input.mk-kpi { font-size: 22px !important; }
+            .mk-modal-grid { grid-template-columns: 1fr !important; }
         }
+
+        /* ── Modal CRUD ───────────────────────────────────────────────────── */
+        .mk-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.52); z-index: 400; display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .mk-modal-overlay.hidden { display: none; }
+        .mk-modal-box { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 12px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow); }
+        .mk-modal-hdr { padding: 16px 20px 12px; border-bottom: 1px solid var(--border-soft); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surface); z-index: 1; }
+        .mk-modal-ttl { font-size: 15px; font-weight: 780; color: var(--ink); }
+        .mk-modal-cls { background: none; border: none; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 4px 8px; border-radius: var(--radius-sm); }
+        .mk-modal-cls:hover { background: var(--surface-2); color: var(--ink); }
+        .mk-modal-bdy { padding: 18px 20px; }
+        .mk-modal-ftr { padding: 12px 20px; border-top: 1px solid var(--border-soft); display: flex; gap: 8px; justify-content: flex-end; position: sticky; bottom: 0; background: var(--surface); }
+        .mk-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .mk-modal-full { grid-column: 1 / -1; }
+        .mk-modal-sep { grid-column: 1 / -1; border: none; border-top: 1px dashed var(--border-soft); margin: 4px 0; }
+        .mk-payload-group { display: contents; }
+        .mk-payload-group.hidden { display: none; }
+        .mk-btn-edit { background: none; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: var(--ink-2); }
+        .mk-btn-edit:hover { background: var(--surface-2); }
+        .mk-btn-del { background: none; border: 1px solid #fca5a5; border-radius: var(--radius-sm); padding: 3px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; color: #dc2626; }
+        .mk-btn-del:hover { background: #fef2f2; }
+        .mk-add-btn { font-size: 12.5px; }
+        .mk-f-label { display: block; font-weight: 600; font-size: 11.5px; margin-bottom: 5px; color: var(--ink-2); text-transform: uppercase; letter-spacing: .04em; }
     </style>
 
     @php
@@ -163,12 +185,12 @@
         <button class="mk-tab" data-mk-section="calendario" type="button">{{ __('Calendario') }}</button>
         @foreach($typeMeta as $type => $meta)
             @php $group = $itemsByType[$type] ?? collect(); @endphp
-            @if($group->isNotEmpty())
-                <button class="mk-tab" data-mk-section="{{ $type }}" type="button">
-                    {{ $meta['nav'] }}
+            <button class="mk-tab" data-mk-section="{{ $type }}" type="button">
+                {{ $meta['nav'] }}
+                @if($group->isNotEmpty())
                     <span class="cnt {{ $group->where('completed', true)->count() >= $group->count() ? 'done' : '' }}" data-cnt-type="{{ $type }}">{{ $group->where('completed', true)->count() }}/{{ $group->count() }}</span>
-                </button>
-            @endif
+                @endif
+            </button>
         @endforeach
     </div>
 
@@ -306,12 +328,21 @@
     {{-- ══ SEZIONI CONTENUTI ══ --}}
     @foreach($typeMeta as $type => $meta)
         @php $group = $itemsByType[$type] ?? collect(); @endphp
-        @if($group->isNotEmpty())
             <div class="mk-section" id="mk-sec-{{ $type }}">
-                <div class="section-header">
+                <div class="section-header" style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
                     <h2 class="section-title">{{ __($meta['title']) }}</h2>
+                    <button class="btn btn-primary mk-add-btn mk-open-add"
+                        data-type="{{ $type }}"
+                        data-type-label="{{ $meta['nav'] }}"
+                        type="button">+ {{ __('Aggiungi') }} {{ strtolower($meta['nav']) }}</button>
                 </div>
+                @if($group->isNotEmpty())
                 <div class="page-subtitle mb-3">{{ $group->count() }} {{ strtolower($meta['nav']) }} — {{ __('spunta, data e note risultati vengono salvati automaticamente.') }}</div>
+                @else
+                <div class="empty-state" style="padding: 32px 0;">
+                    <span>{{ __('Nessun contenuto ancora. Usa il bottone qui sopra per aggiungere.') }}</span>
+                </div>
+                @endif
 
                 @foreach($group as $item)
                     @php
@@ -330,6 +361,22 @@
                                     {{ $scheduled ? '· ' . $scheduled->format('d/m/Y') : '' }}
                                 </span>
                             @endif
+                            <div class="flex items-center gap-1" style="margin-left: auto; flex-shrink: 0;">
+                                <button class="mk-btn-edit mk-open-edit"
+                                    data-item-id="{{ $item->id }}"
+                                    data-item-type="{{ $item->type }}"
+                                    data-item-title="{{ e($item->title) }}"
+                                    data-item-description="{{ e($item->description) }}"
+                                    data-item-week="{{ $item->week }}"
+                                    data-item-day="{{ $item->day_index }}"
+                                    data-item-slot="{{ $item->slot }}"
+                                    data-item-payload="{{ e(json_encode($item->payload ?? [])) }}"
+                                    type="button">{{ __('Modifica') }}</button>
+                                <button class="mk-btn-del mk-do-delete"
+                                    data-item-id="{{ $item->id }}"
+                                    data-item-code="{{ $item->code }}"
+                                    type="button">{{ __('Elimina') }}</button>
+                            </div>
                         </div>
                         <div class="mk-card-body">
                             <dl>
@@ -360,8 +407,121 @@
                     </div>
                 @endforeach
             </div>
-        @endif
     @endforeach
+
+    {{-- ══ MODAL CRUD CONTENUTO ══ --}}
+    <div class="mk-modal-overlay hidden" id="mk-item-modal" role="dialog" aria-modal="true">
+        <div class="mk-modal-box">
+            <div class="mk-modal-hdr">
+                <div class="mk-modal-ttl" id="mk-modal-ttl">{{ __('Aggiungi contenuto') }}</div>
+                <button class="mk-modal-cls" id="mk-modal-cls" type="button" aria-label="{{ __('Chiudi') }}">✕</button>
+            </div>
+            <div class="mk-modal-bdy">
+                <div class="mk-modal-grid">
+                    {{-- Tipo --}}
+                    <div class="field mk-modal-full">
+                        <label class="mk-f-label" for="mk-f-type">{{ __('Tipo contenuto') }}</label>
+                        <select id="mk-f-type" required>
+                            <option value="">— {{ __('Seleziona') }} —</option>
+                            @foreach(\App\Models\MarketingItem::TYPES as $t)
+                                @php $tLabel = ['post'=>'Post','storia'=>'Storia','video'=>'Video','promo'=>'Promo','campagna'=>'Campagna','automazione'=>'Automazione','modello'=>'Modello'][$t] ?? ucfirst($t); @endphp
+                                <option value="{{ $t }}">{{ $tLabel }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    {{-- Titolo --}}
+                    <div class="field mk-modal-full">
+                        <label class="mk-f-label" for="mk-f-title">{{ __('Titolo') }}</label>
+                        <input type="text" id="mk-f-title" maxlength="255" placeholder="{{ __('Es. Carbonara protagonista') }}">
+                    </div>
+                    {{-- Descrizione --}}
+                    <div class="field mk-modal-full">
+                        <label class="mk-f-label" for="mk-f-description" id="mk-f-description-label">{{ __('Descrizione / Script') }}</label>
+                        <textarea id="mk-f-description" rows="3" maxlength="5000" placeholder="{{ __('Testo del contenuto, script video, corpo messaggio...') }}"></textarea>
+                    </div>
+                    <hr class="mk-modal-sep">
+
+                    {{-- Payload per tipo --}}
+                    {{-- post / storia --}}
+                    <div class="mk-payload-group hidden" data-mk-types="post,storia">
+                        <div class="field"><label class="mk-f-label">{{ __('Foto / Visual') }}</label><input type="text" name="foto" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Tono') }}</label><input type="text" name="tono" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">CTA</label><input type="text" name="cta" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Promo collegata') }}</label><input type="text" name="promo" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Modello messaggio') }}</label><input type="text" name="modello" maxlength="255"></div>
+                    </div>
+                    {{-- video --}}
+                    <div class="mk-payload-group hidden" data-mk-types="video">
+                        <div class="field"><label class="mk-f-label">{{ __('Durata (sec)') }}</label><input type="text" name="durata" maxlength="50"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Ambientazione') }}</label><input type="text" name="ambientazione" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Tono') }}</label><input type="text" name="tono" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">CTA</label><input type="text" name="cta" maxlength="255"></div>
+                    </div>
+                    {{-- promo --}}
+                    <div class="mk-payload-group hidden" data-mk-types="promo">
+                        <div class="field"><label class="mk-f-label">{{ __('Tipo sconto') }}</label><input type="text" name="tipo_sconto" maxlength="100"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Sconto') }}</label><input type="text" name="sconto" maxlength="100"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Minimo') }}</label><input type="text" name="minimo" maxlength="100"></div>
+                        <div class="field mk-modal-full"><label class="mk-f-label">{{ __('Applicabile a') }}</label><input type="text" name="applicabile" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Riusabile') }}</label><input type="text" name="riusabile" maxlength="50" placeholder="sì / no"></div>
+                    </div>
+                    {{-- campagna --}}
+                    <div class="mk-payload-group hidden" data-mk-types="campagna">
+                        <div class="field"><label class="mk-f-label">{{ __('Segmento') }}</label><input type="text" name="segmento" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Canale') }}</label><input type="text" name="canale" maxlength="100"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Tipo') }}</label><input type="text" name="tipo" maxlength="100"></div>
+                        <div class="field mk-modal-full"><label class="mk-f-label">{{ __('Conclusione') }}</label><input type="text" name="conclusione" maxlength="255"></div>
+                    </div>
+                    {{-- automazione --}}
+                    <div class="mk-payload-group hidden" data-mk-types="automazione">
+                        <div class="field"><label class="mk-f-label">{{ __('Trigger') }}</label><input type="text" name="trigger" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Segmento') }}</label><input type="text" name="segmento" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Canale') }}</label><input type="text" name="canale" maxlength="100"></div>
+                        <div class="field mk-modal-full"><label class="mk-f-label">{{ __('Modello messaggio') }}</label><input type="text" name="modello" maxlength="255"></div>
+                    </div>
+                    {{-- modello --}}
+                    <div class="mk-payload-group hidden" data-mk-types="modello">
+                        <div class="field"><label class="mk-f-label">{{ __('Tono') }}</label><input type="text" name="tono" maxlength="255"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Canale') }}</label><input type="text" name="canale" maxlength="100"></div>
+                        <div class="field"><label class="mk-f-label">{{ __('Tipo') }}</label><input type="text" name="tipo" maxlength="100"></div>
+                    </div>
+
+                    <hr class="mk-modal-sep">
+                    {{-- Posizione calendario --}}
+                    <div class="field">
+                        <label class="mk-f-label" for="mk-f-week">{{ __('Settimana') }}</label>
+                        <input type="number" id="mk-f-week" min="1" max="{{ $plan->weeks }}" placeholder="1–{{ $plan->weeks }}">
+                    </div>
+                    <div class="field">
+                        <label class="mk-f-label" for="mk-f-day">{{ __('Giorno') }}</label>
+                        <select id="mk-f-day">
+                            <option value="">—</option>
+                            <option value="0">{{ __('Lunedì') }}</option>
+                            <option value="1">{{ __('Martedì') }}</option>
+                            <option value="2">{{ __('Mercoledì') }}</option>
+                            <option value="3">{{ __('Giovedì') }}</option>
+                            <option value="4">{{ __('Venerdì') }}</option>
+                            <option value="5">{{ __('Sabato') }}</option>
+                            <option value="6">{{ __('Domenica') }}</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="mk-f-label" for="mk-f-slot">{{ __('Slot') }}</label>
+                        <select id="mk-f-slot">
+                            <option value="">—</option>
+                            @foreach(\App\Models\MarketingItem::SLOTS as $s)
+                                <option value="{{ $s }}">{{ ucfirst($s) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="mk-modal-ftr">
+                <button class="btn" id="mk-modal-cancel" type="button">{{ __('Annulla') }}</button>
+                <button class="btn btn-primary" id="mk-modal-save" type="button">{{ __('Salva') }}</button>
+            </div>
+        </div>
+    </div>
 
     @endif
 
@@ -484,6 +644,155 @@
         input.addEventListener('change', function() {
             post(URLS.update.replace('__ID__', input.dataset.itemId), { completed_date: input.value || null })
                 .catch(function() { alert('Errore di salvataggio data.'); });
+        });
+    });
+
+    // ── CRUD Modal ────────────────────────────────────────────────────────
+    var STORE_URL = '{{ route('marketing.items.store', $site) }}';
+    var FULL_UPDATE_URL_TPL = '{{ route('marketing.items.updateFull', ['item' => '__ID__']) }}';
+    var DESTROY_URL_TPL = '{{ route('marketing.items.destroy', ['item' => '__ID__']) }}';
+
+    var modal = document.getElementById('mk-item-modal');
+    var modalTitle = document.getElementById('mk-modal-ttl');
+    var fType = document.getElementById('mk-f-type');
+    var fTitle = document.getElementById('mk-f-title');
+    var fDesc = document.getElementById('mk-f-description');
+    var fWeek = document.getElementById('mk-f-week');
+    var fDay = document.getElementById('mk-f-day');
+    var fSlot = document.getElementById('mk-f-slot');
+    var modalSave = document.getElementById('mk-modal-save');
+    var editingItemId = null;
+
+    function getPayloadInputs() {
+        var inputs = {};
+        modal.querySelectorAll('.mk-payload-group:not(.hidden) input[name]').forEach(function(inp) {
+            inputs[inp.name] = inp.value;
+        });
+        return inputs;
+    }
+
+    function setPayloadInputs(payload) {
+        modal.querySelectorAll('.mk-payload-group input[name]').forEach(function(inp) {
+            inp.value = (payload && payload[inp.name]) ? payload[inp.name] : '';
+        });
+    }
+
+    function showPayloadForType(type) {
+        modal.querySelectorAll('.mk-payload-group').forEach(function(grp) {
+            var types = (grp.dataset.mkTypes || '').split(',');
+            grp.classList.toggle('hidden', types.indexOf(type) === -1);
+        });
+    }
+
+    fType.addEventListener('change', function() { showPayloadForType(fType.value); });
+
+    function openModal(opts) {
+        editingItemId = opts.itemId || null;
+        modalTitle.textContent = opts.title;
+        fType.value = opts.type || '';
+        fType.disabled = !! opts.lockType;
+        fTitle.value = opts.itemTitle || '';
+        fDesc.value = opts.description || '';
+        fWeek.value = opts.week !== null && opts.week !== undefined ? opts.week : '';
+        fDay.value = opts.day !== null && opts.day !== undefined ? opts.day : '';
+        fSlot.value = opts.slot || '';
+        showPayloadForType(opts.type || '');
+        setPayloadInputs(opts.payload || {});
+        modal.classList.remove('hidden');
+        fTitle.focus();
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        editingItemId = null;
+        fType.disabled = false;
+    }
+
+    document.getElementById('mk-modal-cls').addEventListener('click', closeModal);
+    document.getElementById('mk-modal-cancel').addEventListener('click', closeModal);
+    modal.addEventListener('click', function(e) { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+
+    document.querySelectorAll('.mk-open-add').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            openModal({
+                title: '{{ __('Aggiungi') }} ' + btn.dataset.typeLabel,
+                type: btn.dataset.type,
+                lockType: true,
+            });
+        });
+    });
+
+    document.querySelectorAll('.mk-open-edit').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var payload = {};
+            try { payload = JSON.parse(btn.dataset.itemPayload || '{}'); } catch(e) {}
+            openModal({
+                title: '{{ __('Modifica') }} ' + btn.dataset.itemType + ' – ' + btn.closest('.mk-card').querySelector('.id').textContent,
+                itemId: btn.dataset.itemId,
+                type: btn.dataset.itemType,
+                lockType: false,
+                itemTitle: btn.dataset.itemTitle,
+                description: btn.dataset.itemDescription,
+                week: btn.dataset.itemWeek,
+                day: btn.dataset.itemDay,
+                slot: btn.dataset.itemSlot,
+                payload: payload,
+            });
+        });
+    });
+
+    modalSave.addEventListener('click', function() {
+        var type = fType.value;
+        if (!type) { fType.focus(); return; }
+
+        var payload = getPayloadInputs();
+        var body = {
+            type: type,
+            title: fTitle.value.trim() || null,
+            description: fDesc.value.trim() || null,
+            week: fWeek.value !== '' ? parseInt(fWeek.value, 10) : null,
+            day_index: fDay.value !== '' ? parseInt(fDay.value, 10) : null,
+            slot: fSlot.value || null,
+            payload: payload,
+        };
+
+        modalSave.disabled = true;
+        modalSave.textContent = '{{ __('Salvataggio...') }}';
+
+        var url = editingItemId
+            ? FULL_UPDATE_URL_TPL.replace('__ID__', editingItemId)
+            : STORE_URL;
+
+        post(url, body)
+            .then(function() {
+                closeModal();
+                location.reload();
+            })
+            .catch(function(err) {
+                alert('{{ __('Errore di salvataggio.') }} ' + (err.message || ''));
+            })
+            .finally(function() {
+                modalSave.disabled = false;
+                modalSave.textContent = '{{ __('Salva') }}';
+            });
+    });
+
+    document.querySelectorAll('.mk-do-delete').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var code = btn.dataset.itemCode;
+            if (!confirm('{{ __('Eliminare il contenuto') }} ' + code + '?')) return;
+            var id = btn.dataset.itemId;
+            fetch(DESTROY_URL_TPL.replace('__ID__', id), {
+                method: 'DELETE',
+                headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+            }).then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                var card = document.getElementById('mk-card-' + id);
+                if (card) card.remove();
+                document.querySelectorAll('.mk-badge[data-item-id="' + id + '"]').forEach(function(b) { b.remove(); });
+                refreshCounters();
+            }).catch(function() { alert('{{ __('Errore durante l\'eliminazione.') }}'); });
         });
     });
 
