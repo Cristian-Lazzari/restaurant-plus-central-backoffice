@@ -8,6 +8,7 @@ use App\Http\Controllers\SiteController;
 use App\Http\Controllers\SiteSyncController;
 use App\Http\Controllers\SnapshotController;
 use App\Http\Controllers\SyncErrorController;
+use App\Http\Controllers\MarketingPlanController;
 use App\Http\Controllers\TodolistController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,16 @@ Route::middleware('backoffice.auth')->group(function () {
     Route::get('pipeline/stats', [PipelineController::class, 'stats'])->name('pipeline.stats');
     Route::post('pipeline/seed', [PipelineController::class, 'seed'])->name('pipeline.seed');
     Route::get('pipeline/export', [PipelineController::class, 'exportCsv'])->name('pipeline.export');
+
+    // ── Pipeline Marketing (strategia social per ristorante) ────────────────
+    Route::get('marketing', [MarketingPlanController::class, 'index'])->name('marketing.index');
+    Route::get('sites/{site}/marketing', [MarketingPlanController::class, 'show'])->name('marketing.show');
+    Route::post('sites/{site}/marketing/import', [MarketingPlanController::class, 'import'])->name('marketing.import');
+    Route::delete('sites/{site}/marketing', [MarketingPlanController::class, 'destroy'])->name('marketing.destroy');
+    Route::post('sites/{site}/marketing/meta', [MarketingPlanController::class, 'updateMeta'])->name('marketing.meta');
+    Route::post('marketing/items/{item}/toggle', [MarketingPlanController::class, 'toggleItem'])->name('marketing.items.toggle');
+    Route::post('marketing/items/{item}/move', [MarketingPlanController::class, 'moveItem'])->name('marketing.items.move');
+    Route::post('marketing/items/{item}', [MarketingPlanController::class, 'updateItem'])->name('marketing.items.update');
 
     // ── Utenti (solo CEO — gli account ristorante vengono reindirizzati dal middleware) ──
     Route::get('users', [UserController::class, 'index'])->name('users.index');

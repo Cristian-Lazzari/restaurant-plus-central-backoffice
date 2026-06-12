@@ -731,6 +731,14 @@
                         </svg>
                         {{ __('Il mio ristorante') }}
                     </a>
+                    <a href="{{ route('marketing.show', $authUser->site_id) }}"
+                       class="nav-item {{ request()->routeIs('marketing.show') ? 'active' : '' }}"
+                       aria-current="{{ request()->routeIs('marketing.show') ? 'page' : 'false' }}">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="M13 2.5a1.5 1.5 0 0 1 3 0v11a1.5 1.5 0 0 1-3 0v-.214c-2.162-1.241-4.49-1.843-6.912-2.083l.405 2.712A1 1 0 0 1 5.51 15.1h-.548a1 1 0 0 1-.916-.599l-1.85-3.49c-.106-.02-.213-.04-.322-.062A2.01 2.01 0 0 1 0 9V7a2.01 2.01 0 0 1 1.992-2.013 74 74 0 0 0 2.483-.074c3.043-.154 6.148-.85 8.525-2.2V2.5zm1 0v11a.5.5 0 0 0 1 0v-11a.5.5 0 0 0-1 0zm-1 1.35C10.72 4.888 8 5.61 5 5.61H4.5A1.01 1.01 0 0 0 3.5 6.61v2.5c0 .553.448 1 1 1H5c3 0 5.72.722 8 2.25V3.85zm-9.5 6.4v-2.6l-1 .375v1.85l1 .375zm.5 3.065.181-.37-1-.374v.371l.82.373z"/>
+                        </svg>
+                        {{ __('Marketing') }}
+                    </a>
                 @endif
             </nav>
             @else
@@ -770,6 +778,15 @@
                         <path d="M13 2.5a1.5 1.5 0 0 1 3 0v11a1.5 1.5 0 0 1-3 0v-.214c-2.162-1.241-4.49-1.843-6.912-2.083l.405 2.712A1 1 0 0 1 5.51 15.1h-.548a1 1 0 0 1-.916-.599l-1.85-3.49c-.106-.02-.213-.04-.322-.062A2.01 2.01 0 0 1 0 9V7a2.01 2.01 0 0 1 1.992-2.013 74 74 0 0 0 2.483-.074c3.043-.154 6.148-.85 8.525-2.2V2.5zm1 0v11a.5.5 0 0 0 1 0v-11a.5.5 0 0 0-1 0zm-1 1.35C10.72 4.888 8 5.61 5 5.61H4.5A1.01 1.01 0 0 0 3.5 6.61v2.5c0 .553.448 1 1 1H5c3 0 5.72.722 8 2.25V3.85zm-9.5 6.4v-2.6l-1 .375v1.85l1 .375zm.5 3.065.181-.37-1-.374v.371l.82.373z"/>
                     </svg>
                     {{ __('Pipeline CRM') }}
+                </a>
+
+                <a href="{{ route('marketing.index') }}"
+                   class="nav-item {{ request()->routeIs('marketing.*') ? 'active' : '' }}"
+                   aria-current="{{ request()->routeIs('marketing.*') ? 'page' : 'false' }}">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path d="M11.251.068a.5.5 0 0 1 .227.58L9.677 6.5H13a.5.5 0 0 1 .364.843l-8 8.5a.5.5 0 0 1-.842-.49L6.323 9.5H3a.5.5 0 0 1-.364-.843l8-8.5a.5.5 0 0 1 .615-.09z"/>
+                    </svg>
+                    {{ __('Marketing') }}
                 </a>
 
                 <div class="nav-divider"></div>

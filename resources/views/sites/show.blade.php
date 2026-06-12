@@ -123,8 +123,9 @@
                     <a href="{{ $site->url }}" target="_blank" rel="noopener noreferrer" class="site-url-link" style="color: var(--muted);">{{ $site->url }}</a>
                 </div>
             </div>
-            @unless($isRestaurantViewer)
             <div class="actions" style="flex-shrink: 0;">
+                <a class="btn" href="{{ route('marketing.show', $site) }}">{{ __('Marketing') }}</a>
+            @unless($isRestaurantViewer)
                 <a class="btn" href="{{ route('sites.edit', $site) }}">{{ __('Modifica') }}</a>
                 <form method="POST" action="{{ route('sites.toggle', $site) }}">
                     @csrf
@@ -132,8 +133,8 @@
                         {{ $site->active ? __('Disattiva') : __('Attiva') }}
                     </button>
                 </form>
-            </div>
             @endunless
+            </div>
         </div>
     </div>
 

@@ -107,4 +107,9 @@ class Site extends Model
     {
         return $this->hasOne(SyncError::class)->latestOfMany('occurred_at');
     }
+
+    public function marketingPlan(): HasOne
+    {
+        return $this->hasOne(MarketingPlan::class);
+    }
 }

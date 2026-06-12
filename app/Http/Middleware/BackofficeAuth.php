@@ -39,13 +39,26 @@ class BackofficeAuth
 
     private function isAllowedForRestaurant(Request $request, User $user): bool
     {
-        if (! $request->routeIs('sites.show')) {
-            return false;
+        // Pagine con parametro {site}: dettaglio e piano marketing del proprio ristorante.
+        if ($request->routeIs('sites.show', 'marketing.show', 'marketing.meta')) {
+            $site = $request->route('site');
+            $siteId = $site instanceof Site ? $site->id : (int) $site;
+
+            return $siteId === (int) $user->site_id;
         }
 
-        $site = $request->route('site');
-        $siteId = $site instanceof Site ? $site->id : (int) $site;
+        // Azioni AJAX sui contenuti del proprio piano marketing.
+        if ($request->routeIs('marketing.items.*')) {
+            $item = $request->route('item');
 
-        return $siteId === (int) $user->site_id;
+            if (! $item instanceof \App\Models\MarketingItem) {
+                $item = \App\Models\MarketingItem::find((int) $item);
+            }
+
+            return $item !== null
+                && (int) $item->plan?->site_id === (int) $user->site_id;
+        }
+
+        return false;
     }
 }
