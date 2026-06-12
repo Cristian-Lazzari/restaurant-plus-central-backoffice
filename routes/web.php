@@ -9,6 +9,7 @@ use App\Http\Controllers\SiteSyncController;
 use App\Http\Controllers\SnapshotController;
 use App\Http\Controllers\SyncErrorController;
 use App\Http\Controllers\TodolistController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/login', [PrivateAuthController::class, 'showLogin'])->name('login');
@@ -50,4 +51,10 @@ Route::middleware('backoffice.auth')->group(function () {
     Route::get('pipeline/stats', [PipelineController::class, 'stats'])->name('pipeline.stats');
     Route::post('pipeline/seed', [PipelineController::class, 'seed'])->name('pipeline.seed');
     Route::get('pipeline/export', [PipelineController::class, 'exportCsv'])->name('pipeline.export');
+
+    // ── Utenti (solo CEO — gli account ristorante vengono reindirizzati dal middleware) ──
+    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::post('users', [UserController::class, 'store'])->name('users.store');
+    Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 });

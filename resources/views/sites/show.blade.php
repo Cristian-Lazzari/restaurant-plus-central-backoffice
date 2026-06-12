@@ -102,11 +102,17 @@
         }
     </style>
 
+    @php
+        $isRestaurantViewer = auth()->user()?->isRestaurant() ?? false;
+    @endphp
+
     {{-- Section: Breadcrumb + Page header --}}
     <div class="page-header">
         <nav class="breadcrumb" aria-label="{{ __('Breadcrumb') }}">
-            <a href="{{ route('dashboard') }}">{{ __('Dashboard') }}</a>
-            <span class="breadcrumb-sep" aria-hidden="true">›</span>
+            @unless($isRestaurantViewer)
+                <a href="{{ route('dashboard') }}">{{ __('Dashboard') }}</a>
+                <span class="breadcrumb-sep" aria-hidden="true">›</span>
+            @endunless
             <span>{{ $site->name }}</span>
         </nav>
 
@@ -117,6 +123,7 @@
                     <a href="{{ $site->url }}" target="_blank" rel="noopener noreferrer" class="site-url-link" style="color: var(--muted);">{{ $site->url }}</a>
                 </div>
             </div>
+            @unless($isRestaurantViewer)
             <div class="actions" style="flex-shrink: 0;">
                 <a class="btn" href="{{ route('sites.edit', $site) }}">{{ __('Modifica') }}</a>
                 <form method="POST" action="{{ route('sites.toggle', $site) }}">
@@ -126,6 +133,7 @@
                     </button>
                 </form>
             </div>
+            @endunless
         </div>
     </div>
 
@@ -493,6 +501,9 @@
         </div>
     @endif
 
+    {{-- Sezioni tecniche/amministrative: nascoste agli account ristorante --}}
+    @unless($isRestaurantViewer)
+
     {{-- Section: Info sito --}}
     <div class="section-header" style="margin-bottom: 12px;">
         <h2 class="section-title">{{ __('Info sito') }}</h2>
@@ -635,6 +646,8 @@
             </div>
         </details>
     @endif
+
+    @endunless
 
 @endsection
 

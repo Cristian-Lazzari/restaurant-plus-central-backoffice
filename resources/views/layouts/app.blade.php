@@ -714,7 +714,26 @@
             @endif
         </a>
 
+        @php
+            $authUser = auth()->user();
+            $isRestaurantUser = $authUser && $authUser->isRestaurant();
+        @endphp
         @if(session('backoffice_authenticated'))
+            @if($isRestaurantUser)
+            <nav class="sidebar-nav">
+                @if($authUser->site_id)
+                    <a href="{{ route('sites.show', $authUser->site_id) }}"
+                       class="nav-item {{ request()->routeIs('sites.show') ? 'active' : '' }}"
+                       aria-current="{{ request()->routeIs('sites.show') ? 'page' : 'false' }}">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                            <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293L8.707 1.5Z"/>
+                            <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293l6-6Z"/>
+                        </svg>
+                        {{ __('Il mio ristorante') }}
+                    </a>
+                @endif
+            </nav>
+            @else
             <nav class="sidebar-nav">
                 <a href="{{ route('dashboard') }}"
                    class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}"
@@ -755,6 +774,15 @@
 
                 <div class="nav-divider"></div>
 
+                <a href="{{ route('users.index') }}"
+                   class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}"
+                   aria-current="{{ request()->routeIs('users.*') ? 'page' : 'false' }}">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                        <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1H7Zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-5.784 6A2.238 2.238 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.325 6.325 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1h5.216ZM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
+                    </svg>
+                    {{ __('Utenti') }}
+                </a>
+
                 <a href="{{ route('backoffice-settings.edit') }}"
                    class="nav-item {{ request()->routeIs('backoffice-settings.*') ? 'active' : '' }}"
                    aria-current="{{ request()->routeIs('backoffice-settings.*') ? 'page' : 'false' }}">
@@ -764,6 +792,7 @@
                     {{ __('Impostazioni') }}
                 </a>
             </nav>
+            @endif
 
             <div class="sidebar-footer">
                 <form method="POST" action="{{ route('logout') }}">
