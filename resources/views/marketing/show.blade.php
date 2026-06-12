@@ -82,6 +82,8 @@
         @media (max-width: 768px) {
             .mk-card-body dl { grid-template-columns: 1fr; gap: 2px; }
             .mk-card-body dt { padding-top: 8px; }
+            /* I KPI restano grandi: già sopra i 16px, nessun rischio auto-zoom */
+            input.mk-kpi { font-size: 22px !important; }
         }
     </style>
 

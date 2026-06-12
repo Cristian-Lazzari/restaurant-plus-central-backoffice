@@ -672,6 +672,23 @@
 
         /* ─── Responsive ─── */
         @media (max-width: 768px) {
+            /* iOS Safari zooma la pagina al focus se l'input ha font < 16px:
+               su mobile nessun campo deve scendere sotto i 16px.
+               !important per vincere anche sugli stili inline delle viste. */
+            input[type="text"],
+            input[type="url"],
+            input[type="password"],
+            input[type="email"],
+            input[type="date"],
+            input[type="number"],
+            input[type="search"],
+            input[type="tel"],
+            input[type="time"],
+            textarea,
+            select {
+                font-size: 16px !important;
+            }
+
             .sidebar { transform: translateX(-100%); }
             .sidebar.open { transform: translateX(0); box-shadow: 4px 0 24px rgba(0,0,0,0.25); }
             .main-area { margin-left: 0; }

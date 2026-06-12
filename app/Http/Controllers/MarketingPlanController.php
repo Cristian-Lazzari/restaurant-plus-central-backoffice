@@ -110,6 +110,8 @@ class MarketingPlanController extends Controller
             $importer->import($site, $data['strategy_json']);
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', 'Import fallito: ' . $e->getMessage());
+        } catch (\Illuminate\Database\QueryException $e) {
+            return back()->with('error', 'Import fallito: il JSON contiene ID duplicati (ogni id deve essere unico in tutto il documento).');
         }
 
         return redirect()
